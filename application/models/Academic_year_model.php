@@ -1,0 +1,81 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Academic_year_model extends CI_Model {
+
+    protected $table = 'tbl_academic_years';
+    protected $primaryKey = 'academic_year_id';
+
+    public function get_all()
+    {
+        return $this->db
+            ->where('status', 1)
+            ->order_by('start_date', 'DESC')
+            ->get($this->table)
+            ->result();
+    }
+
+    public function get_by_id($id)
+    {
+        return $this->db
+            ->where($this->primaryKey, $id)
+            ->get($this->table)
+            ->row();
+    }
+
+    public function get_active_year()
+    {
+        $active = $this->db
+            ->where('is_active', 1)
+            ->where('status', 1)
+            ->get($this->table)
+            ->row();
+
+        if (!$active) {
+            // Fallback to latest
+            $active = $this->db
+                ->where('status', 1)
+                ->order_by('start_date', 'DESC')
+                ->limit(1)
+                ->get($this->table)
+                ->row();
+        }
+
+        return $active;
+    }
+
+    public function set_active($id)
+    {
+        // Enforce single active academic year rule
+        $this->db->update($this->table, array('is_active' => 0));
+        return $this->db
+            ->where($this->primaryKey, $id)
+            ->update($this->table, array('is_active' => 1));
+    }
+
+    public function insert($data)
+    {
+        if (!empty($data['is_active'])) {
+            $this->db->update($this->table, array('is_active' => 0));
+        }
+        $this->db->insert($this->table, $data);
+        return $this->db->insert_id();
+    }
+
+    public function update($id, $data)
+    {
+        if (!empty($data['is_active'])) {
+            $this->db->update($this->table, array('is_active' => 0));
+        }
+        return $this->db
+            ->where($this->primaryKey, $id)
+            ->update($this->table, $data);
+    }
+
+    public function soft_delete($id)
+    {
+        return $this->db
+            ->where($this->primaryKey, $id)
+            ->update($this->table, array('status' => 0));
+    }
+}

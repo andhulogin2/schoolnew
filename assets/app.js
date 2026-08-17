@@ -65,7 +65,7 @@ function url(pageKey) {
 const CURRENT_USER = window.CURRENT_USER || {
   name: "Anjali Menon",
   role: "Super Admin",
-  email: "anjali.menon@educore.edu",
+  email: "anjali.menon@gmail.com",
   initials: "AM",
 };
 

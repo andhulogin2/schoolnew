@@ -18,6 +18,7 @@ A fully normalized, database-driven CodeIgniter 3.1.11 MVC application with Tail
   - User Management & School Settings
 
 ## Default Super Admin Credentials
-- **Email**: `anjali.menon@educore.edu`
+- **Email**: `anjali.menon@gmail.com`
 - **Password**: `Admin@123`
+
 

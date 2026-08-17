@@ -539,18 +539,18 @@ INSERT INTO `tbl_designations` (`designation_id`, `designation_name`, `category`
 
 -- Staff Members
 INSERT INTO `tbl_staff` (`staff_id`, `employee_code`, `full_name`, `email`, `phone`, `gender`, `date_of_birth`, `category`, `department_id`, `designation_id`, `joining_date`, `salary`, `address`, `status`) VALUES
-(1, 'EMP1001', 'Priya Varma', 'priya.varma@educore.edu', '+91 98471 00001', 'Female', '1985-04-12', 'Teacher', 1, 3, '2018-06-01', 45000.00, 'Kakkanad, Kochi, Kerala', 1),
-(2, 'EMP1002', 'George Mathew', 'george.mathew@educore.edu', '+91 98471 00002', 'Male', '1980-09-20', 'Teacher', 2, 2, '2015-03-14', 55000.00, 'Palarivattom, Kochi, Kerala', 1),
-(3, 'EMP1003', 'Fathima Beevi', 'fathima.beevi@educore.edu', '+91 98471 00003', 'Female', '1988-11-05', 'Accountant', 5, 5, '2020-01-09', 38000.00, 'Aluva, Ernakulam, Kerala', 1),
-(4, 'EMP1004', 'Sunil Kumar', 'sunil.kumar@educore.edu', '+91 98471 00004', 'Male', '1992-06-18', 'Receptionist', 4, 6, '2021-08-22', 28000.00, 'Edappally, Kochi, Kerala', 1),
-(5, 'EMP1005', 'Lakshmi Pillai', 'lakshmi.pillai@educore.edu', '+91 98471 00005', 'Female', '1989-02-28', 'Teacher', 3, 4, '2019-07-11', 40000.00, 'Tripunithura, Kochi, Kerala', 1),
-(6, 'EMP1006', 'Antony Xavier', 'antony.xavier@educore.edu', '+91 98471 00006', 'Male', '1975-01-15', 'Principal', 4, 1, '2012-04-01', 75000.00, 'Marine Drive, Kochi, Kerala', 1),
-(7, 'EMP1007', 'Reshma Nair', 'reshma.nair@educore.edu', '+91 98471 00007', 'Female', '1995-10-10', 'Office Staff', 4, 7, '2022-02-03', 24000.00, 'Vyttila, Kochi, Kerala', 0),
-(8, 'EMP1008', 'Vinod Kumar', 'vinod.kumar@educore.edu', '+91 98471 00008', 'Male', '1987-08-14', 'Teacher', 6, 4, '2017-06-01', 42000.00, 'Kalamassery, Kochi, Kerala', 1),
-(9, 'EMP1009', 'Nisha Roy', 'nisha.roy@educore.edu', '+91 98471 00009', 'Female', '1990-03-22', 'Teacher', 3, 4, '2021-05-15', 36000.00, 'Kadavanthra, Kochi, Kerala', 1),
-(10, 'EMP1010', 'Manoj Das', 'manoj.das@educore.edu', '+91 98471 00010', 'Male', '1986-12-04', 'Teacher', 1, 4, '2019-06-10', 40000.00, 'Thrikkakara, Kochi, Kerala', 1),
-(11, 'EMP1011', 'Ancy Thomas', 'ancy.thomas@educore.edu', '+91 98471 00011', 'Female', '1991-07-19', 'Teacher', 2, 4, '2020-08-01', 38000.00, 'Cheranallur, Kochi, Kerala', 1),
-(12, 'EMP1012', 'Rahul Sharma', 'rahul.sharma@educore.edu', '+91 98471 00012', 'Male', '1984-05-30', 'Teacher', 1, 3, '2016-09-01', 46000.00, 'Kaloor, Kochi, Kerala', 1);
+(1, 'EMP1001', 'Priya Varma', 'priya.varma@gmail.com', '+91 98471 00001', 'Female', '1985-04-12', 'Teacher', 1, 3, '2018-06-01', 45000.00, 'Kakkanad, Kochi, Kerala', 1),
+(2, 'EMP1002', 'George Mathew', 'george.mathew@gmail.com', '+91 98471 00002', 'Male', '1980-09-20', 'Teacher', 2, 2, '2015-03-14', 55000.00, 'Palarivattom, Kochi, Kerala', 1),
+(3, 'EMP1003', 'Fathima Beevi', 'fathima.beevi@gmail.com', '+91 98471 00003', 'Female', '1988-11-05', 'Accountant', 5, 5, '2020-01-09', 38000.00, 'Aluva, Ernakulam, Kerala', 1),
+(4, 'EMP1004', 'Sunil Kumar', 'sunil.kumar@gmail.com', '+91 98471 00004', 'Male', '1992-06-18', 'Receptionist', 4, 6, '2021-08-22', 28000.00, 'Edappally, Kochi, Kerala', 1),
+(5, 'EMP1005', 'Lakshmi Pillai', 'lakshmi.pillai@gmail.com', '+91 98471 00005', 'Female', '1989-02-28', 'Teacher', 3, 4, '2019-07-11', 40000.00, 'Tripunithura, Kochi, Kerala', 1),
+(6, 'EMP1006', 'Antony Xavier', 'antony.xavier@gmail.com', '+91 98471 00006', 'Male', '1975-01-15', 'Principal', 4, 1, '2012-04-01', 75000.00, 'Marine Drive, Kochi, Kerala', 1),
+(7, 'EMP1007', 'Reshma Nair', 'reshma.nair@gmail.com', '+91 98471 00007', 'Female', '1995-10-10', 'Office Staff', 4, 7, '2022-02-03', 24000.00, 'Vyttila, Kochi, Kerala', 0),
+(8, 'EMP1008', 'Vinod Kumar', 'vinod.kumar@gmail.com', '+91 98471 00008', 'Male', '1987-08-14', 'Teacher', 6, 4, '2017-06-01', 42000.00, 'Kalamassery, Kochi, Kerala', 1),
+(9, 'EMP1009', 'Nisha Roy', 'nisha.roy@gmail.com', '+91 98471 00009', 'Female', '1990-03-22', 'Teacher', 3, 4, '2021-05-15', 36000.00, 'Kadavanthra, Kochi, Kerala', 1),
+(10, 'EMP1010', 'Manoj Das', 'manoj.das@gmail.com', '+91 98471 00010', 'Male', '1986-12-04', 'Teacher', 1, 4, '2019-06-10', 40000.00, 'Thrikkakara, Kochi, Kerala', 1),
+(11, 'EMP1011', 'Ancy Thomas', 'ancy.thomas@gmail.com', '+91 98471 00011', 'Female', '1991-07-19', 'Teacher', 2, 4, '2020-08-01', 38000.00, 'Cheranallur, Kochi, Kerala', 1),
+(12, 'EMP1012', 'Rahul Sharma', 'rahul.sharma@gmail.com', '+91 98471 00012', 'Male', '1984-05-30', 'Teacher', 1, 3, '2016-09-01', 46000.00, 'Kaloor, Kochi, Kerala', 1);
 
 -- Update department heads
 UPDATE `tbl_departments` SET `head_of_department_id` = 1 WHERE `department_id` = 1;
@@ -562,11 +562,11 @@ UPDATE `tbl_departments` SET `head_of_department_id` = 8 WHERE `department_id` =
 
 -- System Users (Password for all seeded accounts is 'Admin@123')
 INSERT INTO `tbl_users` (`user_id`, `role_id`, `staff_id`, `name`, `email`, `phone`, `password`, `status`) VALUES
-(1, 1, NULL, 'Anjali Menon', 'anjali.menon@educore.edu', '+91 98470 00000', '$2y$10$hUtHYZZMTP9Fw0VCZk4yueEQ/7nBsd2qNbflVGN.56nIL/3XDi9QO', 1),
-(2, 2, 6, 'Antony Xavier', 'antony.xavier@educore.edu', '+91 98471 00006', '$2y$10$hUtHYZZMTP9Fw0VCZk4yueEQ/7nBsd2qNbflVGN.56nIL/3XDi9QO', 1),
-(3, 3, 1, 'Priya Varma', 'priya.varma@educore.edu', '+91 98471 00001', '$2y$10$hUtHYZZMTP9Fw0VCZk4yueEQ/7nBsd2qNbflVGN.56nIL/3XDi9QO', 1),
-(4, 4, 3, 'Fathima Beevi', 'fathima.beevi@educore.edu', '+91 98471 00003', '$2y$10$hUtHYZZMTP9Fw0VCZk4yueEQ/7nBsd2qNbflVGN.56nIL/3XDi9QO', 1),
-(5, 5, 4, 'Sunil Kumar', 'sunil.kumar@educore.edu', '+91 98471 00004', '$2y$10$hUtHYZZMTP9Fw0VCZk4yueEQ/7nBsd2qNbflVGN.56nIL/3XDi9QO', 1);
+(1, 1, NULL, 'Anjali Menon', 'anjali.menon@gmail.com', '+91 98470 00000', '$2y$10$OXjoe7w618tyFJwMPR6oru2vSZKfhj3xIiDAkwN7r/O8afXkaPIl.', 1),
+(2, 2, 6, 'Antony Xavier', 'antony.xavier@gmail.com', '+91 98471 00006', '$2y$10$OXjoe7w618tyFJwMPR6oru2vSZKfhj3xIiDAkwN7r/O8afXkaPIl.', 1),
+(3, 3, 1, 'Priya Varma', 'priya.varma@gmail.com', '+91 98471 00001', '$2y$10$OXjoe7w618tyFJwMPR6oru2vSZKfhj3xIiDAkwN7r/O8afXkaPIl.', 1),
+(4, 4, 3, 'Fathima Beevi', 'fathima.beevi@gmail.com', '+91 98471 00003', '$2y$10$OXjoe7w618tyFJwMPR6oru2vSZKfhj3xIiDAkwN7r/O8afXkaPIl.', 1),
+(5, 5, 4, 'Sunil Kumar', 'sunil.kumar@gmail.com', '+91 98471 00004', '$2y$10$OXjoe7w618tyFJwMPR6oru2vSZKfhj3xIiDAkwN7r/O8afXkaPIl.', 1);
 
 -- Academic Years (Only 2026-2027 is active)
 INSERT INTO `tbl_academic_years` (`academic_year_id`, `year_name`, `start_date`, `end_date`, `is_active`, `status`) VALUES

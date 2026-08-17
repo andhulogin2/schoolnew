@@ -42,7 +42,7 @@ class MY_Controller extends CI_Controller {
             $current_user = array(
                 'name'     => $this->session->userdata('user_name') ?: 'Anjali Menon',
                 'role'     => $this->session->userdata('user_role') ?: 'Super Admin',
-                'email'    => $this->session->userdata('user_email') ?: 'anjali.menon@educore.edu',
+                'email'    => $this->session->userdata('user_email') ?: 'anjali.menon@gmail.com',
                 'initials' => $this->session->userdata('user_initials') ?: 'AM',
             );
         }

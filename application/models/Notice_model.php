@@ -9,27 +9,33 @@ class Notice_model extends CI_Model {
     public function get_all()
     {
         return $this->db
-            ->where('status', 1)
-            ->order_by('notice_date', 'DESC')
-            ->get($this->table)
+            ->select('n.*, n.posted_by AS posted_by_name, n.notice_date AS publish_date, n.notice_date AS date')
+            ->from('tbl_notices n')
+            ->where('n.status', 1)
+            ->order_by('n.notice_date', 'DESC')
+            ->get()
             ->result();
     }
 
     public function get_recent($limit = 3)
     {
         return $this->db
-            ->where('status', 1)
-            ->order_by('notice_date', 'DESC')
+            ->select('n.*, n.posted_by AS posted_by_name, n.notice_date AS publish_date, n.notice_date AS date')
+            ->from('tbl_notices n')
+            ->where('n.status', 1)
+            ->order_by('n.notice_date', 'DESC')
             ->limit($limit)
-            ->get($this->table)
+            ->get()
             ->result();
     }
 
     public function get_by_id($id)
     {
         return $this->db
-            ->where($this->primaryKey, $id)
-            ->get($this->table)
+            ->select('n.*, n.posted_by AS posted_by_name, n.notice_date AS publish_date, n.notice_date AS date')
+            ->from('tbl_notices n')
+            ->where('n.' . $this->primaryKey, $id)
+            ->get()
             ->row();
     }
 

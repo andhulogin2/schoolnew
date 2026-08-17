@@ -9,7 +9,13 @@ class Staff_model extends CI_Model {
     public function get_all($filters = array())
     {
         $this->db
-            ->select('s.*, d.department_name, dg.designation_name')
+            ->select('s.*, 
+                      s.full_name,
+                      SUBSTRING_INDEX(s.full_name, " ", 1) AS first_name,
+                      TRIM(SUBSTRING(s.full_name, LENGTH(SUBSTRING_INDEX(s.full_name, " ", 1)) + 1)) AS last_name,
+                      s.category AS designation_category,
+                      d.department_name, 
+                      dg.designation_name')
             ->from('tbl_staff s')
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
@@ -37,10 +43,17 @@ class Staff_model extends CI_Model {
     public function get_teachers($filters = array())
     {
         $this->db
-            ->select('s.*, d.department_name, dg.designation_name,
-                (SELECT GROUP_CONCAT(DISTINCT sub.subject_name SEPARATOR ", ") FROM tbl_subjects sub WHERE sub.teacher_id = s.staff_id AND sub.status = 1) as subjects_handled,
-                (SELECT GROUP_CONCAT(DISTINCT c.class_name SEPARATOR ", ") FROM tbl_subjects sub JOIN tbl_classes c ON c.class_id = sub.class_id WHERE sub.teacher_id = s.staff_id AND sub.status = 1) as classes_handled,
-                (SELECT GROUP_CONCAT(DISTINCT CONCAT(c.class_name, " ", sec.section_name) SEPARATOR ", ") FROM tbl_sections sec JOIN tbl_classes c ON c.class_id = sec.class_id WHERE sec.class_teacher_id = s.staff_id AND sec.status = 1) as sections_handled')
+            ->select('s.*, 
+                      s.full_name,
+                      SUBSTRING_INDEX(s.full_name, " ", 1) AS first_name,
+                      TRIM(SUBSTRING(s.full_name, LENGTH(SUBSTRING_INDEX(s.full_name, " ", 1)) + 1)) AS last_name,
+                      s.category AS designation_category,
+                      d.department_name, 
+                      dg.designation_name,
+                      (SELECT GROUP_CONCAT(DISTINCT sub.subject_name SEPARATOR ", ") FROM tbl_subjects sub WHERE sub.teacher_id = s.staff_id AND sub.status = 1) as subjects_handled,
+                      (SELECT GROUP_CONCAT(DISTINCT sub.subject_name SEPARATOR ", ") FROM tbl_subjects sub WHERE sub.teacher_id = s.staff_id AND sub.status = 1) as subject_specialization,
+                      (SELECT GROUP_CONCAT(DISTINCT c.class_name SEPARATOR ", ") FROM tbl_subjects sub JOIN tbl_classes c ON c.class_id = sub.class_id WHERE sub.teacher_id = s.staff_id AND sub.status = 1) as classes_handled,
+                      (SELECT GROUP_CONCAT(DISTINCT CONCAT(c.class_name, " ", sec.section_name) SEPARATOR ", ") FROM tbl_sections sec JOIN tbl_classes c ON c.class_id = sec.class_id WHERE sec.class_teacher_id = s.staff_id AND sec.status = 1) as sections_handled')
             ->from('tbl_staff s')
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
@@ -62,7 +75,13 @@ class Staff_model extends CI_Model {
     public function get_by_id($id)
     {
         return $this->db
-            ->select('s.*, d.department_name, dg.designation_name')
+            ->select('s.*, 
+                      s.full_name,
+                      SUBSTRING_INDEX(s.full_name, " ", 1) AS first_name,
+                      TRIM(SUBSTRING(s.full_name, LENGTH(SUBSTRING_INDEX(s.full_name, " ", 1)) + 1)) AS last_name,
+                      s.category AS designation_category,
+                      d.department_name, 
+                      dg.designation_name')
             ->from('tbl_staff s')
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')

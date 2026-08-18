@@ -87,6 +87,11 @@
     </div>
       
     <div class="">
+      <label class="block font-label-md text-label-md text-on-surface mb-1.5">Roll Number</label>
+      <input type="text" name="roll_number" placeholder="e.g. 15" class="w-full px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-body-md focus:ring-2 focus:ring-primary/10 focus:border-primary placeholder-on-surface-variant/50"/>
+    </div>
+      
+    <div class="">
       <label class="block font-label-md text-label-md text-on-surface mb-1.5">Guardian Name</label>
       <input type="text" name="guardian_name" placeholder="e.g. Suresh Nair" class="w-full px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-body-md focus:ring-2 focus:ring-primary/10 focus:border-primary placeholder-on-surface-variant/50"/>
     </div>

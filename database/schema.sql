@@ -214,6 +214,7 @@ CREATE TABLE `tbl_students` (
   `academic_year_id` INT UNSIGNED NOT NULL,
   `class_id` INT UNSIGNED NOT NULL,
   `section_id` INT UNSIGNED NOT NULL,
+  `roll_number` VARCHAR(20) NULL,
   `photo` VARCHAR(255) NULL,
   `status` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1=Active, 0=Inactive, 2=Pending',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -612,15 +613,15 @@ INSERT INTO `tbl_subjects` (`subject_id`, `class_id`, `subject_name`, `subject_c
 (8, 7, 'English', 'ENG09', 'Language', 5, 1);
 
 -- Students
-INSERT INTO `tbl_students` (`student_id`, `admission_number`, `first_name`, `middle_name`, `last_name`, `gender`, `date_of_birth`, `blood_group`, `nationality`, `religion`, `address`, `guardian_name`, `guardian_relation`, `guardian_phone`, `guardian_email`, `academic_year_id`, `class_id`, `section_id`, `status`) VALUES
-(1, 'EDU2026001', 'Aarav', '', 'Nair', 'Male', '2011-06-12', 'B+', 'Indian', 'Hindu', 'Thaikkattukara, Aluva, Ernakulam, Kerala', 'Suresh Nair', 'Father', '+91 98470 11223', 'suresh.nair@email.com', 1, 8, 1, 1),
-(2, 'EDU2026002', 'Diya', '', 'Menon', 'Female', '2012-02-03', 'O+', 'Indian', 'Hindu', 'Kakkanad, Ernakulam, Kerala', 'Ramesh Menon', 'Father', '+91 94470 22314', 'ramesh.menon@email.com', 1, 7, 5, 1),
-(3, 'EDU2026003', 'Kiran', '', 'Thomas', 'Male', '2009-09-19', 'A+', 'Indian', 'Christian', 'Kaloor, Ernakulam, Kerala', 'Thomas Varghese', 'Father', '+91 90480 33556', 'thomas.varghese@email.com', 1, 10, 10, 1),
-(4, 'EDU2026004', 'Ananya', '', 'Pillai', 'Female', '2014-11-27', 'AB+', 'Indian', 'Hindu', 'Tripunithura, Ernakulam, Kerala', 'Vinod Pillai', 'Father', '+91 99460 44778', 'vinod.pillai@email.com', 1, 5, 6, 1),
-(5, 'EDU2026005', 'Rohan', '', 'Iqbal', 'Male', '2013-01-05', 'B-', 'Indian', 'Muslim', 'Edappally, Ernakulam, Kerala', 'Iqbal Rahman', 'Father', '+91 98950 55990', 'iqbal.rahman@email.com', 1, 6, 4, 0),
-(6, 'EDU2026006', 'Sara', '', 'Joseph', 'Female', '2020-04-14', 'O+', 'Indian', 'Christian', 'Palarivattom, Ernakulam, Kerala', 'Jibin Joseph', 'Father', '+91 97460 66112', 'jibin.joseph@email.com', 1, 1, 8, 1),
-(7, 'EDU2026007', 'Vishnu', '', 'Krishnan', 'Male', '2010-08-30', 'A-', 'Indian', 'Hindu', 'Vyttila, Ernakulam, Kerala', 'Krishnan Kutty', 'Father', '+91 88480 77334', 'krishnan.kutty@email.com', 1, 9, 9, 1),
-(8, 'EDU2026008', 'Meera', '', 'Suresh', 'Female', '2016-07-22', 'B+', 'Indian', 'Hindu', 'Kadavanthra, Ernakulam, Kerala', 'Suresh Babu', 'Father', '+91 97350 88556', 'suresh.babu@email.com', 1, 3, 7, 2);
+INSERT INTO `tbl_students` (`student_id`, `admission_number`, `first_name`, `middle_name`, `last_name`, `gender`, `date_of_birth`, `blood_group`, `nationality`, `religion`, `address`, `guardian_name`, `guardian_relation`, `guardian_phone`, `guardian_email`, `academic_year_id`, `class_id`, `section_id`, `roll_number`, `status`) VALUES
+(1, 'EDU2026001', 'Aarav', '', 'Nair', 'Male', '2011-06-12', 'B+', 'Indian', 'Hindu', 'Thaikkattukara, Aluva, Ernakulam, Kerala', 'Suresh Nair', 'Father', '+91 98470 11223', 'suresh.nair@email.com', 1, 8, 1, '01', 1),
+(2, 'EDU2026002', 'Diya', '', 'Menon', 'Female', '2012-02-03', 'O+', 'Indian', 'Hindu', 'Kakkanad, Ernakulam, Kerala', 'Ramesh Menon', 'Father', '+91 94470 22314', 'ramesh.menon@email.com', 1, 7, 5, '02', 1),
+(3, 'EDU2026003', 'Kiran', '', 'Thomas', 'Male', '2009-09-19', 'A+', 'Indian', 'Christian', 'Kaloor, Ernakulam, Kerala', 'Thomas Varghese', 'Father', '+91 90480 33556', 'thomas.varghese@email.com', 1, 10, 10, '03', 1),
+(4, 'EDU2026004', 'Ananya', '', 'Pillai', 'Female', '2014-11-27', 'AB+', 'Indian', 'Hindu', 'Tripunithura, Ernakulam, Kerala', 'Vinod Pillai', 'Father', '+91 99460 44778', 'vinod.pillai@email.com', 1, 5, 6, '04', 1),
+(5, 'EDU2026005', 'Rohan', '', 'Iqbal', 'Male', '2013-01-05', 'B-', 'Indian', 'Muslim', 'Edappally, Ernakulam, Kerala', 'Iqbal Rahman', 'Father', '+91 98950 55990', 'iqbal.rahman@email.com', 1, 6, 4, '05', 0),
+(6, 'EDU2026006', 'Sara', '', 'Joseph', 'Female', '2020-04-14', 'O+', 'Indian', 'Christian', 'Palarivattom, Ernakulam, Kerala', 'Jibin Joseph', 'Father', '+91 97460 66112', 'jibin.joseph@email.com', 1, 1, 8, '06', 1),
+(7, 'EDU2026007', 'Vishnu', '', 'Krishnan', 'Male', '2010-08-30', 'A-', 'Indian', 'Hindu', 'Vyttila, Ernakulam, Kerala', 'Krishnan Kutty', 'Father', '+91 88480 77334', 'krishnan.kutty@email.com', 1, 9, 9, '07', 1),
+(8, 'EDU2026008', 'Meera', '', 'Suresh', 'Female', '2016-07-22', 'B+', 'Indian', 'Hindu', 'Kadavanthra, Ernakulam, Kerala', 'Suresh Babu', 'Father', '+91 97350 88556', 'suresh.babu@email.com', 1, 3, 7, '08', 2);
 
 -- Student Documents for Student 1
 INSERT INTO `tbl_student_documents` (`document_id`, `student_id`, `document_type`, `document_name`, `file_path`, `status`) VALUES

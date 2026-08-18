@@ -20,9 +20,10 @@
         <h2 class="font-headline-lg text-headline-lg text-on-surface"><?php echo html_escape($fullName); ?></h2>
         <?php echo $statusBadge; ?>
       </div>
-      <p class="text-body-md font-body-md text-on-surface-variant mt-1"><?php echo html_escape(isset($student->admission_number) ? $student->admission_number : ''); ?> · Class <?php echo html_escape($classDisplay); ?> · Academic Year <?php echo html_escape(isset($student->year_name) ? $student->year_name : '2026-2027'); ?></p>
+      <p class="text-body-md font-body-md text-on-surface-variant mt-1"><?php echo html_escape(isset($student->admission_number) ? $student->admission_number : ''); ?><?php if (!empty($student->roll_number)): ?> (Roll No. <?php echo html_escape($student->roll_number); ?>)<?php endif; ?> · Class <?php echo html_escape($classDisplay); ?> · Academic Year <?php echo html_escape(isset($student->year_name) ? $student->year_name : '2026-2027'); ?></p>
     </div>
     <div class="flex gap-2">
+      <a href="<?php echo site_url('students/edit/' . $student_id); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span>Edit</a>
       <a href="<?php echo site_url('students'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Back to List</a>
       <a href="<?php echo site_url('students/id_cards'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">badge</span>Print ID Card</a>
     </div>
@@ -58,9 +59,10 @@
         <div class="flex items-center gap-2"></div>
       </div>
       <div class="p-5">
-        <div class="grid grid-cols-3 gap-4 text-body-md font-body-md">
+        <div class="grid grid-cols-4 gap-4 text-body-md font-body-md">
           <div><div class="text-on-surface-variant text-[12px]">Class</div><div class="text-on-surface"><?php echo html_escape(isset($student->class_name) ? $student->class_name : '—'); ?></div></div>
           <div><div class="text-on-surface-variant text-[12px]">Section</div><div class="text-on-surface"><?php echo html_escape(isset($student->section_name) ? $student->section_name : '—'); ?></div></div>
+          <div><div class="text-on-surface-variant text-[12px]">Roll Number</div><div class="text-on-surface"><?php echo html_escape(isset($student->roll_number) && $student->roll_number !== '' ? $student->roll_number : '—'); ?></div></div>
           <div><div class="text-on-surface-variant text-[12px]">Academic Year</div><div class="text-on-surface"><?php echo html_escape(isset($student->year_name) ? $student->year_name : '2026-2027'); ?></div></div>
         </div></div>
     </div>

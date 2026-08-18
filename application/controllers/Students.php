@@ -83,6 +83,65 @@ class Students extends MY_Controller {
         ));
     }
 
+    public function edit($student_id = NULL)
+    {
+        if (!$student_id) {
+            redirect('students');
+            return;
+        }
+
+        $student = $this->Student_model->get_by_id($student_id);
+        if (!$student) {
+            $this->session->set_flashdata('error', 'Student not found.');
+            redirect('students');
+            return;
+        }
+
+        if ($this->input->method() === 'post') {
+            $this->form_validation->set_rules('first_name', 'First Name', 'required|trim');
+            $this->form_validation->set_rules('admission_number', 'Admission Number', 'required|trim');
+
+            if ($this->form_validation->run() === TRUE) {
+                $data = array(
+                    'admission_number' => $this->input->post('admission_number', TRUE),
+                    'first_name'       => $this->input->post('first_name', TRUE),
+                    'last_name'        => $this->input->post('last_name', TRUE),
+                    'gender'           => $this->input->post('gender', TRUE),
+                    'date_of_birth'    => $this->input->post('date_of_birth', TRUE) ?: $student->date_of_birth,
+                    'blood_group'      => $this->input->post('blood_group', TRUE),
+                    'academic_year_id' => $this->input->post('academic_year_id') ?: $student->academic_year_id,
+                    'class_id'         => $this->input->post('class_id') ?: $student->class_id,
+                    'section_id'       => $this->input->post('section_id') ?: $student->section_id,
+                    'roll_number'      => $this->input->post('roll_number', TRUE),
+                    'guardian_name'    => $this->input->post('guardian_name', TRUE),
+                    'guardian_relation'=> $this->input->post('guardian_relation', TRUE),
+                    'guardian_phone'   => $this->input->post('guardian_phone', TRUE),
+                    'guardian_email'   => $this->input->post('guardian_email', TRUE),
+                    'address'          => $this->input->post('address', TRUE),
+                );
+                $this->Student_model->update($student_id, $data);
+                $this->session->set_flashdata('success', 'Student updated successfully.');
+                redirect('students/profile/' . $student_id);
+                return;
+            }
+        }
+
+        $classes  = $this->Class_model->get_all();
+        $sections = $this->Section_model->get_all();
+        $years    = $this->Academic_year_model->get_all();
+
+        $this->render('pages/students/edit', array(
+            'title'      => 'Edit Student',
+            'page_key'   => 'students',
+            'breadcrumb' => array('Students', 'Edit Student'),
+            'student'    => $student,
+            'student_id' => $student_id,
+            'classes'    => $classes,
+            'sections'   => $sections,
+            'years'      => $years,
+        ));
+    }
+
     public function id_cards()
     {
         $class_id = $this->input->get('class_id');

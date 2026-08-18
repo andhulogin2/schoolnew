@@ -70,6 +70,16 @@ $route['students/promotion']  = 'students/promotion';
 $route['students/transfers']  = 'students/transfers';
 $route['students/search']     = 'students/search';
 $route['students/tc/(:num)']  = 'students/tc/$1';
+
+$route['staff/register']                    = 'staff/register';
+$route['staff/teachers']                    = 'staff/teachers';
+$route['staff/non_teaching']                = 'staff/non_teaching';
+$route['staff/departments_designations']    = 'staff/departments_designations';
+$route['staff/documents']                   = 'staff/documents';
+$route['staff/workload']                    = 'staff/workload';
+$route['staff/attendance']                  = 'staff/attendance';
+$route['staff/leave']                       = 'staff/leave';
+
 $route['attendance']         = 'attendance/index';
 $route['examinations']       = 'examinations/index';
 $route['fees']                = 'fees/index';

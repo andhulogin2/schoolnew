@@ -68,13 +68,20 @@ CREATE TABLE `tbl_staff` (
   `full_name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
+  `alternate_phone` VARCHAR(20) NULL,
   `gender` ENUM('Male', 'Female', 'Other') NOT NULL DEFAULT 'Male',
   `date_of_birth` DATE NULL,
+  `blood_group` VARCHAR(10) NULL,
   `category` VARCHAR(50) NOT NULL DEFAULT 'Teacher',
+  `staff_type` ENUM('teacher', 'non_teaching') NOT NULL DEFAULT 'teacher',
   `department_id` INT UNSIGNED NULL,
   `designation_id` INT UNSIGNED NULL,
   `joining_date` DATE NOT NULL,
   `salary` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `qualification` VARCHAR(100) NULL,
+  `experience` VARCHAR(50) NULL,
+  `specialization` VARCHAR(100) NULL,
+  `employment_status` ENUM('Active', 'On Leave', 'Probation', 'Resigned', 'Suspended') NOT NULL DEFAULT 'Active',
   `address` TEXT NULL,
   `photo` VARCHAR(255) NULL,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
@@ -86,6 +93,89 @@ CREATE TABLE `tbl_staff` (
   KEY `idx_staff_designation` (`designation_id`),
   CONSTRAINT `fk_staff_department` FOREIGN KEY (`department_id`) REFERENCES `tbl_departments` (`department_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_staff_designation` FOREIGN KEY (`designation_id`) REFERENCES `tbl_designations` (`designation_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 4b. Table: tbl_staff_documents
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_staff_documents`;
+CREATE TABLE `tbl_staff_documents` (
+  `document_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `staff_id` INT UNSIGNED NOT NULL,
+  `document_type` VARCHAR(100) NOT NULL,
+  `document_name` VARCHAR(255) NOT NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`document_id`),
+  KEY `idx_staff_doc` (`staff_id`),
+  CONSTRAINT `fk_staff_doc` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 4c. Table: tbl_teacher_workload
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_teacher_workload`;
+CREATE TABLE `tbl_teacher_workload` (
+  `workload_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `staff_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `subject_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NULL,
+  `periods` INT UNSIGNED NOT NULL DEFAULT 5,
+  `working_days` VARCHAR(100) NOT NULL DEFAULT 'Mon,Tue,Wed,Thu,Fri',
+  `remarks` VARCHAR(255) NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`workload_id`),
+  KEY `idx_workload_staff` (`staff_id`),
+  KEY `idx_workload_class` (`class_id`),
+  KEY `idx_workload_subject` (`subject_id`),
+  CONSTRAINT `fk_workload_staff` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 4d. Table: tbl_staff_attendance
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_staff_attendance`;
+CREATE TABLE `tbl_staff_attendance` (
+  `attendance_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `staff_id` INT UNSIGNED NOT NULL,
+  `attendance_date` DATE NOT NULL,
+  `attendance_status` ENUM('Present', 'Absent', 'Leave', 'Half Day') NOT NULL DEFAULT 'Present',
+  `remarks` VARCHAR(255) NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`attendance_id`),
+  UNIQUE KEY `uk_staff_att_date` (`staff_id`, `attendance_date`),
+  KEY `idx_staff_att_staff` (`staff_id`),
+  CONSTRAINT `fk_staff_att` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 4e. Table: tbl_staff_leave
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_staff_leave`;
+CREATE TABLE `tbl_staff_leave` (
+  `leave_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `staff_id` INT UNSIGNED NOT NULL,
+  `leave_type` VARCHAR(50) NOT NULL,
+  `from_date` DATE NOT NULL,
+  `to_date` DATE NOT NULL,
+  `total_days` INT UNSIGNED NOT NULL DEFAULT 1,
+  `reason` TEXT NOT NULL,
+  `status` ENUM('Pending', 'Approved', 'Rejected', 'Cancelled') NOT NULL DEFAULT 'Pending',
+  `applied_date` DATE NOT NULL,
+  `approved_by` INT UNSIGNED NULL,
+  `remarks` VARCHAR(255) NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`leave_id`),
+  KEY `idx_staff_leave_staff` (`staff_id`),
+  CONSTRAINT `fk_staff_leave` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

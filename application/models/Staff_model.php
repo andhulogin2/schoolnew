@@ -22,18 +22,28 @@ class Staff_model extends CI_Model {
             ->where('s.status >=', 0)
             ->order_by('s.staff_id', 'ASC');
 
+        if (!empty($filters['staff_type'])) {
+            $this->db->where('s.staff_type', $filters['staff_type']);
+        }
         if (!empty($filters['department_id'])) {
             $this->db->where('s.department_id', $filters['department_id']);
         }
         if (!empty($filters['designation_id'])) {
             $this->db->where('s.designation_id', $filters['designation_id']);
         }
+        if (!empty($filters['employment_status'])) {
+            $this->db->where('s.employment_status', $filters['employment_status']);
+        }
+        if (isset($filters['status']) && $filters['status'] !== '' && $filters['status'] !== 'All') {
+            $this->db->where('s.status', $filters['status']);
+        }
         if (!empty($filters['search'])) {
-            $s = $filters['search'];
+            $s = trim($filters['search']);
             $this->db->group_start()
                 ->like('s.full_name', $s)
                 ->or_like('s.employee_code', $s)
                 ->or_like('s.email', $s)
+                ->or_like('s.phone', $s)
                 ->group_end();
         }
 
@@ -57,16 +67,61 @@ class Staff_model extends CI_Model {
             ->from('tbl_staff s')
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
-            ->where('s.status', 1)
-            ->group_start()
-                ->where('s.category', 'Teacher')
-                ->or_like('dg.designation_name', 'Teacher')
-                ->or_like('dg.designation_name', 'Head of Department')
-            ->group_end()
+            ->where('s.status >=', 0)
+            ->where('s.staff_type', 'teacher')
             ->order_by('s.staff_id', 'ASC');
 
+        if (!empty($filters['department_id'])) {
+            $this->db->where('s.department_id', $filters['department_id']);
+        }
+        if (!empty($filters['designation_id'])) {
+            $this->db->where('s.designation_id', $filters['designation_id']);
+        }
+        if (!empty($filters['search'])) {
+            $s = trim($filters['search']);
+            $this->db->group_start()
+                ->like('s.full_name', $s)
+                ->or_like('s.employee_code', $s)
+                ->or_like('s.email', $s)
+                ->group_end();
+        }
         if (!empty($filters['subject_name'])) {
             $this->db->having('subjects_handled LIKE', '%' . $filters['subject_name'] . '%');
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function get_non_teaching($filters = array())
+    {
+        $this->db
+            ->select('s.*, 
+                      s.full_name,
+                      SUBSTRING_INDEX(s.full_name, " ", 1) AS first_name,
+                      TRIM(SUBSTRING(s.full_name, LENGTH(SUBSTRING_INDEX(s.full_name, " ", 1)) + 1)) AS last_name,
+                      s.category AS designation_category,
+                      d.department_name, 
+                      dg.designation_name')
+            ->from('tbl_staff s')
+            ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
+            ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
+            ->where('s.status >=', 0)
+            ->where('s.staff_type', 'non_teaching')
+            ->order_by('s.staff_id', 'ASC');
+
+        if (!empty($filters['department_id'])) {
+            $this->db->where('s.department_id', $filters['department_id']);
+        }
+        if (!empty($filters['designation_id'])) {
+            $this->db->where('s.designation_id', $filters['designation_id']);
+        }
+        if (!empty($filters['search'])) {
+            $s = trim($filters['search']);
+            $this->db->group_start()
+                ->like('s.full_name', $s)
+                ->or_like('s.employee_code', $s)
+                ->or_like('s.email', $s)
+                ->group_end();
         }
 
         return $this->db->get()->result();
@@ -90,27 +145,247 @@ class Staff_model extends CI_Model {
             ->row();
     }
 
-    public function count_staff()
+    public function get_profile($id)
     {
-        return $this->db
+        $staff = $this->get_by_id($id);
+        if (!$staff) return NULL;
+
+        // 1. Documents
+        $staff->documents = $this->db
+            ->where('staff_id', $id)
             ->where('status', 1)
-            ->count_all_results($this->table);
+            ->order_by('document_id', 'DESC')
+            ->get('tbl_staff_documents')
+            ->result();
+
+        // 2. Workload (Only for teachers)
+        if ($staff->staff_type === 'teacher') {
+            $staff->workload = $this->db
+                ->select('w.*, sub.subject_name, c.class_name, sec.section_name, y.year_name')
+                ->from('tbl_teacher_workload w')
+                ->join('tbl_subjects sub', 'sub.subject_id = w.subject_id', 'left')
+                ->join('tbl_classes c', 'c.class_id = w.class_id', 'left')
+                ->join('tbl_sections sec', 'sec.section_id = w.section_id', 'left')
+                ->join('tbl_academic_years y', 'y.academic_year_id = w.academic_year_id', 'left')
+                ->where('w.staff_id', $id)
+                ->where('w.status', 1)
+                ->order_by('w.workload_id', 'DESC')
+                ->get()
+                ->result();
+        } else {
+            $staff->workload = array();
+        }
+
+        // 3. Attendance Summary
+        $att_total = $this->db->where('staff_id', $id)->count_all_results('tbl_staff_attendance');
+        $att_present = $this->db->where('staff_id', $id)->where('attendance_status', 'Present')->count_all_results('tbl_staff_attendance');
+        $att_leave = $this->db->where('staff_id', $id)->where('attendance_status', 'Leave')->count_all_results('tbl_staff_attendance');
+        $att_absent = $this->db->where('staff_id', $id)->where('attendance_status', 'Absent')->count_all_results('tbl_staff_attendance');
+        $staff->attendance = (object) array(
+            'total_days' => $att_total,
+            'present'    => $att_present,
+            'leave'      => $att_leave,
+            'absent'     => $att_absent,
+            'percentage' => ($att_total > 0) ? round(($att_present / $att_total) * 100, 1) : 100
+        );
+
+        // 4. Leave History
+        $staff->leaves = $this->db
+            ->where('staff_id', $id)
+            ->order_by('leave_id', 'DESC')
+            ->get('tbl_staff_leave')
+            ->result();
+
+        return $staff;
     }
 
-    public function count_teachers()
+    /* =========================================================================
+       Staff Documents
+       ========================================================================= */
+    public function get_all_documents($filters = array())
     {
-        return $this->db
-            ->from($this->table . ' s')
-            ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
-            ->where('s.status', 1)
-            ->group_start()
-                ->where('s.category', 'Teacher')
-                ->or_like('dg.designation_name', 'Teacher')
-                ->or_like('dg.designation_name', 'Head of Department')
-            ->group_end()
-            ->count_all_results();
+        $this->db
+            ->select('d.*, s.employee_code, s.full_name, s.staff_type, dept.department_name, desig.designation_name')
+            ->from('tbl_staff_documents d')
+            ->join('tbl_staff s', 's.staff_id = d.staff_id', 'left')
+            ->join('tbl_departments dept', 'dept.department_id = s.department_id', 'left')
+            ->join('tbl_designations desig', 'desig.designation_id = s.designation_id', 'left')
+            ->where('d.status', 1)
+            ->order_by('d.document_id', 'DESC');
+
+        if (!empty($filters['staff_id'])) {
+            $this->db->where('d.staff_id', $filters['staff_id']);
+        }
+        if (!empty($filters['document_type'])) {
+            $this->db->where('d.document_type', $filters['document_type']);
+        }
+        if (!empty($filters['department_id'])) {
+            $this->db->where('s.department_id', $filters['department_id']);
+        }
+
+        return $this->db->get()->result();
     }
 
+    public function add_document($data)
+    {
+        $this->db->insert('tbl_staff_documents', $data);
+        return $this->db->insert_id();
+    }
+
+    public function delete_document($id)
+    {
+        return $this->db->where('document_id', $id)->delete('tbl_staff_documents');
+    }
+
+    /* =========================================================================
+       Teacher Workload
+       ========================================================================= */
+    public function get_workloads($filters = array())
+    {
+        $this->db
+            ->select('w.*, s.full_name, s.employee_code, sub.subject_name, c.class_name, sec.section_name, y.year_name')
+            ->from('tbl_teacher_workload w')
+            ->join('tbl_staff s', 's.staff_id = w.staff_id', 'left')
+            ->join('tbl_subjects sub', 'sub.subject_id = w.subject_id', 'left')
+            ->join('tbl_classes c', 'c.class_id = w.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = w.section_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = w.academic_year_id', 'left')
+            ->where('w.status', 1)
+            ->where('s.staff_type', 'teacher')
+            ->order_by('w.workload_id', 'DESC');
+
+        if (!empty($filters['staff_id'])) {
+            $this->db->where('w.staff_id', $filters['staff_id']);
+        }
+        if (!empty($filters['academic_year_id'])) {
+            $this->db->where('w.academic_year_id', $filters['academic_year_id']);
+        }
+        if (!empty($filters['class_id'])) {
+            $this->db->where('w.class_id', $filters['class_id']);
+        }
+        if (!empty($filters['subject_id'])) {
+            $this->db->where('w.subject_id', $filters['subject_id']);
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function add_workload($data)
+    {
+        $this->db->insert('tbl_teacher_workload', $data);
+        return $this->db->insert_id();
+    }
+
+    public function delete_workload($id)
+    {
+        return $this->db->where('workload_id', $id)->delete('tbl_teacher_workload');
+    }
+
+    /* =========================================================================
+       Staff Attendance
+       ========================================================================= */
+    public function get_attendance_for_date($date, $department_id = NULL)
+    {
+        $this->db
+            ->select('s.staff_id, s.employee_code, s.full_name, s.staff_type, d.department_name, dg.designation_name, att.attendance_status, att.remarks, att.attendance_id')
+            ->from('tbl_staff s')
+            ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
+            ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
+            ->join('tbl_staff_attendance att', 'att.staff_id = s.staff_id AND att.attendance_date = ' . $this->db->escape($date), 'left')
+            ->where('s.status', 1)
+            ->order_by('s.staff_id', 'ASC');
+
+        if (!empty($department_id)) {
+            $this->db->where('s.department_id', $department_id);
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function save_attendance_batch($date, $records)
+    {
+        if (empty($records) || !is_array($records)) return FALSE;
+
+        $this->db->trans_start();
+
+        foreach ($records as $staff_id => $data) {
+            $status = isset($data['status']) ? $data['status'] : 'Present';
+            $remarks = isset($data['remarks']) ? $data['remarks'] : '';
+
+            $existing = $this->db
+                ->where('staff_id', $staff_id)
+                ->where('attendance_date', $date)
+                ->get('tbl_staff_attendance')
+                ->row();
+
+            if ($existing) {
+                $this->db->where('attendance_id', $existing->attendance_id)->update('tbl_staff_attendance', array(
+                    'attendance_status' => $status,
+                    'remarks'           => $remarks,
+                    'updated_at'        => date('Y-m-d H:i:s')
+                ));
+            } else {
+                $this->db->insert('tbl_staff_attendance', array(
+                    'staff_id'          => $staff_id,
+                    'attendance_date'   => $date,
+                    'attendance_status' => $status,
+                    'remarks'           => $remarks,
+                    'created_at'        => date('Y-m-d H:i:s')
+                ));
+            }
+        }
+
+        $this->db->trans_complete();
+        return $this->db->trans_status();
+    }
+
+    /* =========================================================================
+       Staff Leave Management
+       ========================================================================= */
+    public function get_leaves($filters = array())
+    {
+        $this->db
+            ->select('l.*, s.full_name, s.employee_code, s.staff_type, d.department_name, dg.designation_name')
+            ->from('tbl_staff_leave l')
+            ->join('tbl_staff s', 's.staff_id = l.staff_id', 'left')
+            ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
+            ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
+            ->order_by('l.leave_id', 'DESC');
+
+        if (!empty($filters['status']) && $filters['status'] !== 'All') {
+            $this->db->where('l.status', $filters['status']);
+        }
+        if (!empty($filters['staff_id'])) {
+            $this->db->where('l.staff_id', $filters['staff_id']);
+        }
+        if (!empty($filters['department_id'])) {
+            $this->db->where('s.department_id', $filters['department_id']);
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function apply_leave($data)
+    {
+        $this->db->insert('tbl_staff_leave', $data);
+        return $this->db->insert_id();
+    }
+
+    public function update_leave_status($leave_id, $status, $approved_by = NULL, $remarks = '')
+    {
+        $update = array(
+            'status'     => $status,
+            'updated_at' => date('Y-m-d H:i:s')
+        );
+        if ($approved_by) $update['approved_by'] = $approved_by;
+        if ($remarks) $update['remarks'] = $remarks;
+
+        return $this->db->where('leave_id', $leave_id)->update('tbl_staff_leave', $update);
+    }
+
+    /* =========================================================================
+       CRUD Helpers
+       ========================================================================= */
     public function insert($data)
     {
         $this->db->insert($this->table, $data);
@@ -128,6 +403,16 @@ class Staff_model extends CI_Model {
     {
         return $this->db
             ->where($this->primaryKey, $id)
-            ->update($this->table, array('status' => 0));
+            ->update($this->table, array('status' => 0, 'employment_status' => 'Resigned'));
+    }
+
+    public function count_staff()
+    {
+        return $this->db->where('status', 1)->count_all_results($this->table);
+    }
+
+    public function count_teachers()
+    {
+        return $this->db->where('status', 1)->where('staff_type', 'teacher')->count_all_results($this->table);
     }
 }

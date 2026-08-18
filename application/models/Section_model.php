@@ -49,6 +49,20 @@ class Section_model extends CI_Model {
             ->update($this->table, $data);
     }
 
+    public function check_duplicate($class_id, $section_name, $exclude_id = NULL)
+    {
+        $this->db
+            ->where('class_id', $class_id)
+            ->where('section_name', $section_name)
+            ->where('status', 1);
+
+        if ($exclude_id) {
+            $this->db->where($this->primaryKey . ' !=', $exclude_id);
+        }
+
+        return $this->db->count_all_results($this->table) > 0;
+    }
+
     public function soft_delete($id)
     {
         return $this->db

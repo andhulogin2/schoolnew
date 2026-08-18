@@ -1,5 +1,19 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 
+    <!-- Flash Messages -->
+    <?php if ($this->session->flashdata('success')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-secondary-container text-on-secondary-container text-body-md font-medium flex items-center gap-2 border border-secondary/20">
+        <span class="material-symbols-outlined text-[20px] text-secondary">check_circle</span>
+        <?php echo html_escape($this->session->flashdata('success')); ?>
+      </div>
+    <?php endif; ?>
+    <?php if ($this->session->flashdata('error')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-error-container text-on-error-container text-body-md font-medium flex items-center gap-2 border border-error/20">
+        <span class="material-symbols-outlined text-[20px] text-error">error</span>
+        <?php echo html_escape($this->session->flashdata('error')); ?>
+      </div>
+    <?php endif; ?>
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h2 class="font-headline-md text-headline-md text-on-surface">Academic Years</h2>

@@ -1,5 +1,19 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 
+    <!-- Flash Messages -->
+    <?php if ($this->session->flashdata('success')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-secondary-container text-on-secondary-container text-body-md font-medium flex items-center gap-2 border border-secondary/20">
+        <span class="material-symbols-outlined text-[20px] text-secondary">check_circle</span>
+        <?php echo html_escape($this->session->flashdata('success')); ?>
+      </div>
+    <?php endif; ?>
+    <?php if ($this->session->flashdata('error')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-error-container text-on-error-container text-body-md font-medium flex items-center gap-2 border border-error/20">
+        <span class="material-symbols-outlined text-[20px] text-error">error</span>
+        <?php echo html_escape($this->session->flashdata('error')); ?>
+      </div>
+    <?php endif; ?>
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h2 class="font-headline-md text-headline-md text-on-surface">Sections & Divisions</h2>
@@ -44,6 +58,9 @@
                 <td class="px-4 py-3 font-semibold text-on-surface whitespace-nowrap"><?php echo html_escape($sec->class_name); ?></td>
                 <td class="px-4 py-3 font-bold text-primary whitespace-nowrap">
                   <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-surface-container-high text-on-surface">Section <?php echo html_escape($sec->section_name); ?></span>
+                  <?php if (!empty($sec->description)): ?>
+                    <div class="text-[11px] text-on-surface-variant font-normal mt-0.5"><?php echo html_escape($sec->description); ?></div>
+                  <?php endif; ?>
                 </td>
                 <td class="px-4 py-3 text-on-surface whitespace-nowrap">
                   <?php if ($sec->class_teacher_name): ?>
@@ -61,7 +78,7 @@
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
                   <div class="flex items-center justify-end gap-1.5">
-                    <button onclick="openEditSectionModal(<?php echo $sec->section_id; ?>, <?php echo $sec->class_id; ?>, '<?php echo html_escape(addslashes($sec->section_name)); ?>', '<?php echo html_escape(addslashes($sec->room_no ?: '')); ?>', <?php echo $sec->capacity; ?>)" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer" title="Edit"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+                    <button onclick="openEditSectionModal(<?php echo $sec->section_id; ?>, <?php echo $sec->class_id; ?>, '<?php echo html_escape(addslashes($sec->section_name)); ?>', '<?php echo html_escape(addslashes($sec->room_no ?: '')); ?>', <?php echo $sec->capacity; ?>, '<?php echo html_escape(addslashes($sec->description ?: '')); ?>')" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer" title="Edit"><span class="material-symbols-outlined text-[18px]">edit</span></button>
                     <a href="<?php echo site_url('academics/delete_section/' . $sec->section_id); ?>" onclick="return confirm('Deactivate section?')" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-error-container/20 hover:text-error transition-colors" title="Deactivate"><span class="material-symbols-outlined text-[18px]">delete</span></a>
                   </div>
                 </td>
@@ -77,7 +94,7 @@
       <div class="elevation-3 rounded-2xl bg-surface-container-lowest border border-outline-variant w-full max-w-md">
         <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
           <h3 class="font-headline-md text-headline-md text-on-surface" id="modal-section-title">Add Section</h3>
-          <button onclick="document.getElementById('modal-section').classList.add('hidden')" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">close</span></button>
+          <button onclick="document.getElementById('modal-section').classList.add('hidden')" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high cursor-pointer"><span class="material-symbols-outlined">close</span></button>
         </div>
         <?php echo form_open('academics/sections', array('class' => 'p-6 space-y-4')); ?>
           <input type="hidden" name="action" id="section_action" value="add"/>
@@ -104,8 +121,12 @@
               <input type="number" name="capacity" id="modal_section_capacity" value="40" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest"/>
             </div>
           </div>
+          <div>
+            <label class="block text-label-md mb-1">Description / Notes</label>
+            <textarea name="description" id="modal_section_description" rows="2" placeholder="Optional notes for this division..." class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest"></textarea>
+          </div>
           <div class="flex justify-end gap-2 pt-4 border-t border-outline-variant">
-            <button type="button" onclick="document.getElementById('modal-section').classList.add('hidden')" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant">Cancel</button>
+            <button type="button" onclick="document.getElementById('modal-section').classList.add('hidden')" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant cursor-pointer">Cancel</button>
             <button type="submit" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant cursor-pointer">Save Section</button>
           </div>
         <?php echo form_close(); ?>
@@ -120,9 +141,10 @@
         document.getElementById('modal_section_name').value = '';
         document.getElementById('modal_section_room').value = '';
         document.getElementById('modal_section_capacity').value = '40';
+        document.getElementById('modal_section_description').value = '';
         document.getElementById('modal-section').classList.remove('hidden');
       }
-      function openEditSectionModal(id, classId, name, room, capacity) {
+      function openEditSectionModal(id, classId, name, room, capacity, desc) {
         document.getElementById('section_action').value = 'edit';
         document.getElementById('modal-section-title').textContent = 'Edit Section';
         document.getElementById('modal_section_id').value = id;
@@ -130,6 +152,7 @@
         document.getElementById('modal_section_name').value = name;
         document.getElementById('modal_section_room').value = room;
         document.getElementById('modal_section_capacity').value = capacity;
+        document.getElementById('modal_section_description').value = desc || '';
         document.getElementById('modal-section').classList.remove('hidden');
       }
     </script>

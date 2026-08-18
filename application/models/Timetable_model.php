@@ -40,6 +40,22 @@ class Timetable_model extends CI_Model {
         return $this->db->get()->result();
     }
 
+    public function get_by_id($id)
+    {
+        return $this->db
+            ->select('tt.*, y.year_name, c.class_name, sec.section_name, p.period_name, sub.subject_name, s.full_name as teacher_name')
+            ->from('tbl_timetable tt')
+            ->join('tbl_academic_years y', 'y.academic_year_id = tt.academic_year_id', 'left')
+            ->join('tbl_classes c', 'c.class_id = tt.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = tt.section_id', 'left')
+            ->join('tbl_periods p', 'p.period_id = tt.period_id', 'left')
+            ->join('tbl_subjects sub', 'sub.subject_id = tt.subject_id', 'left')
+            ->join('tbl_staff s', 's.staff_id = tt.teacher_id', 'left')
+            ->where('tt.timetable_id', $id)
+            ->get()
+            ->row();
+    }
+
     public function check_conflicts($data, $exclude_id = NULL)
     {
         $errors = array();

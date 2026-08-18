@@ -74,6 +74,23 @@ class Subject_teacher_model extends CI_Model {
         }
     }
 
+    public function get_teachers_by_subject($academic_year_id, $class_id, $section_id, $subject_id)
+    {
+        $this->db
+            ->select('s.staff_id, s.full_name, s.employee_code')
+            ->from('tbl_subject_teachers st')
+            ->join('tbl_staff s', 's.staff_id = st.staff_id', 'inner')
+            ->where('st.academic_year_id', $academic_year_id)
+            ->where('st.class_id', $class_id)
+            ->where('st.section_id', $section_id)
+            ->where('st.subject_id', $subject_id)
+            ->where('st.status', 1)
+            ->where('s.status', 1)
+            ->where('s.staff_type', 'teacher');
+
+        return $this->db->get()->result();
+    }
+
     public function delete($id)
     {
         return $this->db->where('subject_teacher_id', $id)->delete($this->table);

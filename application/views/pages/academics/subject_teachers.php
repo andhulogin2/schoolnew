@@ -1,12 +1,26 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 
+    <!-- Flash Messages -->
+    <?php if ($this->session->flashdata('success')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-secondary-container text-on-secondary-container text-body-md font-medium flex items-center gap-2 border border-secondary/20">
+        <span class="material-symbols-outlined text-[20px] text-secondary">check_circle</span>
+        <?php echo html_escape($this->session->flashdata('success')); ?>
+      </div>
+    <?php endif; ?>
+    <?php if ($this->session->flashdata('error')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-error-container text-on-error-container text-body-md font-medium flex items-center gap-2 border border-error/20">
+        <span class="material-symbols-outlined text-[20px] text-error">error</span>
+        <?php echo html_escape($this->session->flashdata('error')); ?>
+      </div>
+    <?php endif; ?>
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h2 class="font-headline-md text-headline-md text-on-surface">Subject Teachers</h2>
         <p class="text-body-md font-body-md text-on-surface-variant mt-1">Assign subject specialist teachers to specific academic classes and sections.</p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <button onclick="document.getElementById('modal-assign-st').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm cursor-pointer">
+        <button onclick="openAssignSubjectTeacherModal()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm cursor-pointer">
           <span class="material-symbols-outlined text-[18px]">person_add</span>Assign Subject Teacher
         </button>
       </div>
@@ -14,6 +28,12 @@
 
     <!-- Filters Bar -->
     <div class="flex flex-col md:flex-row gap-3 mb-4 flex-wrap">
+      <select onchange="applyFilter('academic_year_id', this.value)" class="px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-body-md text-on-surface-variant">
+        <option value="">All Academic Years</option>
+        <?php foreach ($years as $yr): ?>
+          <option value="<?php echo $yr->academic_year_id; ?>" <?php echo ($this->input->get('academic_year_id') == $yr->academic_year_id) ? 'selected' : ''; ?>><?php echo html_escape($yr->year_name); ?></option>
+        <?php endforeach; ?>
+      </select>
       <select onchange="applyFilter('class_id', this.value)" class="px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-body-md text-on-surface-variant">
         <option value="">All Classes</option>
         <?php foreach ($classes as $cls): ?>
@@ -58,12 +78,15 @@
                 <td class="px-4 py-3 font-semibold text-on-surface whitespace-nowrap">
                   <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary text-[20px]">menu_book</span>
-                    <?php echo html_escape($a->subject_name); ?>
+                    <div>
+                      <div><?php echo html_escape($a->subject_name); ?></div>
+                      <div class="text-[11px] font-mono text-on-surface-variant"><?php echo html_escape($a->subject_code); ?></div>
+                    </div>
                   </div>
                 </td>
-                <td class="px-4 py-3 text-on-surface whitespace-nowrap"><?php echo html_escape($a->class_name . ' ' . $a->section_name); ?></td>
+                <td class="px-4 py-3 text-on-surface whitespace-nowrap font-medium"><?php echo html_escape($a->class_name . ' - Section ' . $a->section_name); ?></td>
                 <td class="px-4 py-3 font-bold text-secondary whitespace-nowrap">
-                  <a href="<?php echo site_url('staff/profile/' . $a->staff_id); ?>" class="hover:underline"><?php echo html_escape($a->teacher_name); ?></a>
+                  <a href="<?php echo site_url('staff/teachers?id=' . $a->staff_id); ?>" class="hover:underline"><?php echo html_escape($a->teacher_name); ?></a>
                 </td>
                 <td class="px-4 py-3 font-mono text-on-surface-variant whitespace-nowrap"><?php echo html_escape($a->employee_code); ?></td>
                 <td class="px-4 py-3 text-on-surface whitespace-nowrap"><?php echo html_escape($a->year_name ?: '2026-2027'); ?></td>
@@ -82,12 +105,12 @@
       <div class="elevation-3 rounded-2xl bg-surface-container-lowest border border-outline-variant w-full max-w-md">
         <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
           <h3 class="font-headline-md text-headline-md text-on-surface">Assign Subject Teacher</h3>
-          <button onclick="document.getElementById('modal-assign-st').classList.add('hidden')" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">close</span></button>
+          <button onclick="document.getElementById('modal-assign-st').classList.add('hidden')" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high cursor-pointer"><span class="material-symbols-outlined">close</span></button>
         </div>
         <?php echo form_open('academics/subject_teachers', array('class' => 'p-6 space-y-4')); ?>
           <div>
             <label class="block text-label-md mb-1">Academic Session *</label>
-            <select name="academic_year_id" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+            <select name="academic_year_id" id="modal_st_year" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
               <?php foreach ($years as $yr): ?>
                 <option value="<?php echo $yr->academic_year_id; ?>"><?php echo html_escape($yr->year_name); ?></option>
               <?php endforeach; ?>
@@ -95,7 +118,8 @@
           </div>
           <div>
             <label class="block text-label-md mb-1">Class *</label>
-            <select name="class_id" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+            <select name="class_id" id="modal_st_class" onchange="loadClassDependencies(this.value)" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+              <option value="">Select Class</option>
               <?php foreach ($classes as $cls): ?>
                 <option value="<?php echo $cls->class_id; ?>"><?php echo html_escape($cls->class_name); ?></option>
               <?php endforeach; ?>
@@ -103,30 +127,27 @@
           </div>
           <div>
             <label class="block text-label-md mb-1">Section *</label>
-            <select name="section_id" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
-              <?php foreach ($sections as $sec): ?>
-                <option value="<?php echo $sec->section_id; ?>"><?php echo html_escape($sec->class_name . ' ' . $sec->section_name); ?></option>
-              <?php endforeach; ?>
+            <select name="section_id" id="modal_st_section" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+              <option value="">Select Class First</option>
             </select>
           </div>
           <div>
             <label class="block text-label-md mb-1">Subject *</label>
-            <select name="subject_id" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
-              <?php foreach ($subjects as $sub): ?>
-                <option value="<?php echo $sub->subject_id; ?>"><?php echo html_escape($sub->subject_name); ?></option>
-              <?php endforeach; ?>
+            <select name="subject_id" id="modal_st_subject" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+              <option value="">Select Class First</option>
             </select>
           </div>
           <div>
             <label class="block text-label-md mb-1">Assigned Teacher *</label>
-            <select name="staff_id" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+            <select name="staff_id" id="modal_st_staff" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+              <option value="">Select Teacher</option>
               <?php foreach ($teachers as $t): ?>
                 <option value="<?php echo $t->staff_id; ?>"><?php echo html_escape($t->full_name . ' (' . $t->employee_code . ')'); ?></option>
               <?php endforeach; ?>
             </select>
           </div>
           <div class="flex justify-end gap-2 pt-4 border-t border-outline-variant">
-            <button type="button" onclick="document.getElementById('modal-assign-st').classList.add('hidden')" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant">Cancel</button>
+            <button type="button" onclick="document.getElementById('modal-assign-st').classList.add('hidden')" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant cursor-pointer">Cancel</button>
             <button type="submit" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant cursor-pointer">Assign Subject Teacher</button>
           </div>
         <?php echo form_close(); ?>
@@ -138,5 +159,56 @@
         var url = new URL(window.location.href);
         if (val) { url.searchParams.set(key, val); } else { url.searchParams.delete(key); }
         window.location.href = url.toString();
+      }
+
+      function openAssignSubjectTeacherModal() {
+        document.getElementById('modal_st_class').selectedIndex = 0;
+        document.getElementById('modal_st_section').innerHTML = '<option value="">Select Class First</option>';
+        document.getElementById('modal_st_subject').innerHTML = '<option value="">Select Class First</option>';
+        document.getElementById('modal-assign-st').classList.remove('hidden');
+      }
+
+      function loadClassDependencies(classId) {
+        var secSelect = document.getElementById('modal_st_section');
+        var subSelect = document.getElementById('modal_st_subject');
+
+        secSelect.innerHTML = '<option value="">Loading sections...</option>';
+        subSelect.innerHTML = '<option value="">Loading subjects...</option>';
+
+        if (!classId) {
+          secSelect.innerHTML = '<option value="">Select Class First</option>';
+          subSelect.innerHTML = '<option value="">Select Class First</option>';
+          return;
+        }
+
+        // Fetch Sections
+        fetch('<?php echo site_url('academics/ajax_get_sections/'); ?>' + classId)
+          .then(res => res.json())
+          .then(data => {
+            if (data.length === 0) {
+              secSelect.innerHTML = '<option value="">No sections found</option>';
+            } else {
+              var opts = '<option value="">Select Section</option>';
+              data.forEach(function(sec) {
+                opts += '<option value="' + sec.section_id + '">Section ' + sec.section_name + '</option>';
+              });
+              secSelect.innerHTML = opts;
+            }
+          });
+
+        // Fetch Subjects
+        fetch('<?php echo site_url('academics/ajax_get_subjects/'); ?>' + classId)
+          .then(res => res.json())
+          .then(data => {
+            if (data.length === 0) {
+              subSelect.innerHTML = '<option value="">No subjects found</option>';
+            } else {
+              var opts = '<option value="">Select Subject</option>';
+              data.forEach(function(sub) {
+                opts += '<option value="' + sub.subject_id + '">' + sub.subject_name + ' (' + sub.subject_code + ')</option>';
+              });
+              subSelect.innerHTML = opts;
+            }
+          });
       }
     </script>

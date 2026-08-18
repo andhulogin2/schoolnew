@@ -87,6 +87,7 @@ $route['academics/subjects']         = 'academics/subjects';
 $route['academics/class_teachers']   = 'academics/class_teachers';
 $route['academics/subject_teachers'] = 'academics/subject_teachers';
 $route['academics/timetable']        = 'academics/timetable';
+$route['academics/calendar']         = 'academics/calendar';
 
 $route['attendance']         = 'attendance/index';
 $route['examinations']       = 'examinations/index';

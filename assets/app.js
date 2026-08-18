@@ -45,6 +45,7 @@ const PAGE_URLS = {
   "class-teachers": "academics/class_teachers",
   "subject-teachers": "academics/subject_teachers",
   "timetable": "academics/timetable",
+  "academic-calendar": "academics/calendar",
   "attendance-daily": "attendance",
   "attendance-reports": "attendance/reports",
   "exams": "examinations",
@@ -125,6 +126,7 @@ const NAV = [
       { key: "class-teachers", label: "Class Teachers" },
       { key: "subject-teachers", label: "Subject Teachers" },
       { key: "timetable", label: "Timetable" },
+      { key: "academic-calendar", label: "Academic Calendar" },
     ],
   },
   {
@@ -186,6 +188,7 @@ const PAGE_TITLES = {
   "student-profile": "Student Profile",
   "staff": "All Staff", "teachers": "Teachers", "departments": "Departments", "designations": "Designations",
   "academic-years": "Academic Years", "classes": "Classes", "sections": "Sections", "subjects": "Subjects",
+  "class-teachers": "Class Teachers", "subject-teachers": "Subject Teachers", "timetable": "Timetable", "academic-calendar": "Academic Calendar",
   "attendance-daily": "Daily Attendance", "attendance-reports": "Attendance Reports",
   "exams": "Exams", "results": "Results",
   "fee-dashboard": "Fee Dashboard", "fee-structure": "Fee Structure", "student-fees": "Student Fees", "fee-collection": "Fee Collection",

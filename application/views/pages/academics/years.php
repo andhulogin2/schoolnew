@@ -1,42 +1,119 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 
-  
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h2 class="font-headline-md text-headline-md text-on-surface">Academic Years</h2>
-        <p class="text-body-md font-body-md text-on-surface-variant mt-1">Only one academic year can be active at a time.</p>
+        <p class="text-body-md font-body-md text-on-surface-variant mt-1">Manage school academic sessions and configure the active current academic year.</p>
       </div>
-      <div class="flex items-center gap-2 shrink-0"><a href="#" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span>Add Academic Year</a></div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="openAddYearModal()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">add_circle</span>Add Academic Year
+        </button>
+      </div>
     </div>
-  
+
+    <!-- Academic Years Table -->
     <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
       <div class="table-scroll overflow-x-auto">
         <table class="w-full data-table zebra border-collapse">
-          <thead><tr class="border-b border-outline-variant/60"><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Academic Year</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Start Date</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">End Date</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Status</th></tr></thead>
-          <tbody class="divide-y divide-outline-variant/40">
-            <?php foreach ($years as $y): ?>
-              <?php
-                $statusBadge = ($y->is_active == 1)
-                  ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-secondary-container text-on-secondary-container">Active</span>'
-                  : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-container-high text-on-surface-variant">Archived</span>';
-              ?>
+          <thead>
+            <tr class="border-b border-outline-variant/60">
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Academic Session</th>
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Start Date</th>
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">End Date</th>
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Current Status</th>
+              <th class="text-right px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/30 text-body-md">
+            <?php foreach ($years as $yr): ?>
               <tr class='hover:bg-surface-container-low transition-colors'>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap font-medium"><?php echo html_escape($y->year_name); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo date('d M Y', strtotime($y->start_date)); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo date('d M Y', strtotime($y->end_date)); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo $statusBadge; ?></td>
+                <td class="px-4 py-3 font-semibold text-on-surface whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+                    <?php echo html_escape($yr->year_name); ?>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-on-surface whitespace-nowrap"><?php echo date('d M Y', strtotime($yr->start_date)); ?></td>
+                <td class="px-4 py-3 text-on-surface whitespace-nowrap"><?php echo date('d M Y', strtotime($yr->end_date)); ?></td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <?php if ($yr->is_active == 1): ?>
+                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-bold bg-secondary-container text-on-secondary-container">
+                      <span class="w-2 h-2 rounded-full bg-secondary"></span>Active Current Year
+                    </span>
+                  <?php else: ?>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-container-high text-on-surface-variant">Archived / Past</span>
+                  <?php endif; ?>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <?php if ($yr->is_active != 1): ?>
+                      <a href="<?php echo site_url('academics/set_active_year/' . $yr->academic_year_id); ?>" class="px-3 py-1 rounded-lg bg-surface-container-high text-primary text-label-md hover:bg-surface-container-highest transition-colors inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span>Set Active</a>
+                    <?php endif; ?>
+                    <button onclick="openEditYearModal(<?php echo $yr->academic_year_id; ?>, '<?php echo html_escape(addslashes($yr->year_name)); ?>', '<?php echo $yr->start_date; ?>', '<?php echo $yr->end_date; ?>', <?php echo $yr->is_active; ?>)" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer" title="Edit"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+                    <a href="<?php echo site_url('academics/delete_year/' . $yr->academic_year_id); ?>" onclick="return confirm('Deactivate academic year record?')" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-error-container/20 hover:text-error transition-colors" title="Deactivate"><span class="material-symbols-outlined text-[18px]">delete</span></a>
+                  </div>
+                </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
       </div>
-      <div class="flex items-center justify-between px-4 py-3 border-t border-outline-variant/50 text-body-md font-body-md text-on-surface-variant">
-        <span>Showing <?php echo count($years); ?> of <?php echo count($years); ?> records</span>
-        <div class="flex items-center gap-1">
-          <button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high disabled:opacity-40" disabled>Previous</button>
-          <button class="px-3 py-1.5 rounded-lg bg-primary-fixed text-primary font-medium">1</button>
-          <button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high disabled:opacity-40" disabled>Next</button>
+    </div>
+
+    <!-- Modal: Add / Edit Academic Year -->
+    <div id="modal-year" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden">
+      <div class="elevation-3 rounded-2xl bg-surface-container-lowest border border-outline-variant w-full max-w-md">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
+          <h3 class="font-headline-md text-headline-md text-on-surface" id="modal-year-title">Add Academic Year</h3>
+          <button onclick="document.getElementById('modal-year').classList.add('hidden')" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">close</span></button>
         </div>
+        <?php echo form_open('academics/years', array('class' => 'p-6 space-y-4')); ?>
+          <input type="hidden" name="action" id="year_action" value="add"/>
+          <input type="hidden" name="academic_year_id" id="modal_year_id"/>
+          <div>
+            <label class="block text-label-md mb-1">Academic Year Name *</label>
+            <input type="text" name="year_name" id="modal_year_name" required placeholder="e.g. 2027 - 2028" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest"/>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-label-md mb-1">Start Date *</label>
+              <input type="date" name="start_date" id="modal_start_date" required value="<?php echo date('Y-06-01'); ?>" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest"/>
+            </div>
+            <div>
+              <label class="block text-label-md mb-1">End Date *</label>
+              <input type="date" name="end_date" id="modal_end_date" required value="<?php echo date('Y-03-31', strtotime('+1 year')); ?>" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest"/>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 pt-2">
+            <input type="checkbox" name="is_active" id="modal_is_active" value="1" class="rounded text-primary"/>
+            <label for="modal_is_active" class="text-body-md text-on-surface">Set as Current Active Academic Year</label>
+          </div>
+          <div class="flex justify-end gap-2 pt-4 border-t border-outline-variant">
+            <button type="button" onclick="document.getElementById('modal-year').classList.add('hidden')" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant">Cancel</button>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant cursor-pointer">Save Session</button>
+          </div>
+        <?php echo form_close(); ?>
       </div>
     </div>
 
+    <script>
+      function openAddYearModal() {
+        document.getElementById('year_action').value = 'add';
+        document.getElementById('modal-year-title').textContent = 'Add Academic Year';
+        document.getElementById('modal_year_id').value = '';
+        document.getElementById('modal_year_name').value = '';
+        document.getElementById('modal_is_active').checked = false;
+        document.getElementById('modal-year').classList.remove('hidden');
+      }
+      function openEditYearModal(id, name, start, end, isActive) {
+        document.getElementById('year_action').value = 'edit';
+        document.getElementById('modal-year-title').textContent = 'Edit Academic Year';
+        document.getElementById('modal_year_id').value = id;
+        document.getElementById('modal_year_name').value = name;
+        document.getElementById('modal_start_date').value = start;
+        document.getElementById('modal_end_date').value = end;
+        document.getElementById('modal_is_active').checked = (isActive == 1);
+        document.getElementById('modal-year').classList.remove('hidden');
+      }
+    </script>

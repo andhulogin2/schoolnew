@@ -42,6 +42,9 @@ const PAGE_URLS = {
   "classes": "academics/classes",
   "sections": "academics/sections",
   "subjects": "academics/subjects",
+  "class-teachers": "academics/class_teachers",
+  "subject-teachers": "academics/subject_teachers",
+  "timetable": "academics/timetable",
   "attendance-daily": "attendance",
   "attendance-reports": "attendance/reports",
   "exams": "examinations",
@@ -113,12 +116,15 @@ const NAV = [
     ],
   },
   {
-    key: "academics", label: "Academics", icon: "school",
+    key: "academics", label: "Academic Management", icon: "school",
     children: [
-      { key: "academic-years", label: "Academic Years" },
+      { key: "academic-years", label: "Academic Year" },
       { key: "classes", label: "Classes" },
-      { key: "sections", label: "Sections" },
+      { key: "sections", label: "Sections / Divisions" },
       { key: "subjects", label: "Subjects" },
+      { key: "class-teachers", label: "Class Teachers" },
+      { key: "subject-teachers", label: "Subject Teachers" },
+      { key: "timetable", label: "Timetable" },
     ],
   },
   {

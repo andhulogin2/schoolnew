@@ -1,53 +1,147 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 
-  
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h2 class="font-headline-md text-headline-md text-on-surface">Subjects</h2>
-        <p class="text-body-md font-body-md text-on-surface-variant mt-1">Assign subjects and subject teachers to each class.</p>
+        <p class="text-body-md font-body-md text-on-surface-variant mt-1"><?php echo count($subjects); ?> academic subjects and practical course modules.</p>
       </div>
-      <div class="flex items-center gap-2 shrink-0"><a href="#" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span>Add Subject</a></div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="openAddSubjectModal()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">add_circle</span>Add Subject
+        </button>
+      </div>
     </div>
-  
-    <div class="flex flex-col md:flex-row gap-3 mb-4">
-      <div class="relative flex-1">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-[20px]">search</span>
-        <input type="text" placeholder="Search..." class="w-full pl-10 pr-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-body-md focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors"/>
-      </div>
-      <select onchange="window.location.href='<?php echo site_url('academics/subjects'); ?>?class_id=' + this.value" class="px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-body-md text-on-surface-variant">
+
+    <!-- Filter Bar -->
+    <div class="flex flex-col md:flex-row gap-3 mb-4 flex-wrap">
+      <select onchange="window.location.href='<?php echo site_url('academics/subjects'); ?>' + (this.value ? '?class_id=' + this.value : '')" class="px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-body-md text-on-surface-variant">
         <option value="">All Classes</option>
         <?php foreach ($classes as $cls): ?>
           <option value="<?php echo $cls->class_id; ?>" <?php echo ($this->input->get('class_id') == $cls->class_id) ? 'selected' : ''; ?>><?php echo html_escape($cls->class_name); ?></option>
         <?php endforeach; ?>
       </select>
-      <button class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">filter_list</span>Filters</button>
+      <a href="<?php echo site_url('academics/subjects'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">restart_alt</span>Reset</a>
     </div>
-  
+
+    <!-- Subjects Table -->
     <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
       <div class="table-scroll overflow-x-auto">
         <table class="w-full data-table zebra border-collapse">
-          <thead><tr class="border-b border-outline-variant/60"><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Subject</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Code</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Type</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Class</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Teacher</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Status</th></tr></thead>
-          <tbody class="divide-y divide-outline-variant/40">
+          <thead>
+            <tr class="border-b border-outline-variant/60">
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Subject Name</th>
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Code</th>
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Applicable Class</th>
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Subject Type</th>
+              <th class="text-left px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Assigned Teacher</th>
+              <th class="text-right px-4 py-3 text-label-md text-on-surface-variant uppercase whitespace-nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/30 text-body-md">
             <?php foreach ($subjects as $sub): ?>
+              <?php
+                $badge = 'bg-surface-container-high text-on-surface';
+                if ($sub->subject_type === 'Core') $badge = 'bg-primary-fixed/30 text-primary font-semibold';
+                if ($sub->subject_type === 'Language') $badge = 'bg-secondary-container text-on-secondary-container font-semibold';
+                if ($sub->subject_type === 'Practical') $badge = 'bg-tertiary-container/30 text-tertiary font-semibold';
+              ?>
               <tr class='hover:bg-surface-container-low transition-colors'>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap font-medium"><?php echo html_escape($sub->subject_name); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo html_escape($sub->subject_code); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo html_escape($sub->subject_type); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo html_escape($sub->class_name ?: 'All Classes'); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo html_escape($sub->teacher_name ?: 'Not Assigned'); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-secondary-container text-on-secondary-container">Active</span></td>
+                <td class="px-4 py-3 font-semibold text-on-surface whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[20px]">menu_book</span>
+                    <?php echo html_escape($sub->subject_name); ?>
+                  </div>
+                </td>
+                <td class="px-4 py-3 font-mono text-primary font-bold whitespace-nowrap"><?php echo html_escape($sub->subject_code); ?></td>
+                <td class="px-4 py-3 text-on-surface whitespace-nowrap"><?php echo html_escape($sub->class_name ?: 'General / All'); ?></td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] <?php echo $badge; ?>"><?php echo html_escape($sub->subject_type); ?></span>
+                </td>
+                <td class="px-4 py-3 text-on-surface whitespace-nowrap">
+                  <?php if ($sub->teacher_name): ?>
+                    <span class="inline-flex items-center gap-1 font-medium text-secondary"><span class="material-symbols-outlined text-[16px]">person</span><?php echo html_escape($sub->teacher_name); ?></span>
+                  <?php else: ?>
+                    <a href="<?php echo site_url('academics/subject_teachers?subject_id=' . $sub->subject_id); ?>" class="text-[12px] text-primary hover:underline">+ Assign Teacher</a>
+                  <?php endif; ?>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openEditSubjectModal(<?php echo $sub->subject_id; ?>, '<?php echo html_escape(addslashes($sub->subject_name)); ?>', '<?php echo html_escape(addslashes($sub->subject_code)); ?>', '<?php echo $sub->subject_type; ?>', <?php echo $sub->class_id ?: 'null'; ?>)" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer" title="Edit"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+                    <a href="<?php echo site_url('academics/delete_subject/' . $sub->subject_id); ?>" onclick="return confirm('Deactivate subject?')" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-error-container/20 hover:text-error transition-colors" title="Deactivate"><span class="material-symbols-outlined text-[18px]">delete</span></a>
+                  </div>
+                </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
       </div>
-      <div class="flex items-center justify-between px-4 py-3 border-t border-outline-variant/50 text-body-md font-body-md text-on-surface-variant">
-        <span>Showing <?php echo count($subjects); ?> of <?php echo count($subjects); ?> records</span>
-        <div class="flex items-center gap-1">
-          <button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high disabled:opacity-40" disabled>Previous</button>
-          <button class="px-3 py-1.5 rounded-lg bg-primary-fixed text-primary font-medium">1</button>
-          <button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high disabled:opacity-40" disabled>Next</button>
+    </div>
+
+    <!-- Modal: Add / Edit Subject -->
+    <div id="modal-subject" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden">
+      <div class="elevation-3 rounded-2xl bg-surface-container-lowest border border-outline-variant w-full max-w-md">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
+          <h3 class="font-headline-md text-headline-md text-on-surface" id="modal-subject-title">Add Subject</h3>
+          <button onclick="document.getElementById('modal-subject').classList.add('hidden')" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">close</span></button>
         </div>
+        <?php echo form_open('academics/subjects', array('class' => 'p-6 space-y-4')); ?>
+          <input type="hidden" name="action" id="subject_action" value="add"/>
+          <input type="hidden" name="subject_id" id="modal_subject_id"/>
+          <div>
+            <label class="block text-label-md mb-1">Subject Name *</label>
+            <input type="text" name="subject_name" id="modal_subject_name" required placeholder="e.g. Physics Core" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest"/>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-label-md mb-1">Subject Code</label>
+              <input type="text" name="subject_code" id="modal_subject_code" placeholder="e.g. PHY10" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest font-mono uppercase"/>
+            </div>
+            <div>
+              <label class="block text-label-md mb-1">Subject Type *</label>
+              <select name="subject_type" id="modal_subject_type" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+                <option value="Core">Core</option>
+                <option value="Elective">Elective</option>
+                <option value="Language">Language</option>
+                <option value="Practical">Practical</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-label-md mb-1">Applicable Class (Optional)</label>
+            <select name="class_id" id="modal_subject_class" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest">
+              <option value="">All Classes</option>
+              <?php foreach ($classes as $cls): ?>
+                <option value="<?php echo $cls->class_id; ?>"><?php echo html_escape($cls->class_name); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="flex justify-end gap-2 pt-4 border-t border-outline-variant">
+            <button type="button" onclick="document.getElementById('modal-subject').classList.add('hidden')" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant">Cancel</button>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant cursor-pointer">Save Subject</button>
+          </div>
+        <?php echo form_close(); ?>
       </div>
     </div>
 
+    <script>
+      function openAddSubjectModal() {
+        document.getElementById('subject_action').value = 'add';
+        document.getElementById('modal-subject-title').textContent = 'Add Subject';
+        document.getElementById('modal_subject_id').value = '';
+        document.getElementById('modal_subject_name').value = '';
+        document.getElementById('modal_subject_code').value = '';
+        document.getElementById('modal_subject_type').value = 'Core';
+        document.getElementById('modal_subject_class').value = '';
+        document.getElementById('modal-subject').classList.remove('hidden');
+      }
+      function openEditSubjectModal(id, name, code, type, classId) {
+        document.getElementById('subject_action').value = 'edit';
+        document.getElementById('modal-subject-title').textContent = 'Edit Subject';
+        document.getElementById('modal_subject_id').value = id;
+        document.getElementById('modal_subject_name').value = name;
+        document.getElementById('modal_subject_code').value = code;
+        document.getElementById('modal_subject_type').value = type;
+        document.getElementById('modal_subject_class').value = classId ? classId : '';
+        document.getElementById('modal-subject').classList.remove('hidden');
+      }
+    </script>

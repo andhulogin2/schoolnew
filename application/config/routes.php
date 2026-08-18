@@ -80,6 +80,14 @@ $route['staff/workload']                    = 'staff/workload';
 $route['staff/attendance']                  = 'staff/attendance';
 $route['staff/leave']                       = 'staff/leave';
 
+$route['academics/years']            = 'academics/years';
+$route['academics/classes']          = 'academics/classes';
+$route['academics/sections']         = 'academics/sections';
+$route['academics/subjects']         = 'academics/subjects';
+$route['academics/class_teachers']   = 'academics/class_teachers';
+$route['academics/subject_teachers'] = 'academics/subject_teachers';
+$route['academics/timetable']        = 'academics/timetable';
+
 $route['attendance']         = 'attendance/index';
 $route['examinations']       = 'examinations/index';
 $route['fees']                = 'fees/index';

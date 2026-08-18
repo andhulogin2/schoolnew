@@ -282,6 +282,97 @@ CREATE TABLE `tbl_subjects` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
+-- 9b. Table: tbl_class_teachers
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_class_teachers`;
+CREATE TABLE `tbl_class_teachers` (
+  `class_teacher_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `staff_id` INT UNSIGNED NOT NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`class_teacher_id`),
+  UNIQUE KEY `uk_ct_year_sec` (`academic_year_id`, `class_id`, `section_id`),
+  KEY `idx_ct_staff` (`staff_id`),
+  CONSTRAINT `fk_ct_year` FOREIGN KEY (`academic_year_id`) REFERENCES `tbl_academic_years` (`academic_year_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ct_class` FOREIGN KEY (`class_id`) REFERENCES `tbl_classes` (`class_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ct_section` FOREIGN KEY (`section_id`) REFERENCES `tbl_sections` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ct_staff` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 9c. Table: tbl_subject_teachers
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_subject_teachers`;
+CREATE TABLE `tbl_subject_teachers` (
+  `subject_teacher_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `subject_id` INT UNSIGNED NOT NULL,
+  `staff_id` INT UNSIGNED NOT NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`subject_teacher_id`),
+  UNIQUE KEY `uk_st_assignment` (`academic_year_id`, `class_id`, `section_id`, `subject_id`, `staff_id`),
+  KEY `idx_st_subject` (`subject_id`),
+  KEY `idx_st_staff` (`staff_id`),
+  CONSTRAINT `fk_st_year` FOREIGN KEY (`academic_year_id`) REFERENCES `tbl_academic_years` (`academic_year_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_st_class` FOREIGN KEY (`class_id`) REFERENCES `tbl_classes` (`class_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_st_section` FOREIGN KEY (`section_id`) REFERENCES `tbl_sections` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_st_subject` FOREIGN KEY (`subject_id`) REFERENCES `tbl_subjects` (`subject_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_st_staff` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 9d. Table: tbl_periods
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_periods`;
+CREATE TABLE `tbl_periods` (
+  `period_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `period_name` VARCHAR(50) NOT NULL,
+  `start_time` TIME NOT NULL,
+  `end_time` TIME NOT NULL,
+  `period_order` INT UNSIGNED NOT NULL DEFAULT 1,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`period_id`),
+  UNIQUE KEY `uk_period_name` (`period_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 9e. Table: tbl_timetable
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_timetable`;
+CREATE TABLE `tbl_timetable` (
+  `timetable_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `day` ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday') NOT NULL,
+  `period_id` INT UNSIGNED NOT NULL,
+  `subject_id` INT UNSIGNED NOT NULL,
+  `teacher_id` INT UNSIGNED NOT NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`timetable_id`),
+  UNIQUE KEY `uk_class_day_period` (`academic_year_id`, `class_id`, `section_id`, `day`, `period_id`),
+  KEY `idx_tt_teacher` (`teacher_id`),
+  CONSTRAINT `fk_tt_year` FOREIGN KEY (`academic_year_id`) REFERENCES `tbl_academic_years` (`academic_year_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_tt_class` FOREIGN KEY (`class_id`) REFERENCES `tbl_classes` (`class_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_tt_section` FOREIGN KEY (`section_id`) REFERENCES `tbl_sections` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_tt_period` FOREIGN KEY (`period_id`) REFERENCES `tbl_periods` (`period_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_tt_subject` FOREIGN KEY (`subject_id`) REFERENCES `tbl_subjects` (`subject_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_tt_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
 -- 10. Table: tbl_students
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `tbl_students`;

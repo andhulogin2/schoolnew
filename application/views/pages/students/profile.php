@@ -6,99 +6,441 @@
   $initials = '';
   foreach ($nameParts as $np) { if (!empty($np)) $initials .= strtoupper($np[0]); }
   if (strlen($initials) > 2) $initials = substr($initials, 0, 2);
-  $status = (isset($student->status) && $student->status == 1) ? 'Active' : 'Inactive';
+  $status = (isset($student->status) && $student->status == 1) ? 'Active' : 'Inactive / Transferred';
   $statusBadge = ($status == 'Active')
     ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-secondary-container text-on-secondary-container">Active</span>'
-    : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-container-high text-on-surface-variant">Inactive</span>';
+    : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-container-high text-on-surface-variant">Inactive / Transferred</span>';
   $classDisplay = (isset($student->class_name) ? $student->class_name : '') . ' ' . (isset($student->section_name) ? $student->section_name : '');
 ?>
 
-  <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-5 mb-5 flex flex-col sm:flex-row sm:items-center gap-4">
-    <div class="w-20 h-20 rounded-xl bg-primary-fixed text-primary flex items-center justify-center text-2xl font-semibold shrink-0"><?php echo html_escape($initials); ?></div>
-    <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="font-headline-lg text-headline-lg text-on-surface"><?php echo html_escape($fullName); ?></h2>
-        <?php echo $statusBadge; ?>
-      </div>
-      <p class="text-body-md font-body-md text-on-surface-variant mt-1"><?php echo html_escape(isset($student->admission_number) ? $student->admission_number : ''); ?><?php if (!empty($student->roll_number)): ?> (Roll No. <?php echo html_escape($student->roll_number); ?>)<?php endif; ?> · Class <?php echo html_escape($classDisplay); ?> · Academic Year <?php echo html_escape(isset($student->year_name) ? $student->year_name : '2026-2027'); ?></p>
-    </div>
-    <div class="flex gap-2">
-      <a href="<?php echo site_url('students/edit/' . $student_id); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span>Edit</a>
-      <a href="<?php echo site_url('students'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Back to List</a>
-      <a href="<?php echo site_url('students/id_cards'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">badge</span>Print ID Card</a>
-    </div>
-  </div>
-  <div class="flex gap-1 border-b border-outline-variant/60 mb-5 overflow-x-auto">
-    <button class="px-4 py-2.5 text-body-md font-body-md border-b-2 border-secondary text-on-surface font-medium">Overview</button>
-    <button class="px-4 py-2.5 text-body-md font-body-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface">Personal Info</button>
-    <button class="px-4 py-2.5 text-body-md font-body-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface">Parent Info</button>
-    <button class="px-4 py-2.5 text-body-md font-body-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface">Academic Info</button>
-    <button class="px-4 py-2.5 text-body-md font-body-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface">Documents</button>
-  </div>
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-    <div class="lg:col-span-2 space-y-5">
-      
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
-        <h3 class="font-headline-md text-headline-md text-on-surface">Personal Information</h3>
-        <div class="flex items-center gap-2"></div>
-      </div>
-      <div class="p-5">
-        <div class="grid grid-cols-2 gap-4 text-body-md font-body-md">
-          <div><div class="text-on-surface-variant text-[12px]">Gender</div><div class="text-on-surface"><?php echo html_escape(isset($student->gender) ? $student->gender : '—'); ?></div></div>
-          <div><div class="text-on-surface-variant text-[12px]">Date of Birth</div><div class="text-on-surface"><?php echo html_escape(isset($student->date_of_birth) ? date('d M Y', strtotime($student->date_of_birth)) : '—'); ?></div></div>
-          <div><div class="text-on-surface-variant text-[12px]">Blood Group</div><div class="text-on-surface"><?php echo html_escape(isset($student->blood_group) ? $student->blood_group : '—'); ?></div></div>
-          <div><div class="text-on-surface-variant text-[12px]">Nationality</div><div class="text-on-surface">Indian</div></div>
-          <div class="col-span-2"><div class="text-on-surface-variant text-[12px]">Address</div><div class="text-on-surface"><?php echo html_escape(isset($student->address) ? $student->address : '—'); ?></div></div>
-        </div></div>
-    </div>
-      
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
-        <h3 class="font-headline-md text-headline-md text-on-surface">Academic Information</h3>
-        <div class="flex items-center gap-2"></div>
-      </div>
-      <div class="p-5">
-        <div class="grid grid-cols-4 gap-4 text-body-md font-body-md">
-          <div><div class="text-on-surface-variant text-[12px]">Class</div><div class="text-on-surface"><?php echo html_escape(isset($student->class_name) ? $student->class_name : '—'); ?></div></div>
-          <div><div class="text-on-surface-variant text-[12px]">Section</div><div class="text-on-surface"><?php echo html_escape(isset($student->section_name) ? $student->section_name : '—'); ?></div></div>
-          <div><div class="text-on-surface-variant text-[12px]">Roll Number</div><div class="text-on-surface"><?php echo html_escape(isset($student->roll_number) && $student->roll_number !== '' ? $student->roll_number : '—'); ?></div></div>
-          <div><div class="text-on-surface-variant text-[12px]">Academic Year</div><div class="text-on-surface"><?php echo html_escape(isset($student->year_name) ? $student->year_name : '2026-2027'); ?></div></div>
-        </div></div>
-    </div>
-    </div>
-    <div class="space-y-5">
-      
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
-        <h3 class="font-headline-md text-headline-md text-on-surface">Parent / Guardian</h3>
-        <div class="flex items-center gap-2"></div>
-      </div>
-      <div class="p-5">
-        <div class="text-body-md font-body-md space-y-1.5">
-          <div class="text-on-surface font-medium"><?php echo html_escape(isset($student->guardian_name) ? $student->guardian_name : '—'); ?> (<?php echo html_escape(isset($student->guardian_relation) ? $student->guardian_relation : 'Parent'); ?>)</div>
-          <div class="text-on-surface-variant"><?php echo html_escape(isset($student->guardian_phone) ? $student->guardian_phone : '—'); ?></div>
-          <div class="text-on-surface-variant"><?php echo html_escape(isset($student->guardian_email) ? $student->guardian_email : '—'); ?></div>
-        </div></div>
-    </div>
-      
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
-        <h3 class="font-headline-md text-headline-md text-on-surface">Documents</h3>
-        <div class="flex items-center gap-2"></div>
-      </div>
-      <div class="p-5">
-        <?php if (!empty($student->documents)): ?>
-          <ul class="text-body-md font-body-md text-on-surface-variant space-y-1 list-disc pl-4">
-            <?php foreach ($student->documents as $doc): ?>
-              <li><?php echo html_escape($doc->document_type); ?>: <?php echo html_escape($doc->document_name); ?></li>
-            <?php endforeach; ?>
-          </ul>
-        <?php else: ?>
-          <div class="text-body-md font-body-md text-on-surface-variant">3 documents uploaded — Birth Certificate, Previous School TC, ID Proof.</div>
-        <?php endif; ?>
+  <!-- Header Card -->
+  <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-5 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div class="w-16 h-16 rounded-xl bg-primary-fixed text-primary flex items-center justify-center text-2xl font-bold shrink-0"><?php echo html_escape($initials); ?></div>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <h2 class="font-headline-md text-headline-md text-on-surface"><?php echo html_escape($fullName); ?></h2>
+          <?php echo $statusBadge; ?>
+        </div>
+        <p class="text-body-md font-body-md text-on-surface-variant mt-1">
+          <span class="font-medium text-on-surface"><?php echo html_escape($student->admission_number); ?></span>
+          <?php if (!empty($student->roll_number)): ?> · Roll No. <span class="font-medium text-on-surface"><?php echo html_escape($student->roll_number); ?></span><?php endif; ?>
+          · Class <span class="font-medium text-on-surface"><?php echo html_escape($classDisplay ?: 'Not assigned'); ?></span>
+          · Session <span class="font-medium text-on-surface"><?php echo html_escape(isset($student->year_name) ? $student->year_name : '2026-2027'); ?></span>
+        </p>
       </div>
     </div>
+    <div class="flex items-center gap-2 flex-wrap shrink-0">
+      <a href="<?php echo site_url('students/edit/' . $student_id); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span>Edit</a>
+      <a href="<?php echo site_url('students/id_cards?class_id=' . $student->class_id); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">badge</span>ID Card</a>
+      <?php if (!empty($student->transfer)): ?>
+        <a href="<?php echo site_url('students/tc/' . $student->transfer->transfer_id); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-tertiary text-on-tertiary text-label-md hover:opacity-90 transition-opacity"><span class="material-symbols-outlined text-[18px]">description</span>Print TC</a>
+      <?php endif; ?>
+      <a href="<?php echo site_url('students'); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Back</a>
     </div>
   </div>
 
+  <!-- Interactive Profile Tabs -->
+  <div class="flex gap-2 border-b border-outline-variant/60 mb-6 overflow-x-auto" id="profile-tabs">
+    <button onclick="switchTab('overview')" class="tab-btn px-4 py-2.5 text-body-md font-medium border-b-2 border-secondary text-primary cursor-pointer" data-tab="overview">Overview</button>
+    <button onclick="switchTab('personal')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="personal">Personal Info</button>
+    <button onclick="switchTab('guardian')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="guardian">Guardian & Address</button>
+    <button onclick="switchTab('academic')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="academic">Academic & Promotion History</button>
+    <button onclick="switchTab('documents')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="documents">Documents (<?php echo count($student->documents); ?>)</button>
+    <button onclick="switchTab('attendance')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="attendance">Attendance Summary</button>
+    <button onclick="switchTab('transfer')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="transfer">Transfer / TC</button>
+  </div>
+
+  <!-- TAB 1: OVERVIEW -->
+  <div id="tab-overview" class="tab-pane space-y-5">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      
+      <!-- Left Column: Personal & Academic Quick Summary -->
+      <div class="lg:col-span-2 space-y-5">
+        
+        <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px]">person</span>Personal & Admission Details
+            </h3>
+            <a href="<?php echo site_url('students/edit/' . $student_id); ?>" class="text-label-md text-primary hover:underline">Edit</a>
+          </div>
+          <div class="p-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-body-md">
+              <div><div class="text-on-surface-variant text-[12px]">Admission Number</div><div class="font-medium text-on-surface"><?php echo html_escape($student->admission_number); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Roll Number</div><div class="font-medium text-on-surface"><?php echo html_escape($student->roll_number ?: '—'); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Gender</div><div class="font-medium text-on-surface"><?php echo html_escape($student->gender); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Date of Birth</div><div class="font-medium text-on-surface"><?php echo date('d M Y', strtotime($student->date_of_birth)); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Blood Group</div><div class="font-medium text-on-surface"><?php echo html_escape($student->blood_group ?: '—'); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Nationality</div><div class="font-medium text-on-surface"><?php echo html_escape($student->nationality ?: 'Indian'); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Class & Section</div><div class="font-medium text-on-surface"><?php echo html_escape($classDisplay ?: '—'); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Academic Session</div><div class="font-medium text-on-surface"><?php echo html_escape($student->year_name ?: '2026-2027'); ?></div></div>
+              <div><div class="text-on-surface-variant text-[12px]">Admission Date</div><div class="font-medium text-on-surface"><?php echo date('d M Y', strtotime($student->created_at)); ?></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Stats Card -->
+        <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-[20px]">fact_check</span>Attendance Overview
+            </h3>
+            <span class="text-label-md font-semibold text-secondary"><?php echo $student->attendance->percentage; ?>% Attendance</span>
+          </div>
+          <div class="p-5">
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div class="p-3.5 rounded-lg bg-surface-container-low border border-outline-variant/30">
+                <div class="text-title-lg font-bold text-on-surface"><?php echo $student->attendance->total_days; ?></div>
+                <div class="text-[12px] text-on-surface-variant mt-0.5">Total Working Days</div>
+              </div>
+              <div class="p-3.5 rounded-lg bg-secondary-container/20 border border-secondary/20">
+                <div class="text-title-lg font-bold text-secondary"><?php echo $student->attendance->present; ?></div>
+                <div class="text-[12px] text-on-secondary-container mt-0.5">Days Present</div>
+              </div>
+              <div class="p-3.5 rounded-lg bg-error-container/20 border border-error/20">
+                <div class="text-title-lg font-bold text-error"><?php echo $student->attendance->absent; ?></div>
+                <div class="text-[12px] text-on-error-container mt-0.5">Days Absent</div>
+              </div>
+            </div>
+            <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden mt-4">
+              <div class="bg-secondary h-full rounded-full transition-all" style="width: <?php echo min(100, max(0, $student->attendance->percentage)); ?>%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Guardian, Address & Documents -->
+      <div class="space-y-5">
+        
+        <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px]">family_restroom</span>Parent / Guardian
+            </h3>
+          </div>
+          <div class="p-5 space-y-3 text-body-md">
+            <div>
+              <div class="text-[12px] text-on-surface-variant">Guardian Name & Relation</div>
+              <div class="font-medium text-on-surface"><?php echo html_escape($student->guardian_name); ?> (<?php echo html_escape($student->guardian_relation ?: 'Father'); ?>)</div>
+            </div>
+            <div>
+              <div class="text-[12px] text-on-surface-variant">Contact Phone</div>
+              <div class="font-medium text-on-surface"><?php echo html_escape($student->guardian_phone); ?></div>
+            </div>
+            <div>
+              <div class="text-[12px] text-on-surface-variant">Email Address</div>
+              <div class="font-medium text-on-surface"><?php echo html_escape($student->guardian_email ?: '—'); ?></div>
+            </div>
+            <div>
+              <div class="text-[12px] text-on-surface-variant">Residential Address</div>
+              <div class="text-on-surface text-[13px] leading-relaxed"><?php echo html_escape($student->address ?: '—'); ?></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px]">folder</span>Documents
+            </h3>
+            <button onclick="switchTab('documents')" class="text-label-md text-primary hover:underline">Manage</button>
+          </div>
+          <div class="p-5">
+            <?php if (!empty($student->documents)): ?>
+              <ul class="divide-y divide-outline-variant/30 text-body-md">
+                <?php foreach ($student->documents as $doc): ?>
+                  <li class="py-2.5 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-primary text-[18px]">description</span>
+                      <div>
+                        <div class="font-medium text-on-surface text-[13px]"><?php echo html_escape($doc->document_name); ?></div>
+                        <div class="text-[11px] text-on-surface-variant"><?php echo html_escape($doc->document_type); ?></div>
+                      </div>
+                    </div>
+                    <span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+            <?php else: ?>
+              <p class="text-body-md text-on-surface-variant text-center py-2">No documents uploaded yet.</p>
+            <?php endif; ?>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 2: PERSONAL INFO -->
+  <div id="tab-personal" class="tab-pane hidden space-y-5">
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6">
+      <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Complete Personal Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-body-md">
+        <div class="space-y-4">
+          <div><span class="text-on-surface-variant text-sm block">Full Name</span><span class="font-medium text-on-surface"><?php echo html_escape($student->first_name . ' ' . $student->last_name); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">First Name</span><span class="font-medium text-on-surface"><?php echo html_escape($student->first_name); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Last Name</span><span class="font-medium text-on-surface"><?php echo html_escape($student->last_name); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Gender</span><span class="font-medium text-on-surface"><?php echo html_escape($student->gender); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Date of Birth</span><span class="font-medium text-on-surface"><?php echo date('d M Y', strtotime($student->date_of_birth)); ?></span></div>
+        </div>
+        <div class="space-y-4">
+          <div><span class="text-on-surface-variant text-sm block">Blood Group</span><span class="font-medium text-on-surface"><?php echo html_escape($student->blood_group ?: '—'); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Nationality</span><span class="font-medium text-on-surface"><?php echo html_escape($student->nationality ?: 'Indian'); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Religion</span><span class="font-medium text-on-surface"><?php echo html_escape($student->religion ?: '—'); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Account Status</span><span class="font-medium text-on-surface"><?php echo $status; ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Registered In System Since</span><span class="font-medium text-on-surface"><?php echo date('d M Y, h:i A', strtotime($student->created_at)); ?></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: GUARDIAN & ADDRESS -->
+  <div id="tab-guardian" class="tab-pane hidden space-y-5">
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6">
+      <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Guardian & Residential Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-body-md">
+        <div class="space-y-4">
+          <div><span class="text-on-surface-variant text-sm block">Guardian Full Name</span><span class="font-medium text-on-surface"><?php echo html_escape($student->guardian_name); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Relationship to Student</span><span class="font-medium text-on-surface"><?php echo html_escape($student->guardian_relation ?: 'Father'); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Primary Phone Number</span><span class="font-medium text-on-surface"><?php echo html_escape($student->guardian_phone); ?></span></div>
+          <div><span class="text-on-surface-variant text-sm block">Email Address</span><span class="font-medium text-on-surface"><?php echo html_escape($student->guardian_email ?: '—'); ?></span></div>
+        </div>
+        <div class="space-y-4">
+          <div><span class="text-on-surface-variant text-sm block">Full Residential Address</span><span class="font-medium text-on-surface leading-relaxed"><?php echo nl2br(html_escape($student->address ?: 'No address provided.')); ?></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: ACADEMIC & PROMOTION HISTORY -->
+  <div id="tab-academic" class="tab-pane hidden space-y-5">
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-headline-md text-headline-md text-on-surface">Current Academic Enrollment</h3>
+        <a href="<?php echo site_url('students/promotion'); ?>" class="text-label-md text-primary hover:underline flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">upgrade</span>Promote Student</a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/40">
+          <div class="text-[12px] text-on-surface-variant">Class</div>
+          <div class="text-title-md font-semibold text-on-surface"><?php echo html_escape($student->class_name ?: '—'); ?></div>
+        </div>
+        <div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/40">
+          <div class="text-[12px] text-on-surface-variant">Section</div>
+          <div class="text-title-md font-semibold text-on-surface">Section <?php echo html_escape($student->section_name ?: '—'); ?></div>
+        </div>
+        <div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/40">
+          <div class="text-[12px] text-on-surface-variant">Current Academic Year</div>
+          <div class="text-title-md font-semibold text-on-surface"><?php echo html_escape($student->year_name ?: '2026-2027'); ?></div>
+        </div>
+      </div>
+
+      <h4 class="font-title-md text-title-md text-on-surface mb-3">Promotion & Academic History</h4>
+      <div class="table-scroll overflow-x-auto border border-outline-variant/40 rounded-lg">
+        <table class="w-full data-table zebra border-collapse">
+          <thead>
+            <tr class="border-b border-outline-variant/60 bg-surface-container-low">
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">Date</th>
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">From Class</th>
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">To Class</th>
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">Action Type</th>
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">Remarks</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/40">
+            <?php if (empty($student->promotions)): ?>
+              <tr>
+                <td colspan="5" class="px-4 py-6 text-center text-on-surface-variant text-body-md">Initial registration enrollment record. No prior promotions recorded.</td>
+              </tr>
+            <?php else: ?>
+              <?php foreach ($student->promotions as $p): ?>
+                <tr>
+                  <td class="px-4 py-3 text-body-md text-on-surface whitespace-nowrap"><?php echo date('d M Y', strtotime($p->promotion_date)); ?></td>
+                  <td class="px-4 py-3 text-body-md text-on-surface whitespace-nowrap"><?php echo html_escape($p->from_class . ' ' . $p->from_section . ' (' . $p->from_year . ')'); ?></td>
+                  <td class="px-4 py-3 text-body-md text-on-surface whitespace-nowrap font-medium"><?php echo html_escape($p->to_class . ' ' . $p->to_section . ' (' . $p->to_year . ')'); ?></td>
+                  <td class="px-4 py-3 text-body-md whitespace-nowrap">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-secondary-container text-on-secondary-container"><?php echo html_escape($p->promotion_type); ?></span>
+                  </td>
+                  <td class="px-4 py-3 text-body-md text-on-surface-variant"><?php echo html_escape($p->remarks ?: '—'); ?></td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: DOCUMENTS -->
+  <div id="tab-documents" class="tab-pane hidden space-y-5">
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h3 class="font-headline-md text-headline-md text-on-surface">Student Document Repository</h3>
+          <p class="text-body-md text-on-surface-variant mt-0.5">Upload and manage official certificates, identity proof, and academic documents.</p>
+        </div>
+      </div>
+
+      <!-- Upload Document Form -->
+      <?php echo form_open_multipart('students/upload_document', array('class' => 'p-4 rounded-xl bg-surface-container-low border border-outline-variant/40 mb-6')); ?>
+        <input type="hidden" name="student_id" value="<?php echo $student_id; ?>"/>
+        <input type="hidden" name="redirect_to" value="<?php echo current_url(); ?>"/>
+        <h4 class="font-title-md text-title-md text-on-surface mb-3 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">cloud_upload</span>Upload New Document</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="block text-label-md text-on-surface mb-1">Document Type *</label>
+            <select name="document_type" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md">
+              <option value="Birth Certificate">Birth Certificate</option>
+              <option value="Aadhaar Card / ID Proof">Aadhaar Card / ID Proof</option>
+              <option value="Previous School TC">Previous School TC</option>
+              <option value="Transfer Certificate">Transfer Certificate</option>
+              <option value="Medical Fitness Certificate">Medical Fitness Certificate</option>
+              <option value="Passport Photo">Passport Photo</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-label-md text-on-surface mb-1">Document Title / Name *</label>
+            <input type="text" name="document_name" required placeholder="e.g. Birth Certificate Original" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md"/>
+          </div>
+          <div>
+            <label class="block text-label-md text-on-surface mb-1">Select File</label>
+            <input type="file" name="document_file" class="w-full px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md text-on-surface-variant"/>
+          </div>
+        </div>
+        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors cursor-pointer"><span class="material-symbols-outlined text-[18px]">upload</span>Upload Document</button>
+      <?php echo form_close(); ?>
+
+      <!-- Documents List Table -->
+      <div class="table-scroll overflow-x-auto border border-outline-variant/40 rounded-lg">
+        <table class="w-full data-table zebra border-collapse">
+          <thead>
+            <tr class="border-b border-outline-variant/60 bg-surface-container-low">
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">Document Name</th>
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">Document Type</th>
+              <th class="text-left px-4 py-2.5 text-label-md text-on-surface-variant">Uploaded On</th>
+              <th class="text-right px-4 py-2.5 text-label-md text-on-surface-variant">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/40">
+            <?php if (empty($student->documents)): ?>
+              <tr>
+                <td colspan="4" class="px-4 py-6 text-center text-on-surface-variant text-body-md">No documents currently uploaded for this student.</td>
+              </tr>
+            <?php else: ?>
+              <?php foreach ($student->documents as $doc): ?>
+                <tr>
+                  <td class="px-4 py-3 text-body-md text-on-surface font-medium whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-primary text-[18px]">description</span>
+                      <?php echo html_escape($doc->document_name); ?>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-body-md text-on-surface-variant whitespace-nowrap"><?php echo html_escape($doc->document_type); ?></td>
+                  <td class="px-4 py-3 text-body-md text-on-surface-variant whitespace-nowrap"><?php echo date('d M Y', strtotime($doc->created_at)); ?></td>
+                  <td class="px-4 py-3 text-body-md text-right whitespace-nowrap">
+                    <a href="<?php echo base_url($doc->file_path); ?>" target="_blank" class="px-2.5 py-1 rounded bg-surface-container-high text-on-surface text-label-md hover:bg-surface-container-highest transition-colors inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">visibility</span>View</a>
+                    <a href="<?php echo site_url('students/delete_document/' . $doc->document_id . '?redirect_to=' . urlencode(current_url())); ?>" onclick="return confirm('Remove this document record?')" class="px-2.5 py-1 rounded text-error hover:bg-error-container/20 transition-colors inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">delete</span>Delete</a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: ATTENDANCE SUMMARY -->
+  <div id="tab-attendance" class="tab-pane hidden space-y-5">
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6">
+      <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Attendance Summary & Records</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 text-center">
+          <div class="text-headline-md font-bold text-on-surface"><?php echo $student->attendance->total_days; ?></div>
+          <div class="text-body-md text-on-surface-variant mt-1">Total Academic Days</div>
+        </div>
+        <div class="p-4 rounded-lg bg-secondary-container/20 border border-secondary/20 text-center">
+          <div class="text-headline-md font-bold text-secondary"><?php echo $student->attendance->present; ?></div>
+          <div class="text-body-md text-on-secondary-container mt-1">Present</div>
+        </div>
+        <div class="p-4 rounded-lg bg-error-container/20 border border-error/20 text-center">
+          <div class="text-headline-md font-bold text-error"><?php echo $student->attendance->absent; ?></div>
+          <div class="text-body-md text-on-error-container mt-1">Absent</div>
+        </div>
+        <div class="p-4 rounded-lg bg-primary-fixed/20 border border-primary/20 text-center">
+          <div class="text-headline-md font-bold text-primary"><?php echo $student->attendance->percentage; ?>%</div>
+          <div class="text-body-md text-on-surface-variant mt-1">Attendance Percentage</div>
+        </div>
+      </div>
+      <p class="text-body-md text-on-surface-variant">To view detailed day-by-day attendance reports, visit the <a href="<?php echo site_url('attendance/reports'); ?>" class="text-primary font-medium hover:underline">Attendance Reports</a> module.</p>
+    </div>
+  </div>
+
+  <!-- TAB 7: TRANSFER / TC -->
+  <div id="tab-transfer" class="tab-pane hidden space-y-5">
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-headline-md text-headline-md text-on-surface">Transfer / School Leaving Certificate</h3>
+        <?php if (empty($student->transfer)): ?>
+          <a href="<?php echo site_url('students/transfers'); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors"><span class="material-symbols-outlined text-[18px]">post_add</span>Issue TC</a>
+        <?php endif; ?>
+      </div>
+
+      <?php if (!empty($student->transfer)): ?>
+        <div class="p-5 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-4">
+          <div class="flex items-center justify-between border-b border-outline-variant/40 pb-3">
+            <div>
+              <div class="text-[12px] text-on-surface-variant">Transfer Certificate Number</div>
+              <div class="text-title-md font-bold text-primary font-mono"><?php echo html_escape($student->transfer->tc_number); ?></div>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-label-md font-semibold bg-secondary-container text-on-secondary-container">Issued</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-body-md">
+            <div><span class="text-on-surface-variant text-[12px] block">Date of Issue</span><span class="font-medium text-on-surface"><?php echo date('d M Y', strtotime($student->transfer->transfer_date)); ?></span></div>
+            <div><span class="text-on-surface-variant text-[12px] block">Reason for Leaving</span><span class="font-medium text-on-surface"><?php echo html_escape($student->transfer->reason); ?></span></div>
+            <div><span class="text-on-surface-variant text-[12px] block">Conduct & Behavior</span><span class="font-medium text-on-surface"><?php echo html_escape($student->transfer->conduct); ?></span></div>
+            <div class="sm:col-span-3"><span class="text-on-surface-variant text-[12px] block">Remarks</span><span class="text-on-surface"><?php echo html_escape($student->transfer->remarks ?: 'All school dues cleared.'); ?></span></div>
+          </div>
+          <div class="pt-3 border-t border-outline-variant/40">
+            <a href="<?php echo site_url('students/tc/' . $student->transfer->transfer_id); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-on-primary text-label-md hover:bg-primary/90 transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">print</span>Print Official Transfer Certificate</a>
+          </div>
+        </div>
+      <?php else: ?>
+        <div class="p-6 rounded-xl bg-surface-container-low border border-outline-variant/40 text-center">
+          <span class="material-symbols-outlined text-[48px] text-on-surface-variant/50 mb-2">school</span>
+          <h4 class="font-title-md text-title-md text-on-surface">No Transfer Certificate Issued</h4>
+          <p class="text-body-md text-on-surface-variant mt-1 mb-4">This student is currently actively enrolled or has not requested a Transfer Certificate.</p>
+          <a href="<?php echo site_url('students/transfers'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add_circle</span>Issue Transfer Certificate</a>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <!-- Tab Switching Script -->
+  <script>
+    function switchTab(tabName) {
+      // Hide all panes
+      document.querySelectorAll('.tab-pane').forEach(function(pane) {
+        pane.classList.add('hidden');
+      });
+      // Deactivate all buttons
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.remove('border-secondary', 'text-primary', 'font-medium');
+        btn.classList.add('border-transparent', 'text-on-surface-variant');
+      });
+      // Show selected pane
+      var targetPane = document.getElementById('tab-' + tabName);
+      if (targetPane) {
+        targetPane.classList.remove('hidden');
+      }
+      // Activate button
+      var targetBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+      if (targetBtn) {
+        targetBtn.classList.remove('border-transparent', 'text-on-surface-variant');
+        targetBtn.classList.add('border-secondary', 'text-primary', 'font-medium');
+      }
+    }
+  </script>

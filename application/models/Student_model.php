@@ -6,7 +6,7 @@ class Student_model extends CI_Model {
     protected $table = 'tbl_students';
     protected $primaryKey = 'student_id';
 
-    public function get_all($filters = array())
+    public function get_all($filters = array(), $limit = NULL, $offset = NULL)
     {
         $this->db
             ->select('st.*, c.class_name, sec.section_name, y.year_name')
@@ -17,27 +17,74 @@ class Student_model extends CI_Model {
             ->where('st.status >=', 0)
             ->order_by('st.student_id', 'ASC');
 
+        if (!empty($filters['academic_year_id'])) {
+            $this->db->where('st.academic_year_id', $filters['academic_year_id']);
+        }
         if (!empty($filters['class_id'])) {
             $this->db->where('st.class_id', $filters['class_id']);
         }
         if (!empty($filters['section_id'])) {
             $this->db->where('st.section_id', $filters['section_id']);
         }
+        if (!empty($filters['gender'])) {
+            $this->db->where('st.gender', $filters['gender']);
+        }
         if (isset($filters['status']) && $filters['status'] !== '' && $filters['status'] !== 'All') {
             $this->db->where('st.status', $filters['status']);
         }
         if (!empty($filters['search'])) {
-            $s = $filters['search'];
+            $s = trim($filters['search']);
             $this->db->group_start()
                 ->like('st.first_name', $s)
                 ->or_like('st.last_name', $s)
                 ->or_like('st.admission_number', $s)
                 ->or_like('st.guardian_name', $s)
                 ->or_like('st.guardian_phone', $s)
+                ->or_like('st.roll_number', $s)
                 ->group_end();
         }
 
+        if ($limit !== NULL) {
+            $this->db->limit($limit, $offset ?: 0);
+        }
+
         return $this->db->get()->result();
+    }
+
+    public function count_filtered($filters = array())
+    {
+        $this->db
+            ->from('tbl_students st')
+            ->where('st.status >=', 0);
+
+        if (!empty($filters['academic_year_id'])) {
+            $this->db->where('st.academic_year_id', $filters['academic_year_id']);
+        }
+        if (!empty($filters['class_id'])) {
+            $this->db->where('st.class_id', $filters['class_id']);
+        }
+        if (!empty($filters['section_id'])) {
+            $this->db->where('st.section_id', $filters['section_id']);
+        }
+        if (!empty($filters['gender'])) {
+            $this->db->where('st.gender', $filters['gender']);
+        }
+        if (isset($filters['status']) && $filters['status'] !== '' && $filters['status'] !== 'All') {
+            $this->db->where('st.status', $filters['status']);
+        }
+        if (!empty($filters['search'])) {
+            $s = trim($filters['search']);
+            $this->db->group_start()
+                ->like('st.first_name', $s)
+                ->or_like('st.last_name', $s)
+                ->or_like('st.admission_number', $s)
+                ->or_like('st.guardian_name', $s)
+                ->or_like('st.guardian_phone', $s)
+                ->or_like('st.roll_number', $s)
+                ->group_end();
+        }
+
+        return $this->db->count_all_results();
     }
 
     public function get_by_id($id)
@@ -56,14 +103,312 @@ class Student_model extends CI_Model {
     public function get_profile($id)
     {
         $student = $this->get_by_id($id);
-        if ($student) {
-            $student->documents = $this->db
-                ->where('student_id', $id)
-                ->where('status', 1)
-                ->get('tbl_student_documents')
-                ->result();
-        }
+        if (!$student) return NULL;
+
+        // 1. Documents
+        $student->documents = $this->db
+            ->where('student_id', $id)
+            ->where('status', 1)
+            ->order_by('document_id', 'DESC')
+            ->get('tbl_student_documents')
+            ->result();
+
+        // 2. Promotions & Academic History
+        $student->promotions = $this->db
+            ->select('p.*, fy.year_name as from_year, ty.year_name as to_year, fc.class_name as from_class, tc.class_name as to_class, fsec.section_name as from_section, tsec.section_name as to_section')
+            ->from('tbl_student_promotions p')
+            ->join('tbl_academic_years fy', 'fy.academic_year_id = p.from_academic_year_id', 'left')
+            ->join('tbl_academic_years ty', 'ty.academic_year_id = p.to_academic_year_id', 'left')
+            ->join('tbl_classes fc', 'fc.class_id = p.from_class_id', 'left')
+            ->join('tbl_classes tc', 'tc.class_id = p.to_class_id', 'left')
+            ->join('tbl_sections fsec', 'fsec.section_id = p.from_section_id', 'left')
+            ->join('tbl_sections tsec', 'tsec.section_id = p.to_section_id', 'left')
+            ->where('p.student_id', $id)
+            ->order_by('p.promotion_date', 'DESC')
+            ->get()
+            ->result();
+
+        // 3. Transfer / TC status
+        $student->transfer = $this->db
+            ->select('t.*, c.class_name as prev_class_name, y.year_name')
+            ->from('tbl_student_transfers t')
+            ->join('tbl_classes c', 'c.class_id = t.previous_class_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = t.academic_year_id', 'left')
+            ->where('t.student_id', $id)
+            ->order_by('t.transfer_id', 'DESC')
+            ->get()
+            ->row();
+
+        // 4. Attendance Summary
+        $att_total = $this->db->where('student_id', $id)->count_all_results('tbl_attendance');
+        $att_present = $this->db->where('student_id', $id)->where('attendance_status', 'Present')->count_all_results('tbl_attendance');
+        $att_absent = $this->db->where('student_id', $id)->where('attendance_status', 'Absent')->count_all_results('tbl_attendance');
+        $student->attendance = (object) array(
+            'total_days' => $att_total,
+            'present'    => $att_present,
+            'absent'     => $att_absent,
+            'percentage' => ($att_total > 0) ? round(($att_present / $att_total) * 100, 1) : 100
+        );
+
         return $student;
+    }
+
+    /* =========================================================================
+       Documents Management
+       ========================================================================= */
+    public function get_all_documents($filters = array())
+    {
+        $this->db
+            ->select('d.*, st.admission_number, st.first_name, st.last_name, c.class_name, sec.section_name')
+            ->from('tbl_student_documents d')
+            ->join('tbl_students st', 'st.student_id = d.student_id', 'left')
+            ->join('tbl_classes c', 'c.class_id = st.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = st.section_id', 'left')
+            ->where('d.status', 1)
+            ->order_by('d.document_id', 'DESC');
+
+        if (!empty($filters['student_id'])) {
+            $this->db->where('d.student_id', $filters['student_id']);
+        }
+        if (!empty($filters['document_type'])) {
+            $this->db->where('d.document_type', $filters['document_type']);
+        }
+        if (!empty($filters['class_id'])) {
+            $this->db->where('st.class_id', $filters['class_id']);
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function add_document($data)
+    {
+        $this->db->insert('tbl_student_documents', $data);
+        return $this->db->insert_id();
+    }
+
+    public function delete_document($document_id)
+    {
+        return $this->db
+            ->where('document_id', $document_id)
+            ->delete('tbl_student_documents');
+    }
+
+    /* =========================================================================
+       Promotions Engine
+       ========================================================================= */
+    public function promote_students($student_ids, $from_year, $from_class, $from_sec, $to_year, $to_class, $to_sec, $type = 'Promoted', $remarks = '')
+    {
+        if (empty($student_ids) || !is_array($student_ids)) return FALSE;
+
+        $this->db->trans_start();
+
+        foreach ($student_ids as $sid) {
+            // Record promotion history
+            $this->db->insert('tbl_student_promotions', array(
+                'student_id'            => $sid,
+                'from_academic_year_id' => $from_year,
+                'from_class_id'         => $from_class,
+                'from_section_id'       => $from_sec,
+                'to_academic_year_id'   => $to_year,
+                'to_class_id'           => $to_class,
+                'to_section_id'         => $to_sec,
+                'promotion_date'        => date('Y-m-d'),
+                'promotion_type'        => $type,
+                'remarks'               => $remarks ?: 'Promoted to new academic session'
+            ));
+
+            // Update current student record
+            $this->db->where('student_id', $sid)->update('tbl_students', array(
+                'academic_year_id' => $to_year,
+                'class_id'         => $to_class,
+                'section_id'       => $to_sec,
+                'updated_at'       => date('Y-m-d H:i:s')
+            ));
+        }
+
+        $this->db->trans_complete();
+        return $this->db->trans_status();
+    }
+
+    public function get_promotions($filters = array())
+    {
+        $this->db
+            ->select('p.*, st.admission_number, st.first_name, st.last_name, fy.year_name as from_year, ty.year_name as to_year, fc.class_name as from_class, tc.class_name as to_class, fsec.section_name as from_section, tsec.section_name as to_section')
+            ->from('tbl_student_promotions p')
+            ->join('tbl_students st', 'st.student_id = p.student_id', 'left')
+            ->join('tbl_academic_years fy', 'fy.academic_year_id = p.from_academic_year_id', 'left')
+            ->join('tbl_academic_years ty', 'ty.academic_year_id = p.to_academic_year_id', 'left')
+            ->join('tbl_classes fc', 'fc.class_id = p.from_class_id', 'left')
+            ->join('tbl_classes tc', 'tc.class_id = p.to_class_id', 'left')
+            ->join('tbl_sections fsec', 'fsec.section_id = p.from_section_id', 'left')
+            ->join('tbl_sections tsec', 'tsec.section_id = p.to_section_id', 'left')
+            ->order_by('p.promotion_id', 'DESC');
+
+        if (!empty($filters['student_id'])) {
+            $this->db->where('p.student_id', $filters['student_id']);
+        }
+
+        return $this->db->get()->result();
+    }
+
+    /* =========================================================================
+       Transfer / TC Management
+       ========================================================================= */
+    public function get_transfers($filters = array())
+    {
+        $this->db
+            ->select('t.*, st.admission_number, st.first_name, st.last_name, st.gender, st.date_of_birth, st.guardian_name, c.class_name as prev_class, y.year_name')
+            ->from('tbl_student_transfers t')
+            ->join('tbl_students st', 'st.student_id = t.student_id', 'left')
+            ->join('tbl_classes c', 'c.class_id = t.previous_class_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = t.academic_year_id', 'left')
+            ->order_by('t.transfer_id', 'DESC');
+
+        if (!empty($filters['status'])) {
+            $this->db->where('t.status', $filters['status']);
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function get_transfer_by_id($transfer_id)
+    {
+        return $this->db
+            ->select('t.*, st.admission_number, st.first_name, st.last_name, st.gender, st.date_of_birth, st.guardian_name, st.guardian_relation, st.address, st.roll_number, c.class_name as prev_class, y.year_name')
+            ->from('tbl_student_transfers t')
+            ->join('tbl_students st', 'st.student_id = t.student_id', 'left')
+            ->join('tbl_classes c', 'c.class_id = t.previous_class_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = t.academic_year_id', 'left')
+            ->where('t.transfer_id', $transfer_id)
+            ->get()
+            ->row();
+    }
+
+    public function issue_transfer($data)
+    {
+        $this->db->trans_start();
+
+        // 1. Insert into tbl_student_transfers
+        $this->db->insert('tbl_student_transfers', $data);
+        $transfer_id = $this->db->insert_id();
+
+        // 2. Also register in tbl_certificates for school record consistency
+        $this->db->insert('tbl_certificates', array(
+            'student_id'       => $data['student_id'],
+            'certificate_type' => 'Transfer Certificate',
+            'certificate_no'   => $data['tc_number'],
+            'issue_date'       => $data['transfer_date'],
+            'remarks'          => $data['reason'],
+            'status'           => 1
+        ));
+
+        // 3. Update student status to 0 (Inactive/Transferred)
+        $this->db->where('student_id', $data['student_id'])->update('tbl_students', array(
+            'status'     => 0,
+            'updated_at' => date('Y-m-d H:i:s')
+        ));
+
+        $this->db->trans_complete();
+        return ($this->db->trans_status()) ? $transfer_id : FALSE;
+    }
+
+    /* =========================================================================
+       Admission Management
+       ========================================================================= */
+    public function get_admissions($filters = array())
+    {
+        $this->db
+            ->select('a.*, c.class_name, sec.section_name, y.year_name')
+            ->from('tbl_admissions a')
+            ->join('tbl_classes c', 'c.class_id = a.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = a.section_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = a.academic_year_id', 'left')
+            ->order_by('a.admission_id', 'DESC');
+
+        if (!empty($filters['status']) && $filters['status'] !== 'All') {
+            $this->db->where('a.status', $filters['status']);
+        }
+        if (!empty($filters['class_id'])) {
+            $this->db->where('a.class_id', $filters['class_id']);
+        }
+        if (!empty($filters['search'])) {
+            $s = trim($filters['search']);
+            $this->db->group_start()
+                ->like('a.first_name', $s)
+                ->or_like('a.last_name', $s)
+                ->or_like('a.application_number', $s)
+                ->or_like('a.guardian_name', $s)
+                ->or_like('a.guardian_phone', $s)
+                ->group_end();
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function get_admission_by_id($admission_id)
+    {
+        return $this->db
+            ->select('a.*, c.class_name, sec.section_name, y.year_name')
+            ->from('tbl_admissions a')
+            ->join('tbl_classes c', 'c.class_id = a.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = a.section_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = a.academic_year_id', 'left')
+            ->where('a.admission_id', $admission_id)
+            ->get()
+            ->row();
+    }
+
+    public function add_admission($data)
+    {
+        $this->db->insert('tbl_admissions', $data);
+        return $this->db->insert_id();
+    }
+
+    public function update_admission_status($admission_id, $status, $student_id = NULL)
+    {
+        $updateData = array('status' => $status);
+        if ($student_id) $updateData['student_id'] = $student_id;
+        return $this->db->where('admission_id', $admission_id)->update('tbl_admissions', $updateData);
+    }
+
+    public function convert_admission_to_student($admission_id, $section_id, $roll_number = NULL)
+    {
+        $adm = $this->get_admission_by_id($admission_id);
+        if (!$adm) return FALSE;
+
+        $admission_number = 'EDU' . date('Y') . sprintf('%03d', rand(100, 999));
+        $studentData = array(
+            'admission_number' => $admission_number,
+            'first_name'       => $adm->first_name,
+            'last_name'        => $adm->last_name,
+            'gender'           => $adm->gender,
+            'date_of_birth'    => $adm->date_of_birth,
+            'blood_group'      => $adm->blood_group,
+            'academic_year_id' => $adm->academic_year_id,
+            'class_id'         => $adm->class_id,
+            'section_id'       => $section_id ?: 1,
+            'roll_number'      => $roll_number,
+            'guardian_name'    => $adm->guardian_name,
+            'guardian_relation'=> $adm->guardian_relation ?: 'Father',
+            'guardian_phone'   => $adm->guardian_phone,
+            'guardian_email'   => $adm->guardian_email,
+            'address'          => $adm->address,
+            'status'           => 1,
+            'created_at'       => date('Y-m-d H:i:s')
+        );
+
+        $this->db->trans_start();
+        $this->db->insert('tbl_students', $studentData);
+        $student_id = $this->db->insert_id();
+
+        $this->db->where('admission_id', $admission_id)->update('tbl_admissions', array(
+            'status'     => 'Admitted',
+            'student_id' => $student_id,
+            'section_id' => $section_id ?: 1
+        ));
+
+        $this->db->trans_complete();
+        return ($this->db->trans_status()) ? $student_id : FALSE;
     }
 
     public function count_students($academic_year_id = NULL)
@@ -137,3 +482,4 @@ class Student_model extends CI_Model {
             ->update($this->table, array('status' => 0));
     }
 }
+

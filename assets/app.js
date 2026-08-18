@@ -19,8 +19,14 @@
 const PAGE_URLS = {
   "dashboard": "dashboard",
   "students": "students",
-  "student-add": "students/add",
+  "student-registration": "students/register",
+  "student-add": "students/register",
+  "admissions": "students/admissions",
+  "student-documents": "students/documents",
   "student-id-cards": "students/id_cards",
+  "student-promotion": "students/promotion",
+  "student-transfers": "students/transfers",
+  "student-search": "students/search",
   "student-profile": "students/profile",
   "staff": "staff",
   "teachers": "staff/teachers",
@@ -75,11 +81,16 @@ const CURRENT_USER = window.CURRENT_USER || {
 const NAV = [
   { key: "dashboard", label: "Dashboard", icon: "dashboard" },
   {
-    key: "students", label: "Students", icon: "group",
+    key: "students", label: "Student Management", icon: "group",
     children: [
       { key: "students", label: "All Students" },
-      { key: "student-add", label: "Add Student" },
+      { key: "student-registration", label: "Student Registration" },
+      { key: "admissions", label: "Admission Management" },
+      { key: "student-documents", label: "Student Documents" },
       { key: "student-id-cards", label: "Student ID Cards" },
+      { key: "student-promotion", label: "Student Promotion" },
+      { key: "student-transfers", label: "Transfer / TC Management" },
+      { key: "student-search", label: "Student Search & Filtering" },
     ],
   },
   {
@@ -147,8 +158,16 @@ const NAV = [
 
 const PAGE_TITLES = {
   "dashboard": "Dashboard",
-  "students": "All Students", "student-add": "Add Student", "student-profile": "Student Profile",
+  "students": "All Students",
+  "student-registration": "Student Registration",
+  "student-add": "Student Registration",
+  "admissions": "Admission Management",
+  "student-documents": "Student Documents",
   "student-id-cards": "Student ID Cards",
+  "student-promotion": "Student Promotion",
+  "student-transfers": "Transfer / TC Management",
+  "student-search": "Student Search & Filtering",
+  "student-profile": "Student Profile",
   "staff": "All Staff", "teachers": "Teachers", "departments": "Departments", "designations": "Designations",
   "academic-years": "Academic Years", "classes": "Classes", "sections": "Sections", "subjects": "Subjects",
   "attendance-daily": "Daily Attendance", "attendance-reports": "Attendance Reports",

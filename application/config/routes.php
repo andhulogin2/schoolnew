@@ -62,6 +62,14 @@ $route['translate_uri_dashes'] = FALSE;
  */
 $route['login']              = 'auth/login';
 $route['logout']             = 'auth/logout';
+$route['students/register']   = 'students/register';
+$route['students/admissions'] = 'students/admissions';
+$route['students/documents']  = 'students/documents';
+$route['students/id_cards']   = 'students/id_cards';
+$route['students/promotion']  = 'students/promotion';
+$route['students/transfers']  = 'students/transfers';
+$route['students/search']     = 'students/search';
+$route['students/tc/(:num)']  = 'students/tc/$1';
 $route['attendance']         = 'attendance/index';
 $route['examinations']       = 'examinations/index';
 $route['fees']                = 'fees/index';

@@ -12,21 +12,24 @@ class Students extends MY_Controller {
         $this->load->model('Academic_year_model');
     }
 
+    /* =========================================================================
+       1. All Students Listing
+       ========================================================================= */
     public function index()
     {
-        $class_id   = $this->input->get('class_id');
-        $section_id = $this->input->get('section_id');
-        $status     = $this->input->get('status');
-        $search     = $this->input->get('search');
+        $filters = array(
+            'academic_year_id' => $this->input->get('academic_year_id'),
+            'class_id'         => $this->input->get('class_id'),
+            'section_id'       => $this->input->get('section_id'),
+            'gender'           => $this->input->get('gender'),
+            'status'           => $this->input->get('status'),
+            'search'           => $this->input->get('search'),
+        );
 
-        $students = $this->Student_model->get_all(array(
-            'class_id'   => $class_id,
-            'section_id' => $section_id,
-            'status'     => $status,
-            'search'     => $search,
-        ));
+        $students = $this->Student_model->get_all($filters);
         $classes  = $this->Class_model->get_all();
         $sections = $this->Section_model->get_all();
+        $years    = $this->Academic_year_model->get_all();
 
         $this->render('pages/students/index', array(
             'title'    => 'All Students',
@@ -34,7 +37,17 @@ class Students extends MY_Controller {
             'students' => $students,
             'classes'  => $classes,
             'sections' => $sections,
+            'years'    => $years,
+            'filters'  => $filters,
         ));
+    }
+
+    /* =========================================================================
+       2. Student Registration / Add Student
+       ========================================================================= */
+    public function register()
+    {
+        $this->add();
     }
 
     public function add()
@@ -56,7 +69,7 @@ class Students extends MY_Controller {
                     'section_id'       => $this->input->post('section_id') ?: 1,
                     'roll_number'      => $this->input->post('roll_number', TRUE),
                     'guardian_name'    => $this->input->post('guardian_name', TRUE),
-                    'guardian_relation'=> $this->input->post('guardian_relation', TRUE),
+                    'guardian_relation'=> $this->input->post('guardian_relation', TRUE) ?: 'Father',
                     'guardian_phone'   => $this->input->post('guardian_phone', TRUE),
                     'guardian_email'   => $this->input->post('guardian_email', TRUE),
                     'address'          => $this->input->post('address', TRUE),
@@ -64,7 +77,7 @@ class Students extends MY_Controller {
                     'created_at'       => date('Y-m-d H:i:s'),
                 );
                 $new_id = $this->Student_model->insert($data);
-                $this->session->set_flashdata('success', 'Student admitted successfully.');
+                $this->session->set_flashdata('success', 'Student registered successfully.');
                 redirect('students/profile/' . $new_id);
                 return;
             }
@@ -75,14 +88,17 @@ class Students extends MY_Controller {
         $years    = $this->Academic_year_model->get_all();
 
         $this->render('pages/students/add', array(
-            'title'    => 'Add Student',
-            'page_key' => 'student-add',
+            'title'    => 'Student Registration',
+            'page_key' => 'student-registration',
             'classes'  => $classes,
             'sections' => $sections,
             'years'    => $years,
         ));
     }
 
+    /* =========================================================================
+       3. Student Edit
+       ========================================================================= */
     public function edit($student_id = NULL)
     {
         if (!$student_id) {
@@ -114,13 +130,13 @@ class Students extends MY_Controller {
                     'section_id'       => $this->input->post('section_id') ?: $student->section_id,
                     'roll_number'      => $this->input->post('roll_number', TRUE),
                     'guardian_name'    => $this->input->post('guardian_name', TRUE),
-                    'guardian_relation'=> $this->input->post('guardian_relation', TRUE),
+                    'guardian_relation'=> $this->input->post('guardian_relation', TRUE) ?: $student->guardian_relation,
                     'guardian_phone'   => $this->input->post('guardian_phone', TRUE),
                     'guardian_email'   => $this->input->post('guardian_email', TRUE),
                     'address'          => $this->input->post('address', TRUE),
                 );
                 $this->Student_model->update($student_id, $data);
-                $this->session->set_flashdata('success', 'Student updated successfully.');
+                $this->session->set_flashdata('success', 'Student details updated successfully.');
                 redirect('students/profile/' . $student_id);
                 return;
             }
@@ -133,7 +149,7 @@ class Students extends MY_Controller {
         $this->render('pages/students/edit', array(
             'title'      => 'Edit Student',
             'page_key'   => 'students',
-            'breadcrumb' => array('Students', 'Edit Student'),
+            'breadcrumb' => array('Student Management', 'Edit Student'),
             'student'    => $student,
             'student_id' => $student_id,
             'classes'    => $classes,
@@ -142,23 +158,30 @@ class Students extends MY_Controller {
         ));
     }
 
-    public function id_cards()
+    /* =========================================================================
+       4. Student Delete (Safe Deactivation)
+       ========================================================================= */
+    public function delete($student_id = NULL)
     {
-        $class_id = $this->input->get('class_id');
-        $students = $this->Student_model->get_all(array(
-            'class_id' => $class_id,
-            'status'   => 1
-        ));
-        $classes  = $this->Class_model->get_all();
+        if (!$student_id) {
+            redirect('students');
+            return;
+        }
 
-        $this->render('pages/students/id_cards', array(
-            'title'    => 'Student ID Cards',
-            'page_key' => 'student-id-cards',
-            'students' => $students,
-            'classes'  => $classes,
-        ));
+        $student = $this->Student_model->get_by_id($student_id);
+        if ($student) {
+            $this->Student_model->soft_delete($student_id);
+            $this->session->set_flashdata('success', 'Student record has been deactivated safely.');
+        } else {
+            $this->session->set_flashdata('error', 'Student not found.');
+        }
+
+        redirect('students');
     }
 
+    /* =========================================================================
+       5. Student Profile
+       ========================================================================= */
     public function profile($student_id = NULL)
     {
         if (!$student_id) {
@@ -167,13 +190,366 @@ class Students extends MY_Controller {
         }
 
         $student = $this->Student_model->get_profile($student_id);
+        if (!$student) {
+            $this->session->set_flashdata('error', 'Student profile not found.');
+            redirect('students');
+            return;
+        }
+
+        $classes  = $this->Class_model->get_all();
+        $sections = $this->Section_model->get_all();
+        $years    = $this->Academic_year_model->get_all();
 
         $this->render('pages/students/profile', array(
             'title'      => 'Student Profile',
             'page_key'   => 'student-profile',
-            'breadcrumb' => array('Students', 'Student Profile'),
+            'breadcrumb' => array('Student Management', 'Student Profile'),
             'student'    => $student,
             'student_id' => $student_id,
+            'classes'    => $classes,
+            'sections'   => $sections,
+            'years'      => $years,
+        ));
+    }
+
+    /* =========================================================================
+       6. Admission Management
+       ========================================================================= */
+    public function admissions()
+    {
+        if ($this->input->method() === 'post') {
+            $action = $this->input->post('action');
+
+            if ($action === 'new_admission') {
+                $appNo = 'APP' . date('Y') . sprintf('%03d', rand(100, 999));
+                $admData = array(
+                    'application_number' => $appNo,
+                    'first_name'        => $this->input->post('first_name', TRUE),
+                    'last_name'         => $this->input->post('last_name', TRUE),
+                    'gender'            => $this->input->post('gender', TRUE),
+                    'date_of_birth'     => $this->input->post('date_of_birth', TRUE) ?: date('Y-m-d'),
+                    'blood_group'       => $this->input->post('blood_group', TRUE),
+                    'academic_year_id'  => $this->input->post('academic_year_id') ?: 1,
+                    'class_id'          => $this->input->post('class_id') ?: 1,
+                    'guardian_name'     => $this->input->post('guardian_name', TRUE),
+                    'guardian_relation' => $this->input->post('guardian_relation', TRUE) ?: 'Father',
+                    'guardian_phone'    => $this->input->post('guardian_phone', TRUE),
+                    'guardian_email'    => $this->input->post('guardian_email', TRUE),
+                    'address'           => $this->input->post('address', TRUE),
+                    'application_date'  => date('Y-m-d'),
+                    'status'            => 'Pending',
+                    'created_at'        => date('Y-m-d H:i:s')
+                );
+                $this->Student_model->add_admission($admData);
+                $this->session->set_flashdata('success', 'New admission application submitted successfully (App No: ' . $appNo . ').');
+                redirect('students/admissions');
+                return;
+            }
+
+            if ($action === 'admit') {
+                $admission_id = $this->input->post('admission_id');
+                $section_id   = $this->input->post('section_id');
+                $roll_number  = $this->input->post('roll_number');
+
+                $new_student_id = $this->Student_model->convert_admission_to_student($admission_id, $section_id, $roll_number);
+                if ($new_student_id) {
+                    $this->session->set_flashdata('success', 'Student admitted and registered successfully.');
+                    redirect('students/profile/' . $new_student_id);
+                    return;
+                }
+            }
+
+            if ($action === 'update_status') {
+                $admission_id = $this->input->post('admission_id');
+                $status       = $this->input->post('status');
+                $this->Student_model->update_admission_status($admission_id, $status);
+                $this->session->set_flashdata('success', 'Admission status updated to ' . $status . '.');
+                redirect('students/admissions');
+                return;
+            }
+        }
+
+        $filters = array(
+            'status'   => $this->input->get('status'),
+            'class_id' => $this->input->get('class_id'),
+            'search'   => $this->input->get('search'),
+        );
+
+        $admissions = $this->Student_model->get_admissions($filters);
+        $classes    = $this->Class_model->get_all();
+        $sections   = $this->Section_model->get_all();
+        $years      = $this->Academic_year_model->get_all();
+
+        $this->render('pages/students/admissions', array(
+            'title'      => 'Admission Management',
+            'page_key'   => 'admissions',
+            'admissions' => $admissions,
+            'classes'    => $classes,
+            'sections'   => $sections,
+            'years'      => $years,
+            'filters'    => $filters,
+        ));
+    }
+
+    /* =========================================================================
+       7. Student Documents
+       ========================================================================= */
+    public function documents()
+    {
+        $filters = array(
+            'student_id'    => $this->input->get('student_id'),
+            'class_id'      => $this->input->get('class_id'),
+            'document_type' => $this->input->get('document_type'),
+        );
+
+        $documents = $this->Student_model->get_all_documents($filters);
+        $students  = $this->Student_model->get_all();
+        $classes   = $this->Class_model->get_all();
+
+        $this->render('pages/students/documents', array(
+            'title'     => 'Student Documents',
+            'page_key'  => 'student-documents',
+            'documents' => $documents,
+            'students'  => $students,
+            'classes'   => $classes,
+            'filters'   => $filters,
+        ));
+    }
+
+    public function upload_document($student_id = NULL)
+    {
+        if ($this->input->method() === 'post') {
+            $student_id = $this->input->post('student_id') ?: $student_id;
+            $docType    = $this->input->post('document_type', TRUE) ?: 'Other';
+            $docName    = $this->input->post('document_name', TRUE) ?: 'Document';
+
+            // Document file upload handling
+            $filePath = 'uploads/documents/doc_' . time() . '.pdf';
+            if (!empty($_FILES['document_file']['name'])) {
+                $uploadDir = FCPATH . 'uploads/documents/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['document_file']['name']);
+                if (move_uploaded_file($_FILES['document_file']['tmp_name'], $uploadDir . $fileName)) {
+                    $filePath = 'uploads/documents/' . $fileName;
+                    $docName = $docName ?: $_FILES['document_file']['name'];
+                }
+            }
+
+            $data = array(
+                'student_id'    => $student_id,
+                'document_type' => $docType,
+                'document_name' => $docName,
+                'file_path'     => $filePath,
+                'status'        => 1,
+                'created_at'    => date('Y-m-d H:i:s'),
+            );
+            $this->Student_model->add_document($data);
+            $this->session->set_flashdata('success', 'Document uploaded successfully.');
+
+            $referrer = $this->input->post('redirect_to');
+            redirect($referrer ?: 'students/profile/' . $student_id);
+            return;
+        }
+
+        redirect('students');
+    }
+
+    public function delete_document($document_id = NULL)
+    {
+        if ($document_id) {
+            $this->Student_model->delete_document($document_id);
+            $this->session->set_flashdata('success', 'Document removed successfully.');
+        }
+        $redirect = $this->input->get('redirect_to');
+        redirect($redirect ?: 'students/documents');
+    }
+
+    /* =========================================================================
+       8. Student ID Cards
+       ========================================================================= */
+    public function id_cards()
+    {
+        $class_id   = $this->input->get('class_id');
+        $section_id = $this->input->get('section_id');
+
+        $students = $this->Student_model->get_all(array(
+            'class_id'   => $class_id,
+            'section_id' => $section_id,
+            'status'     => 1
+        ));
+        $classes  = $this->Class_model->get_all();
+        $sections = $this->Section_model->get_all();
+
+        $this->render('pages/students/id_cards', array(
+            'title'    => 'Student ID Cards',
+            'page_key' => 'student-id-cards',
+            'students' => $students,
+            'classes'  => $classes,
+            'sections' => $sections,
+            'selected_class'   => $class_id,
+            'selected_section' => $section_id,
+        ));
+    }
+
+    /* =========================================================================
+       9. Student Promotion
+       ========================================================================= */
+    public function promotion()
+    {
+        if ($this->input->method() === 'post') {
+            $student_ids  = $this->input->post('student_ids');
+            $from_year    = $this->input->post('from_academic_year_id');
+            $from_class   = $this->input->post('from_class_id');
+            $from_sec     = $this->input->post('from_section_id');
+            $to_year      = $this->input->post('to_academic_year_id');
+            $to_class     = $this->input->post('to_class_id');
+            $to_sec       = $this->input->post('to_section_id');
+            $promo_type   = $this->input->post('promotion_type') ?: 'Promoted';
+            $remarks      = $this->input->post('remarks', TRUE);
+
+            if (!empty($student_ids) && is_array($student_ids)) {
+                $result = $this->Student_model->promote_students($student_ids, $from_year, $from_class, $from_sec, $to_year, $to_class, $to_sec, $promo_type, $remarks);
+                if ($result) {
+                    $this->session->set_flashdata('success', count($student_ids) . ' student(s) ' . strtolower($promo_type) . ' successfully.');
+                    redirect('students/promotion?from_year=' . $to_year . '&from_class=' . $to_class . '&from_section=' . $to_sec);
+                    return;
+                }
+            } else {
+                $this->session->set_flashdata('error', 'Please select at least one student to promote.');
+            }
+        }
+
+        $from_year  = $this->input->get('from_year') ?: 1;
+        $from_class = $this->input->get('from_class') ?: 8;
+        $from_sec   = $this->input->get('from_section');
+
+        $students = $this->Student_model->get_all(array(
+            'academic_year_id' => $from_year,
+            'class_id'         => $from_class,
+            'section_id'       => $from_sec,
+            'status'           => 1
+        ));
+
+        $promotions_history = $this->Student_model->get_promotions();
+        $classes  = $this->Class_model->get_all();
+        $sections = $this->Section_model->get_all();
+        $years    = $this->Academic_year_model->get_all();
+
+        $this->render('pages/students/promotion', array(
+            'title'              => 'Student Promotion',
+            'page_key'           => 'student-promotion',
+            'students'           => $students,
+            'promotions_history' => $promotions_history,
+            'classes'            => $classes,
+            'sections'           => $sections,
+            'years'              => $years,
+            'from_year'          => $from_year,
+            'from_class'         => $from_class,
+            'from_sec'           => $from_sec,
+        ));
+    }
+
+    /* =========================================================================
+       10. Transfer / TC Management
+       ========================================================================= */
+    public function transfers()
+    {
+        if ($this->input->method() === 'post') {
+            $student_id = $this->input->post('student_id');
+            $student    = $this->Student_model->get_by_id($student_id);
+
+            if ($student) {
+                $tcNumber = 'TC/' . date('Y') . '/' . sprintf('%03d', rand(10, 999));
+                $tcData = array(
+                    'student_id'        => $student_id,
+                    'tc_number'         => $tcNumber,
+                    'transfer_date'     => $this->input->post('transfer_date') ?: date('Y-m-d'),
+                    'reason'            => $this->input->post('reason', TRUE) ?: 'Parent Relocation',
+                    'previous_class_id' => $student->class_id,
+                    'academic_year_id'  => $student->academic_year_id,
+                    'conduct'           => $this->input->post('conduct', TRUE) ?: 'Good',
+                    'dues_cleared'      => 1,
+                    'status'            => 'Issued',
+                    'remarks'           => $this->input->post('remarks', TRUE),
+                    'created_at'        => date('Y-m-d H:i:s'),
+                );
+
+                $transfer_id = $this->Student_model->issue_transfer($tcData);
+                $this->session->set_flashdata('success', 'Transfer Certificate ' . $tcNumber . ' issued successfully.');
+                redirect('students/tc/' . $transfer_id);
+                return;
+            }
+        }
+
+        $transfers = $this->Student_model->get_transfers();
+        $students  = $this->Student_model->get_all(array('status' => 1));
+        $classes   = $this->Class_model->get_all();
+
+        $this->render('pages/students/transfers', array(
+            'title'     => 'Transfer / TC Management',
+            'page_key'  => 'student-transfers',
+            'transfers' => $transfers,
+            'students'  => $students,
+            'classes'   => $classes,
+        ));
+    }
+
+    public function tc($transfer_id = NULL)
+    {
+        if (!$transfer_id) {
+            redirect('students/transfers');
+            return;
+        }
+
+        $transfer = $this->Student_model->get_transfer_by_id($transfer_id);
+        if (!$transfer) {
+            $this->session->set_flashdata('error', 'Transfer certificate record not found.');
+            redirect('students/transfers');
+            return;
+        }
+
+        $this->render('pages/students/tc_print', array(
+            'title'      => 'Transfer Certificate - ' . $transfer->tc_number,
+            'page_key'   => 'student-transfers',
+            'transfer'   => $transfer,
+        ));
+    }
+
+    /* =========================================================================
+       11. Student Search & Filtering
+       ========================================================================= */
+    public function search()
+    {
+        $filters = array(
+            'academic_year_id' => $this->input->get('academic_year_id'),
+            'class_id'         => $this->input->get('class_id'),
+            'section_id'       => $this->input->get('section_id'),
+            'gender'           => $this->input->get('gender'),
+            'status'           => $this->input->get('status'),
+            'search'           => $this->input->get('search'),
+        );
+
+        $hasSearch = !empty($filters['search']) || !empty($filters['class_id']) || !empty($filters['section_id']) || !empty($filters['gender']) || !empty($filters['academic_year_id']) || ($filters['status'] !== '' && $filters['status'] !== NULL);
+
+        $students = $hasSearch ? $this->Student_model->get_all($filters) : $this->Student_model->get_all(array(), 20);
+        $totalCount = $this->Student_model->count_filtered($filters);
+
+        $classes  = $this->Class_model->get_all();
+        $sections = $this->Section_model->get_all();
+        $years    = $this->Academic_year_model->get_all();
+
+        $this->render('pages/students/search', array(
+            'title'      => 'Student Search & Filtering',
+            'page_key'   => 'student-search',
+            'students'   => $students,
+            'total_count'=> $totalCount,
+            'classes'    => $classes,
+            'sections'   => $sections,
+            'years'      => $years,
+            'filters'    => $filters,
         ));
     }
 }
+

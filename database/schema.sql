@@ -248,6 +248,84 @@ CREATE TABLE `tbl_student_documents` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
+-- 11b. Table: tbl_student_promotions
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_student_promotions`;
+CREATE TABLE `tbl_student_promotions` (
+  `promotion_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_id` INT UNSIGNED NOT NULL,
+  `from_academic_year_id` INT UNSIGNED NOT NULL,
+  `from_class_id` INT UNSIGNED NOT NULL,
+  `from_section_id` INT UNSIGNED NOT NULL,
+  `to_academic_year_id` INT UNSIGNED NOT NULL,
+  `to_class_id` INT UNSIGNED NOT NULL,
+  `to_section_id` INT UNSIGNED NOT NULL,
+  `promotion_date` DATE NOT NULL,
+  `promotion_type` ENUM('Promoted', 'Retained', 'Demoted', 'Transferred') NOT NULL DEFAULT 'Promoted',
+  `remarks` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`promotion_id`),
+  KEY `idx_promo_student` (`student_id`),
+  CONSTRAINT `fk_promo_student` FOREIGN KEY (`student_id`) REFERENCES `tbl_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 11c. Table: tbl_student_transfers
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_student_transfers`;
+CREATE TABLE `tbl_student_transfers` (
+  `transfer_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_id` INT UNSIGNED NOT NULL,
+  `tc_number` VARCHAR(50) NOT NULL,
+  `transfer_date` DATE NOT NULL,
+  `reason` VARCHAR(255) NOT NULL,
+  `previous_class_id` INT UNSIGNED NULL,
+  `academic_year_id` INT UNSIGNED NULL,
+  `conduct` VARCHAR(50) NOT NULL DEFAULT 'Good',
+  `dues_cleared` TINYINT(1) NOT NULL DEFAULT 1,
+  `status` ENUM('Requested', 'Approved', 'Issued', 'Cancelled') NOT NULL DEFAULT 'Issued',
+  `remarks` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`transfer_id`),
+  UNIQUE KEY `uk_tc_number` (`tc_number`),
+  KEY `idx_transfer_student` (`student_id`),
+  CONSTRAINT `fk_transfer_student` FOREIGN KEY (`student_id`) REFERENCES `tbl_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 11d. Table: tbl_admissions
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_admissions`;
+CREATE TABLE `tbl_admissions` (
+  `admission_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `application_number` VARCHAR(50) NOT NULL,
+  `first_name` VARCHAR(50) NOT NULL,
+  `last_name` VARCHAR(50) NOT NULL,
+  `gender` ENUM('Male', 'Female', 'Other') NOT NULL DEFAULT 'Male',
+  `date_of_birth` DATE NOT NULL,
+  `blood_group` VARCHAR(10) NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NULL,
+  `guardian_name` VARCHAR(100) NOT NULL,
+  `guardian_relation` VARCHAR(50) NULL DEFAULT 'Father',
+  `guardian_phone` VARCHAR(20) NOT NULL,
+  `guardian_email` VARCHAR(100) NULL,
+  `address` TEXT NULL,
+  `application_date` DATE NOT NULL,
+  `status` ENUM('Pending', 'Approved', 'Admitted', 'Rejected', 'Cancelled') NOT NULL DEFAULT 'Pending',
+  `student_id` INT UNSIGNED NULL,
+  `remarks` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`admission_id`),
+  UNIQUE KEY `uk_app_number` (`application_number`),
+  KEY `idx_admission_student` (`student_id`),
+  KEY `idx_admission_class` (`class_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
 -- 12. Table: tbl_attendance
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `tbl_attendance`;

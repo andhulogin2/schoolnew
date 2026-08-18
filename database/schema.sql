@@ -208,7 +208,7 @@ CREATE TABLE `tbl_students` (
   `religion` VARCHAR(50) NULL,
   `address` TEXT NULL,
   `guardian_name` VARCHAR(100) NOT NULL,
-  `guardian_relation` VARCHAR(50) NOT NULL DEFAULT 'Father',
+  `guardian_relation` VARCHAR(50) NULL DEFAULT 'Father',
   `guardian_phone` VARCHAR(20) NOT NULL,
   `guardian_email` VARCHAR(100) NULL,
   `academic_year_id` INT UNSIGNED NOT NULL,

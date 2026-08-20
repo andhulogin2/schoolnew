@@ -884,36 +884,187 @@ CREATE TABLE `tbl_finance_audit_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 17. Table: tbl_notices
+-- 17. Communication Module Tables
 -- ----------------------------------------------------------------------------
+
 DROP TABLE IF EXISTS `tbl_notices`;
 CREATE TABLE `tbl_notices` (
   `notice_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `category` ENUM('General', 'Academic', 'Examination', 'Holiday', 'Fee', 'Attendance', 'Event', 'Emergency', 'Other') NOT NULL DEFAULT 'General',
   `title` VARCHAR(255) NOT NULL,
-  `posted_by` VARCHAR(100) NOT NULL,
-  `audience` VARCHAR(100) NOT NULL DEFAULT 'All',
-  `notice_date` DATE NOT NULL,
   `content` TEXT NULL,
-  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `target_role` VARCHAR(100) NOT NULL DEFAULT 'All',
+  `target_type` ENUM('Entire School', 'Class', 'Section', 'Individual') NOT NULL DEFAULT 'Entire School',
+  `class_id` INT UNSIGNED NULL,
+  `section_id` INT UNSIGNED NULL,
+  `target_ids` TEXT NULL,
+  `priority` ENUM('Normal', 'Important', 'Urgent') NOT NULL DEFAULT 'Normal',
+  `attachment` VARCHAR(255) NULL,
+  `publish_date` DATE NOT NULL,
+  `expiry_date` DATE NULL,
+  `posted_by` VARCHAR(100) NOT NULL DEFAULT 'Admin',
+  `posted_by_id` INT UNSIGNED NULL,
+  `status` ENUM('Draft', 'Published', 'Scheduled', 'Expired', 'Archived') NOT NULL DEFAULT 'Published',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`notice_id`)
+  PRIMARY KEY (`notice_id`),
+  KEY `idx_not_date` (`publish_date`),
+  KEY `idx_not_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 18. Table: tbl_announcements
--- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `tbl_announcements`;
 CREATE TABLE `tbl_announcements` (
   `announcement_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `title` VARCHAR(255) NOT NULL,
-  `audience` VARCHAR(100) NOT NULL DEFAULT 'Whole School',
-  `announcement_date` DATE NOT NULL,
+  `category` VARCHAR(100) NOT NULL DEFAULT 'General',
   `content` TEXT NULL,
-  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `audience` VARCHAR(100) NOT NULL DEFAULT 'Whole School',
+  `target_role` VARCHAR(100) NOT NULL DEFAULT 'All',
+  `announcement_date` DATE NOT NULL,
+  `expiry_date` DATE NULL,
+  `priority` ENUM('Normal', 'Important', 'Urgent') NOT NULL DEFAULT 'Normal',
+  `attachment` VARCHAR(255) NULL,
+  `posted_by` VARCHAR(100) NOT NULL DEFAULT 'Principal',
+  `status` ENUM('Draft', 'Published', 'Scheduled', 'Archived') NOT NULL DEFAULT 'Published',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`announcement_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_communication_templates`;
+CREATE TABLE `tbl_communication_templates` (
+  `template_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `template_name` VARCHAR(150) NOT NULL,
+  `communication_type` ENUM('General', 'Attendance', 'Fee Reminder', 'Homework', 'Examination', 'Event', 'Emergency') NOT NULL DEFAULT 'General',
+  `channel` ENUM('In-App', 'SMS', 'WhatsApp', 'Email') NOT NULL DEFAULT 'SMS',
+  `subject` VARCHAR(255) NULL,
+  `message_template` TEXT NOT NULL,
+  `variables` VARCHAR(255) NOT NULL DEFAULT '{student_name}, {parent_name}, {date}, {school_name}',
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`template_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_communication_messages`;
+CREATE TABLE `tbl_communication_messages` (
+  `message_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `source_module` ENUM('Direct', 'Attendance', 'Fees', 'Homework', 'Examination', 'Timetable') NOT NULL DEFAULT 'Direct',
+  `source_ref_id` INT UNSIGNED NULL,
+  `channel` ENUM('In-App', 'SMS', 'WhatsApp', 'Email') NOT NULL DEFAULT 'In-App',
+  `template_id` INT UNSIGNED NULL,
+  `sender_id` INT UNSIGNED NULL,
+  `recipient_type` ENUM('All', 'Role', 'Class', 'Section', 'Individual') NOT NULL DEFAULT 'Individual',
+  `recipient_id` INT UNSIGNED NULL,
+  `recipient_name` VARCHAR(150) NULL,
+  `recipient_contact` VARCHAR(150) NULL,
+  `subject` VARCHAR(255) NULL,
+  `message` TEXT NOT NULL,
+  `attachment` VARCHAR(255) NULL,
+  `scheduled_at` DATETIME NULL,
+  `sent_at` DATETIME NULL,
+  `delivered_at` DATETIME NULL,
+  `status` ENUM('Draft', 'Scheduled', 'Processing', 'Sent', 'Delivered', 'Failed', 'Cancelled') NOT NULL DEFAULT 'Sent',
+  `failure_reason` TEXT NULL,
+  `retry_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`message_id`),
+  KEY `idx_msg_channel` (`channel`),
+  KEY `idx_msg_status` (`status`),
+  KEY `idx_msg_scheduled` (`scheduled_at`),
+  KEY `idx_msg_source` (`source_module`, `source_ref_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_conversations`;
+CREATE TABLE `tbl_conversations` (
+  `conversation_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `conversation_type` ENUM('Parent-Teacher', 'Internal', 'Group') NOT NULL DEFAULT 'Internal',
+  `group_id` INT UNSIGNED NULL,
+  `title` VARCHAR(255) NULL,
+  `created_by` INT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`conversation_id`),
+  KEY `idx_conv_type` (`conversation_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_conversation_participants`;
+CREATE TABLE `tbl_conversation_participants` (
+  `participant_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `conversation_id` INT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
+  `user_type` ENUM('Staff', 'Parent', 'Student') NOT NULL DEFAULT 'Staff',
+  `unread_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `last_read_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`participant_id`),
+  UNIQUE KEY `uk_conv_user` (`conversation_id`, `user_id`, `user_type`),
+  KEY `idx_cp_user` (`user_id`, `user_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_messages`;
+CREATE TABLE `tbl_messages` (
+  `message_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `conversation_id` INT UNSIGNED NOT NULL,
+  `sender_id` INT UNSIGNED NOT NULL,
+  `sender_type` ENUM('Staff', 'Parent', 'Student') NOT NULL DEFAULT 'Staff',
+  `message_text` TEXT NOT NULL,
+  `attachments` TEXT NULL,
+  `status` ENUM('Sent', 'Delivered', 'Read') NOT NULL DEFAULT 'Sent',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`message_id`),
+  KEY `idx_msg_conv` (`conversation_id`),
+  KEY `idx_msg_sender` (`sender_id`, `sender_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_communication_groups`;
+CREATE TABLE `tbl_communication_groups` (
+  `group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `group_name` VARCHAR(150) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `group_type` ENUM('Teachers', 'Parents', 'Management', 'Custom') NOT NULL DEFAULT 'Custom',
+  `member_user_ids` TEXT NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_communication_settings`;
+CREATE TABLE `tbl_communication_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `enable_inapp` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_sms` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_whatsapp` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_email` TINYINT(1) NOT NULL DEFAULT 1,
+  `sms_provider` VARCHAR(50) NOT NULL DEFAULT 'Generic SMS Gateway',
+  `sms_sender_id` VARCHAR(20) NOT NULL DEFAULT 'EDUSCH',
+  `whatsapp_provider` VARCHAR(50) NOT NULL DEFAULT 'WhatsApp Business API',
+  `email_from_name` VARCHAR(100) NOT NULL DEFAULT 'EduCore Model School',
+  `email_from_address` VARCHAR(100) NOT NULL DEFAULT 'notifications@educore.school',
+  `enable_scheduled_jobs` TINYINT(1) NOT NULL DEFAULT 1,
+  `max_retries` INT UNSIGNED NOT NULL DEFAULT 3,
+  `retry_interval_minutes` INT UNSIGNED NOT NULL DEFAULT 15,
+  `parent_teacher_direct_messaging` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_communication_audit_logs`;
+CREATE TABLE `tbl_communication_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `details` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_comm_action` (`action`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

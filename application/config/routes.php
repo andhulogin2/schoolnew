@@ -183,6 +183,28 @@ $route['homework/publish/(:num)']            = 'homework/publish/$1';
 $route['homework/archive/(:num)']            = 'homework/archive/$1';
 $route['homework/delete/(:num)']             = 'homework/delete/$1';
 
-$route['communication']      = 'communication/index';
+$route['communication']                           = 'communication/index';
+$route['communication/dashboard']                 = 'communication/index';
+$route['communication/notices']                   = 'communication/notices';
+$route['communication/create_notice']             = 'communication/create_notice';
+$route['communication/delete_notice/(:num)']      = 'communication/delete_notice/$1';
+$route['communication/archive_notice/(:num)']     = 'communication/archive_notice/$1';
+$route['communication/announcements']             = 'communication/announcements';
+$route['communication/announcement_details/(:num)']= 'communication/announcement_details/$1';
+$route['communication/delete_announcement/(:num)']= 'communication/delete_announcement/$1';
+$route['communication/sms']                       = 'communication/sms';
+$route['communication/whatsapp']                  = 'communication/whatsapp';
+$route['communication/email']                     = 'communication/email';
+$route['communication/templates']                 = 'communication/templates';
+$route['communication/scheduled']                 = 'communication/scheduled';
+$route['communication/history']                   = 'communication/history';
+$route['communication/reports']                   = 'communication/reports';
+$route['communication/parent_teacher']            = 'communication/parent_teacher';
+$route['communication/messages']                  = 'communication/messages';
+$route['communication/conversations']             = 'communication/conversations';
+$route['communication/conversation_view/(:num)']  = 'communication/conversation_view/$1';
+$route['communication/groups']                    = 'communication/groups';
+$route['communication/settings']                  = 'communication/settings';
+
 $route['unauthorized']       = 'unauthorized/index';
 

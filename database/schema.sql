@@ -757,19 +757,186 @@ CREATE TABLE `tbl_school_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- Future Module Tables
 -- ----------------------------------------------------------------------------
+-- 21. Examination & Results Module Tables
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_exam_types`;
+CREATE TABLE `tbl_exam_types` (
+  `exam_type_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(100) NOT NULL,
+  `description` TEXT NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`exam_type_id`),
+  UNIQUE KEY `uk_exam_type_name` (`type_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `tbl_exams`;
 CREATE TABLE `tbl_exams` (
   `exam_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `academic_year_id` INT UNSIGNED NOT NULL,
   `exam_name` VARCHAR(100) NOT NULL,
+  `exam_type_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `description` TEXT NULL,
   `start_date` DATE NOT NULL,
   `end_date` DATE NOT NULL,
+  `applicable_classes` TEXT NULL,
+  `status` ENUM('Draft', 'Scheduled', 'Ongoing', 'Completed', 'Marks Pending', 'Under Verification', 'Published', 'Cancelled') NOT NULL DEFAULT 'Draft',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`exam_id`),
+  KEY `idx_exam_year` (`academic_year_id`),
+  KEY `idx_exam_type` (`exam_type_id`),
+  KEY `idx_exam_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_exam_schedules`;
+CREATE TABLE `tbl_exam_schedules` (
+  `schedule_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `exam_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `subject_id` INT UNSIGNED NOT NULL,
+  `teacher_id` INT UNSIGNED NULL,
+  `exam_date` DATE NOT NULL,
+  `start_time` TIME NOT NULL,
+  `end_time` TIME NOT NULL,
+  `max_marks` DECIMAL(6,2) NOT NULL DEFAULT 100.00,
+  `passing_marks` DECIMAL(6,2) NOT NULL DEFAULT 35.00,
+  `room_no` VARCHAR(50) NULL,
+  `instructions` TEXT NULL,
+  `status` ENUM('Scheduled', 'Ongoing', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Scheduled',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`schedule_id`),
+  UNIQUE KEY `uk_exam_class_sec_subj` (`exam_id`, `class_id`, `section_id`, `subject_id`),
+  KEY `idx_sched_exam` (`exam_id`),
+  KEY `idx_sched_class_sec` (`class_id`, `section_id`),
+  KEY `idx_sched_subject` (`subject_id`),
+  KEY `idx_sched_teacher` (`teacher_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_exam_marks`;
+CREATE TABLE `tbl_exam_marks` (
+  `mark_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `exam_id` INT UNSIGNED NOT NULL,
+  `schedule_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `subject_id` INT UNSIGNED NOT NULL,
+  `marks_obtained` DECIMAL(6,2) NULL,
+  `is_absent` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_exempted` TINYINT(1) NOT NULL DEFAULT 0,
+  `grade` VARCHAR(10) NULL,
+  `grade_point` DECIMAL(4,2) NULL,
+  `status` ENUM('Draft', 'Submitted', 'Under Verification', 'Approved', 'Rejected') NOT NULL DEFAULT 'Draft',
+  `remarks` VARCHAR(255) NULL,
+  `entered_by` INT UNSIGNED NULL,
+  `submitted_at` DATETIME NULL,
+  `approved_by` INT UNSIGNED NULL,
+  `approved_at` DATETIME NULL,
+  `rejection_reason` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`mark_id`),
+  UNIQUE KEY `uk_exam_student_subject` (`exam_id`, `student_id`, `subject_id`),
+  KEY `idx_mark_exam` (`exam_id`),
+  KEY `idx_mark_student` (`student_id`),
+  KEY `idx_mark_schedule` (`schedule_id`),
+  KEY `idx_mark_class_sec` (`class_id`, `section_id`),
+  KEY `idx_mark_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_grades`;
+CREATE TABLE `tbl_grades` (
+  `grade_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `grade_name` VARCHAR(10) NOT NULL,
+  `min_percentage` DECIMAL(5,2) NOT NULL,
+  `max_percentage` DECIMAL(5,2) NOT NULL,
+  `grade_point` DECIMAL(4,2) NOT NULL,
+  `description` VARCHAR(100) NULL,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`exam_id`)
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`grade_id`),
+  UNIQUE KEY `uk_grade_name` (`grade_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_student_results`;
+CREATE TABLE `tbl_student_results` (
+  `result_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `exam_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `total_marks` DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+  `max_marks` DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+  `percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `overall_grade` VARCHAR(10) NOT NULL DEFAULT 'F',
+  `gpa` DECIMAL(4,2) NOT NULL DEFAULT 0.00,
+  `pass_status` ENUM('Pass', 'Fail', 'Withheld') NOT NULL DEFAULT 'Pass',
+  `failed_subjects_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `class_rank` INT UNSIGNED NULL,
+  `section_rank` INT UNSIGNED NULL,
+  `is_published` TINYINT(1) NOT NULL DEFAULT 0,
+  `published_at` DATETIME NULL,
+  `published_by` INT UNSIGNED NULL,
+  `teacher_remarks` TEXT NULL,
+  `principal_remarks` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`result_id`),
+  UNIQUE KEY `uk_result_exam_student` (`exam_id`, `student_id`),
+  KEY `idx_res_exam` (`exam_id`),
+  KEY `idx_res_student` (`student_id`),
+  KEY `idx_res_class_sec` (`class_id`, `section_id`),
+  KEY `idx_res_published` (`is_published`),
+  KEY `idx_res_rank` (`class_rank`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_examination_settings`;
+CREATE TABLE `tbl_examination_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `decimal_precision` INT UNSIGNED NOT NULL DEFAULT 2,
+  `default_max_marks` DECIMAL(6,2) NOT NULL DEFAULT 100.00,
+  `default_passing_marks` DECIMAL(6,2) NOT NULL DEFAULT 35.00,
+  `subject_pass_mark_rule` TINYINT(1) NOT NULL DEFAULT 1,
+  `overall_pass_percentage` DECIMAL(5,2) NOT NULL DEFAULT 35.00,
+  `single_subject_fail_overall` TINYINT(1) NOT NULL DEFAULT 1,
+  `rank_criteria` ENUM('Percentage', 'Total Marks', 'GPA') NOT NULL DEFAULT 'Percentage',
+  `include_failed_in_rank` TINYINT(1) NOT NULL DEFAULT 0,
+  `show_rank_on_report_card` TINYINT(1) NOT NULL DEFAULT 1,
+  `show_attendance_on_report_card` TINYINT(1) NOT NULL DEFAULT 1,
+  `report_card_header` TEXT NULL,
+  `principal_signature_title` VARCHAR(100) NOT NULL DEFAULT 'Principal',
+  `teacher_signature_title` VARCHAR(100) NOT NULL DEFAULT 'Class Teacher',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_exam_audit_logs`;
+CREATE TABLE `tbl_exam_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `details` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_audit_action` (`action`),
+  KEY `idx_audit_entity` (`entity_type`, `entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 22. Homework & Other Future Modules
+-- ----------------------------------------------------------------------------
 
 DROP TABLE IF EXISTS `tbl_homework`;
 CREATE TABLE `tbl_homework` (

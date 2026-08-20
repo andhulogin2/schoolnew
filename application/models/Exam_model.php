@@ -1,0 +1,227 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Exam_model extends CI_Model {
+
+    protected $table = 'tbl_exams';
+    protected $primaryKey = 'exam_id';
+
+    public function get_all($filters = array())
+    {
+        $this->db
+            ->select('e.*, t.type_name, y.year_name,
+                (SELECT COUNT(*) FROM tbl_exam_schedules s WHERE s.exam_id = e.exam_id) as schedule_count,
+                (SELECT COUNT(DISTINCT m.student_id) FROM tbl_exam_marks m WHERE m.exam_id = e.exam_id) as marks_student_count,
+                (SELECT COUNT(*) FROM tbl_student_results r WHERE r.exam_id = e.exam_id) as result_count')
+            ->from('tbl_exams e')
+            ->join('tbl_exam_types t', 't.exam_type_id = e.exam_type_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = e.academic_year_id', 'left')
+            ->order_by('e.start_date', 'DESC');
+
+        if (!empty($filters['academic_year_id'])) {
+            $this->db->where('e.academic_year_id', $filters['academic_year_id']);
+        }
+        if (!empty($filters['exam_type_id'])) {
+            $this->db->where('e.exam_type_id', $filters['exam_type_id']);
+        }
+        if (!empty($filters['status'])) {
+            $this->db->where('e.status', $filters['status']);
+        }
+        if (!empty($filters['search'])) {
+            $s = $filters['search'];
+            $this->db->group_start()
+                ->like('e.exam_name', $s)
+                ->or_like('t.type_name', $s)
+                ->or_like('e.description', $s)
+                ->group_end();
+        }
+
+        $results = $this->db->get()->result();
+
+        // Decode applicable classes
+        foreach ($results as $row) {
+            $row->class_ids = !empty($row->applicable_classes) ? json_decode($row->applicable_classes, TRUE) : [];
+            if (!is_array($row->class_ids)) $row->class_ids = [];
+            
+            if (!empty($row->class_ids)) {
+                $c_rows = $this->db->select('class_name')->where_in('class_id', $row->class_ids)->get('tbl_classes')->result();
+                $row->class_names = array_map(function($c) { return $c->class_name; }, $c_rows);
+            } else {
+                $row->class_names = ['All Classes'];
+            }
+        }
+
+        return $results;
+    }
+
+    public function get_by_id($id)
+    {
+        $exam = $this->db
+            ->select('e.*, t.type_name, y.year_name')
+            ->from('tbl_exams e')
+            ->join('tbl_exam_types t', 't.exam_type_id = e.exam_type_id', 'left')
+            ->join('tbl_academic_years y', 'y.academic_year_id = e.academic_year_id', 'left')
+            ->where('e.exam_id', $id)
+            ->get()
+            ->row();
+
+        if ($exam) {
+            $exam->class_ids = !empty($exam->applicable_classes) ? json_decode($exam->applicable_classes, TRUE) : [];
+            if (!is_array($exam->class_ids)) $exam->class_ids = [];
+        }
+
+        return $exam;
+    }
+
+    public function insert($data)
+    {
+        if (isset($data['applicable_classes']) && is_array($data['applicable_classes'])) {
+            $data['applicable_classes'] = json_encode(array_map('intval', $data['applicable_classes']));
+        }
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $this->db->insert($this->table, $data);
+        return $this->db->insert_id();
+    }
+
+    public function update($id, $data)
+    {
+        if (isset($data['applicable_classes']) && is_array($data['applicable_classes'])) {
+            $data['applicable_classes'] = json_encode(array_map('intval', $data['applicable_classes']));
+        }
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        return $this->db->where($this->primaryKey, $id)->update($this->table, $data);
+    }
+
+    public function delete($id)
+    {
+        // Safe delete / cascade cleanup
+        $this->db->where('exam_id', $id)->delete('tbl_exam_marks');
+        $this->db->where('exam_id', $id)->delete('tbl_exam_schedules');
+        $this->db->where('exam_id', $id)->delete('tbl_student_results');
+        return $this->db->where($this->primaryKey, $id)->delete($this->table);
+    }
+
+    /* =========================================================================
+       Dashboard & Statistical Queries
+       ========================================================================= */
+    public function get_dashboard_stats($year_id = NULL)
+    {
+        $today = date('Y-m-d');
+
+        $this->db->from($this->table);
+        if ($year_id) $this->db->where('academic_year_id', $year_id);
+        $total_exams = $this->db->count_all_results();
+
+        $this->db->from($this->table)->where('start_date >', $today);
+        if ($year_id) $this->db->where('academic_year_id', $year_id);
+        $upcoming_exams = $this->db->count_all_results();
+
+        $this->db->from($this->table)->where('end_date <', $today);
+        if ($year_id) $this->db->where('academic_year_id', $year_id);
+        $completed_exams = $this->db->count_all_results();
+
+        $this->db->from('tbl_student_results')->where('is_published', 1);
+        if ($year_id) $this->db->where('academic_year_id', $year_id);
+        $published_results = $this->db->count_all_results();
+
+        $this->db->from('tbl_exam_marks')->where('status', 'Draft');
+        if ($year_id) $this->db->where('academic_year_id', $year_id);
+        $pending_marks = $this->db->count_all_results();
+
+        $this->db->from('tbl_exam_marks')->where_in('status', ['Submitted', 'Under Verification']);
+        if ($year_id) $this->db->where('academic_year_id', $year_id);
+        $pending_verification = $this->db->count_all_results();
+
+        return (object) [
+            'total_exams'          => $total_exams,
+            'upcoming_exams'       => $upcoming_exams,
+            'completed_exams'      => $completed_exams,
+            'published_results'    => $published_results,
+            'pending_marks'        => $pending_marks,
+            'pending_verification' => $pending_verification,
+        ];
+    }
+
+    public function get_upcoming_exam_schedules($year_id = NULL, $limit = 6)
+    {
+        $today = date('Y-m-d');
+        $this->db
+            ->select('s.*, e.exam_name, c.class_name, sec.section_name, sub.subject_name, st.full_name as teacher_name')
+            ->from('tbl_exam_schedules s')
+            ->join('tbl_exams e', 'e.exam_id = s.exam_id', 'inner')
+            ->join('tbl_classes c', 'c.class_id = s.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = s.section_id', 'left')
+            ->join('tbl_subjects sub', 'sub.subject_id = s.subject_id', 'left')
+            ->join('tbl_staff st', 'st.staff_id = s.teacher_id', 'left')
+            ->where('s.exam_date >=', $today)
+            ->order_by('s.exam_date', 'ASC')
+            ->order_by('s.start_time', 'ASC')
+            ->limit($limit);
+
+        if ($year_id) $this->db->where('s.academic_year_id', $year_id);
+
+        return $this->db->get()->result();
+    }
+
+    public function get_recent_published_results($year_id = NULL, $limit = 5)
+    {
+        $this->db
+            ->select('e.exam_id, e.exam_name, c.class_name, sec.section_name, r.published_at, COUNT(r.result_id) as total_students,
+                SUM(CASE WHEN r.pass_status = "Pass" THEN 1 ELSE 0 END) as passed_count')
+            ->from('tbl_student_results r')
+            ->join('tbl_exams e', 'e.exam_id = r.exam_id', 'inner')
+            ->join('tbl_classes c', 'c.class_id = r.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = r.section_id', 'left')
+            ->where('r.is_published', 1)
+            ->group_by(['r.exam_id', 'r.class_id', 'r.section_id', 'r.published_at'])
+            ->order_by('r.published_at', 'DESC')
+            ->limit($limit);
+
+        if ($year_id) $this->db->where('r.academic_year_id', $year_id);
+
+        return $this->db->get()->result();
+    }
+
+    public function get_marks_entry_progress_summary($exam_id = NULL)
+    {
+        $this->db
+            ->select('s.schedule_id, s.exam_id, e.exam_name, c.class_id, c.class_name, sec.section_id, sec.section_name, sub.subject_name,
+                COUNT(st.student_id) as total_students,
+                COUNT(m.mark_id) as entered_marks_count,
+                SUM(CASE WHEN m.status = "Approved" THEN 1 ELSE 0 END) as approved_count,
+                SUM(CASE WHEN m.status = "Submitted" THEN 1 ELSE 0 END) as submitted_count,
+                SUM(CASE WHEN m.status = "Draft" THEN 1 ELSE 0 END) as draft_count')
+            ->from('tbl_exam_schedules s')
+            ->join('tbl_exams e', 'e.exam_id = s.exam_id', 'inner')
+            ->join('tbl_classes c', 'c.class_id = s.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = s.section_id', 'left')
+            ->join('tbl_subjects sub', 'sub.subject_id = s.subject_id', 'left')
+            ->join('tbl_students st', 'st.class_id = s.class_id AND st.section_id = s.section_id AND st.status = 1', 'left')
+            ->join('tbl_exam_marks m', 'm.schedule_id = s.schedule_id AND m.student_id = st.student_id', 'left')
+            ->group_by('s.schedule_id')
+            ->order_by('c.class_id', 'ASC')
+            ->order_by('sec.section_id', 'ASC')
+            ->order_by('sub.subject_name', 'ASC');
+
+        if ($exam_id) $this->db->where('s.exam_id', $exam_id);
+
+        $rows = $this->db->get()->result();
+
+        foreach ($rows as $r) {
+            $total = (int)$r->total_students;
+            $entered = (int)$r->entered_marks_count;
+            $r->progress_pct = ($total > 0) ? round(($entered / $total) * 100, 1) : 0;
+            if ($r->approved_count == $total && $total > 0) {
+                $r->status_label = 'Approved';
+            } elseif ($r->submitted_count > 0) {
+                $r->status_label = 'Under Verification';
+            } elseif ($entered > 0) {
+                $r->status_label = 'Draft in Progress';
+            } else {
+                $r->status_label = 'Pending Entry';
+            }
+        }
+
+        return $rows;
+    }
+}

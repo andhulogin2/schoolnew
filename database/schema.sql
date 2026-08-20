@@ -1152,23 +1152,148 @@ CREATE TABLE `tbl_exam_audit_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 22. Homework & Other Future Modules
+-- 22. Homework & Assignments Module
 -- ----------------------------------------------------------------------------
 
-DROP TABLE IF EXISTS `tbl_homework`;
-CREATE TABLE `tbl_homework` (
-  `homework_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+DROP TABLE IF EXISTS `tbl_assignment_types`;
+CREATE TABLE `tbl_assignment_types` (
+  `type_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(100) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`type_id`),
+  UNIQUE KEY `uk_type_name` (`type_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_assignments`;
+CREATE TABLE `tbl_assignments` (
+  `assignment_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
   `class_id` INT UNSIGNED NOT NULL,
   `section_id` INT UNSIGNED NOT NULL,
   `subject_id` INT UNSIGNED NOT NULL,
   `teacher_id` INT UNSIGNED NOT NULL,
+  `assignment_type_id` INT UNSIGNED NOT NULL DEFAULT 1,
   `title` VARCHAR(255) NOT NULL,
   `description` TEXT NULL,
+  `instructions` TEXT NULL,
   `assigned_date` DATE NOT NULL,
-  `submission_date` DATE NOT NULL,
-  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `due_date` DATE NOT NULL,
+  `due_time` TIME NULL,
+  `max_marks` DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+  `allow_remarks` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_file_submission` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_text_submission` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_multiple_files` TINYINT(1) NOT NULL DEFAULT 0,
+  `allow_resubmission` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_late_submission` TINYINT(1) NOT NULL DEFAULT 1,
+  `target_type` ENUM('Class', 'Section', 'Individual') NOT NULL DEFAULT 'Section',
+  `target_student_ids` TEXT NULL,
+  `status` ENUM('Draft', 'Published', 'Active', 'Closed', 'Archived') NOT NULL DEFAULT 'Published',
+  `attachments` TEXT NULL,
+  `created_by` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`homework_id`)
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`assignment_id`),
+  KEY `idx_asgn_class` (`class_id`, `section_id`),
+  KEY `idx_asgn_subject` (`subject_id`),
+  KEY `idx_asgn_teacher` (`teacher_id`),
+  KEY `idx_asgn_due` (`due_date`),
+  KEY `idx_asgn_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_assignment_submissions`;
+CREATE TABLE `tbl_assignment_submissions` (
+  `submission_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `assignment_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `submission_version` INT UNSIGNED NOT NULL DEFAULT 1,
+  `submitted_text` TEXT NULL,
+  `submitted_files` TEXT NULL,
+  `submitted_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_late` TINYINT(1) NOT NULL DEFAULT 0,
+  `late_duration_minutes` INT UNSIGNED NOT NULL DEFAULT 0,
+  `status` ENUM('Pending', 'Submitted', 'Late', 'Reviewed', 'Returned') NOT NULL DEFAULT 'Submitted',
+  `marks_obtained` DECIMAL(5,2) NULL,
+  `grade` VARCHAR(10) NULL,
+  `teacher_remarks` TEXT NULL,
+  `correction_reason` TEXT NULL,
+  `reviewed_by` INT UNSIGNED NULL,
+  `reviewed_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`submission_id`),
+  UNIQUE KEY `uk_asgn_student` (`assignment_id`, `student_id`),
+  KEY `idx_subm_asgn` (`assignment_id`),
+  KEY `idx_subm_student` (`student_id`),
+  KEY `idx_subm_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_submission_history`;
+CREATE TABLE `tbl_submission_history` (
+  `history_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `submission_id` INT UNSIGNED NOT NULL,
+  `assignment_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `version` INT UNSIGNED NOT NULL DEFAULT 1,
+  `submitted_text` TEXT NULL,
+  `submitted_files` TEXT NULL,
+  `submitted_at` DATETIME NOT NULL,
+  `marks_obtained` DECIMAL(5,2) NULL,
+  `grade` VARCHAR(10) NULL,
+  `teacher_remarks` TEXT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'Submitted',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`history_id`),
+  KEY `idx_hist_submission` (`submission_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_homework_notifications`;
+CREATE TABLE `tbl_homework_notifications` (
+  `notification_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `assignment_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `parent_name` VARCHAR(100) NULL,
+  `parent_phone` VARCHAR(20) NULL,
+  `parent_email` VARCHAR(100) NULL,
+  `notification_type` ENUM('New Assignment', 'Upcoming Due', 'Overdue', 'Submission Received', 'Submission Reviewed', 'Returned') NOT NULL,
+  `message` TEXT NOT NULL,
+  `status` ENUM('Pending', 'Sent', 'Failed') NOT NULL DEFAULT 'Pending',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`notification_id`),
+  KEY `idx_hw_notif_asgn` (`assignment_id`),
+  KEY `idx_hw_notif_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_homework_settings`;
+CREATE TABLE `tbl_homework_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `default_submission_deadline_days` INT UNSIGNED NOT NULL DEFAULT 3,
+  `allow_late_submissions_default` TINYINT(1) NOT NULL DEFAULT 1,
+  `max_upload_size_mb` INT UNSIGNED NOT NULL DEFAULT 10,
+  `allowed_file_extensions` VARCHAR(255) NOT NULL DEFAULT 'pdf,doc,docx,jpg,jpeg,png,zip,txt',
+  `enable_grading` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_parent_notifications` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_homework_audit_logs`;
+CREATE TABLE `tbl_homework_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `details` TEXT NULL,
+  `previous_value` TEXT NULL,
+  `new_value` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_hw_action` (`action`),
+  KEY `idx_hw_entity` (`entity_type`, `entity_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `tbl_leave_requests`;

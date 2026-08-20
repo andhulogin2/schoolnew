@@ -162,7 +162,27 @@ $route['timetable/settings']            = 'timetable/settings';
 $route['timetable/delete_slot/(:num)']  = 'timetable/delete_slot/$1';
 $route['timetable/ajax_get_entry/(:num)']= 'timetable/ajax_get_entry/$1';
 
-$route['homework']           = 'homework/index';
+$route['homework']                           = 'homework/index';
+$route['homework/dashboard']                 = 'homework/index';
+$route['homework/assignments']               = 'homework/assignments';
+$route['homework/create']                    = 'homework/create';
+$route['homework/edit/(:num)']               = 'homework/edit/$1';
+$route['homework/details/(:num)']            = 'homework/details/$1';
+$route['homework/types']                     = 'homework/types';
+$route['homework/subjects']                  = 'homework/subjects';
+$route['homework/classes']                   = 'homework/classes';
+$route['homework/calendar']                  = 'homework/calendar';
+$route['homework/submissions']               = 'homework/submissions';
+$route['homework/submission_detail/(:num)']  = 'homework/submission_detail/$1';
+$route['homework/review/(:num)']             = 'homework/review/$1';
+$route['homework/student_view/(:num)']       = 'homework/student_view/$1';
+$route['homework/reports']                   = 'homework/reports';
+$route['homework/settings']                  = 'homework/settings';
+$route['homework/duplicate/(:num)']          = 'homework/duplicate/$1';
+$route['homework/publish/(:num)']            = 'homework/publish/$1';
+$route['homework/archive/(:num)']            = 'homework/archive/$1';
+$route['homework/delete/(:num)']             = 'homework/delete/$1';
+
 $route['communication']      = 'communication/index';
 $route['unauthorized']       = 'unauthorized/index';
 

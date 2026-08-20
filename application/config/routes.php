@@ -206,5 +206,23 @@ $route['communication/conversation_view/(:num)']  = 'communication/conversation_
 $route['communication/groups']                    = 'communication/groups';
 $route['communication/settings']                  = 'communication/settings';
 
+$route['leave']                                   = 'leave/index';
+$route['leave/dashboard']                         = 'leave/index';
+$route['leave/student_leave']                     = 'leave/student_leave';
+$route['leave/staff_leave']                       = 'leave/staff_leave';
+$route['leave/types']                             = 'leave/types';
+$route['leave/request']                           = 'leave/request';
+$route['leave/approval']                          = 'leave/approval';
+$route['leave/approve/(:num)']                    = 'leave/approve_action/$1';
+$route['leave/reject/(:num)']                     = 'leave/reject_action/$1';
+$route['leave/clarification/(:num)']              = 'leave/clarification_action/$1';
+$route['leave/cancel/(:num)']                     = 'leave/cancel_action/$1';
+$route['leave/balances']                          = 'leave/balances';
+$route['leave/calendar']                          = 'leave/calendar';
+$route['leave/history']                           = 'leave/history';
+$route['leave/details/(:num)']                    = 'leave/details/$1';
+$route['leave/reports']                           = 'leave/reports';
+$route['leave/settings']                          = 'leave/settings';
+
 $route['unauthorized']       = 'unauthorized/index';
 

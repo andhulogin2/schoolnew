@@ -3,11 +3,369 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Leave extends MY_Controller {
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->model('Leave_model');
+        $this->load->model('Leave_type_model');
+        $this->load->model('Leave_balance_model');
+        $this->load->model('Leave_setting_model');
+        $this->load->model('Academic_year_model');
+        $this->load->model('Class_model');
+        $this->load->model('Section_model');
+        $this->load->model('Student_model');
+        $this->load->model('Staff_model');
+    }
+
+    // 1. Leave Dashboard
     public function index()
     {
-        $this->render('pages/leave/index', array(
-            'title'    => 'Leave Management',
-            'page_key' => 'leave-management',
-        ));
+        $this->dashboard();
+    }
+
+    public function dashboard()
+    {
+        $data['title'] = 'Leave Dashboard';
+        $data['stats'] = $this->Leave_model->get_dashboard_stats();
+        $data['recent_student_leaves'] = $this->Leave_model->get_applications(['applicant_type' => 'Student'], 5);
+        $data['recent_staff_leaves'] = $this->Leave_model->get_applications(['applicant_type' => 'Staff'], 5);
+        $data['pending_approvals'] = $this->Leave_model->get_applications(['status' => 'Pending'], 6);
+
+        $this->render('pages/leave/dashboard', $data);
+    }
+
+    // 2. Student Leave Directory
+    public function student_leave()
+    {
+        $filters = [
+            'applicant_type' => 'Student',
+            'class_id'       => $this->input->get('class_id') ?: NULL,
+            'section_id'     => $this->input->get('section_id') ?: NULL,
+            'leave_type_id'  => $this->input->get('leave_type_id') ?: NULL,
+            'status'         => $this->input->get('status') ?: NULL,
+            'search'         => $this->input->get('search') ?: NULL,
+        ];
+
+        $data['title'] = 'Student Leave Management';
+        $data['filters'] = $filters;
+        $data['classes'] = $this->Class_model->get_all(TRUE);
+        $data['leave_types'] = $this->Leave_type_model->get_all('Students');
+        $data['applications'] = $this->Leave_model->get_applications($filters);
+
+        $this->render('pages/leave/student_leave', $data);
+    }
+
+    // 3. Staff Leave Directory
+    public function staff_leave()
+    {
+        $filters = [
+            'applicant_type' => 'Staff',
+            'department_id'  => $this->input->get('department_id') ?: NULL,
+            'leave_type_id'  => $this->input->get('leave_type_id') ?: NULL,
+            'status'         => $this->input->get('status') ?: NULL,
+            'search'         => $this->input->get('search') ?: NULL,
+        ];
+
+        $data['title'] = 'Staff Leave Management';
+        $data['filters'] = $filters;
+        $data['departments'] = $this->db->get('tbl_departments')->result();
+        $data['leave_types'] = $this->Leave_type_model->get_all('Staff');
+        $data['applications'] = $this->Leave_model->get_applications($filters);
+
+        $this->render('pages/leave/staff_leave', $data);
+    }
+
+    // 4. Leave Types Management
+    public function types()
+    {
+        if ($this->input->post()) {
+            $type_id = (int)$this->input->post('type_id');
+            $action = $this->input->post('action');
+
+            if ($action === 'delete') {
+                $this->Leave_type_model->delete_or_deactivate($type_id);
+                $this->session->set_flashdata('success', 'Leave type removed/deactivated.');
+            } else {
+                $postData = [
+                    'type_name'           => trim($this->input->post('type_name')),
+                    'type_code'           => strtoupper(trim($this->input->post('type_code'))),
+                    'applicable_to'       => $this->input->post('applicable_to') ?: 'Both',
+                    'description'         => trim($this->input->post('description')),
+                    'max_days'            => (int)$this->input->post('max_days'),
+                    'requires_document'   => $this->input->post('requires_document') ? 1 : 0,
+                    'requires_approval'   => $this->input->post('requires_approval') ? 1 : 0,
+                    'allow_half_day'      => $this->input->post('allow_half_day') ? 1 : 0,
+                    'allow_carry_forward' => $this->input->post('allow_carry_forward') ? 1 : 0,
+                    'status'              => $this->input->post('status') ? 1 : 0
+                ];
+
+                if ($type_id > 0) {
+                    $this->Leave_type_model->update($type_id, $postData);
+                    $this->session->set_flashdata('success', 'Leave type updated.');
+                } else {
+                    $this->Leave_type_model->insert($postData);
+                    $this->session->set_flashdata('success', 'New leave type created.');
+                }
+            }
+            redirect('leave/types');
+            return;
+        }
+
+        $data['title'] = 'Leave Types';
+        $data['types'] = $this->Leave_type_model->get_all();
+
+        $this->render('pages/leave/types', $data);
+    }
+
+    // 5. Leave Request Form (Student & Staff)
+    public function request()
+    {
+        if ($this->input->post()) {
+            $applicant_type = $this->input->post('applicant_type') ?: 'Student';
+            $from_date = $this->input->post('from_date');
+            $to_date = $this->input->post('to_date') ?: $from_date;
+            $is_half_day = $this->input->post('is_half_day') ? 1 : 0;
+            $half_day_type = $this->input->post('half_day_type') ?: 'Full Day';
+            $leave_type_id = (int)$this->input->post('leave_type_id');
+
+            $entity_id = ($applicant_type === 'Student') ? (int)$this->input->post('student_id') : (int)$this->input->post('staff_id');
+
+            // Overlapping check
+            if ($this->Leave_model->check_overlapping($applicant_type, $entity_id, $from_date, $to_date)) {
+                $this->session->set_flashdata('error', 'A leave request already exists or overlaps with the selected date range.');
+                redirect('leave/request');
+                return;
+            }
+
+            // Duration calculation
+            $duration = $this->Leave_model->calculate_duration($from_date, $to_date, $is_half_day);
+
+            // Attachment upload
+            $attachment = NULL;
+            if (!empty($_FILES['attachment']['name'])) {
+                $upload_path = './uploads/leaves/';
+                if (!is_dir($upload_path)) mkdir($upload_path, 0777, TRUE);
+
+                $config['upload_path']   = $upload_path;
+                $config['allowed_types'] = 'pdf|doc|docx|jpg|jpeg|png';
+                $config['max_size']      = 10240;
+                $this->load->library('upload', $config);
+
+                if ($this->upload->do_upload('attachment')) {
+                    $upData = $this->upload->data();
+                    $attachment = $upData['file_name'];
+                }
+            }
+
+            // Class & Section lookup for student
+            $class_id = NULL;
+            $section_id = NULL;
+            if ($applicant_type === 'Student') {
+                $st = $this->Student_model->get_by_id($entity_id);
+                if ($st) {
+                    $class_id = $st->class_id;
+                    $section_id = $st->section_id;
+                }
+            }
+
+            $appData = [
+                'applicant_type'   => $applicant_type,
+                'student_id'       => ($applicant_type === 'Student') ? $entity_id : NULL,
+                'staff_id'         => ($applicant_type === 'Staff') ? $entity_id : NULL,
+                'academic_year_id' => 1,
+                'class_id'         => $class_id,
+                'section_id'       => $section_id,
+                'leave_type_id'    => $leave_type_id,
+                'from_date'        => $from_date,
+                'to_date'          => $to_date,
+                'duration_days'    => $duration,
+                'is_half_day'      => $is_half_day,
+                'half_day_type'    => $half_day_type,
+                'reason'           => trim($this->input->post('reason')),
+                'attachment'       => $attachment,
+                'status'           => 'Pending'
+            ];
+
+            $app_id = $this->Leave_model->submit_application($appData);
+            $this->session->set_flashdata('success', "Leave request submitted successfully ({$duration} days).");
+
+            redirect($applicant_type === 'Student' ? 'leave/student_leave' : 'leave/staff_leave');
+            return;
+        }
+
+        $data['title'] = 'Apply for Leave';
+        $data['leave_types'] = $this->Leave_type_model->get_all(NULL, TRUE);
+        $data['students'] = $this->Student_model->get_all(50);
+        $data['staff'] = $this->Staff_model->get_all();
+
+        $this->render('pages/leave/request', $data);
+    }
+
+    // 6. Leave Approval Desk
+    public function approval()
+    {
+        $filters = [
+            'status' => $this->input->get('status') ?: 'Pending',
+            'search' => $this->input->get('search') ?: NULL,
+        ];
+
+        $data['title'] = 'Leave Approval Desk';
+        $data['filters'] = $filters;
+        $data['applications'] = $this->Leave_model->get_applications($filters);
+
+        $this->render('pages/leave/approval', $data);
+    }
+
+    // 7. Approval Action Handlers
+    public function approve_action($id)
+    {
+        $approver_id = $this->session->userdata('user_id') ?: 1;
+        $this->Leave_model->approve($id, $approver_id, 'Approved via approver desk');
+        $this->session->set_flashdata('success', 'Leave request approved successfully.');
+        redirect('leave/approval');
+    }
+
+    public function reject_action($id)
+    {
+        $approver_id = $this->session->userdata('user_id') ?: 1;
+        $reason = trim($this->input->post('rejection_reason')) ?: 'Insufficient documentation or scheduling conflict.';
+        $this->Leave_model->reject($id, $approver_id, $reason);
+        $this->session->set_flashdata('success', 'Leave request rejected.');
+        redirect('leave/approval');
+    }
+
+    public function clarification_action($id)
+    {
+        $approver_id = $this->session->userdata('user_id') ?: 1;
+        $notes = trim($this->input->post('clarification_notes')) ?: 'Please submit medical prescription / event invitation.';
+        $this->Leave_model->request_clarification($id, $approver_id, $notes);
+        $this->session->set_flashdata('success', 'Clarification requested from applicant.');
+        redirect('leave/approval');
+    }
+
+    public function cancel_action($id)
+    {
+        $user_id = $this->session->userdata('user_id') ?: 1;
+        $this->Leave_model->cancel($id, $user_id, 'Staff', 'Cancelled by user');
+        $this->session->set_flashdata('success', 'Leave application cancelled.');
+        redirect('leave/approval');
+    }
+
+    // 8. Leave Balances Summary
+    public function balances()
+    {
+        $type = $this->input->get('type') ?: 'Staff';
+        $data['title'] = 'Leave Balances Matrix';
+        $data['type'] = $type;
+        $data['balances'] = $this->Leave_balance_model->get_all_balances(1, $type, 100);
+
+        $this->render('pages/leave/balances', $data);
+    }
+
+    // 9. Leave Calendar
+    public function calendar()
+    {
+        $data['title'] = 'Leave Calendar';
+        $data['leaves'] = $this->Leave_model->get_applications(['status' => 'Approved'], 100);
+
+        $this->render('pages/leave/calendar', $data);
+    }
+
+    // 10. Leave History
+    public function history()
+    {
+        $filters = [
+            'status' => $this->input->get('status') ?: NULL,
+            'search' => $this->input->get('search') ?: NULL,
+        ];
+
+        $data['title'] = 'Leave History & Audit Trail';
+        $data['filters'] = $filters;
+        $data['applications'] = $this->Leave_model->get_applications($filters, 100);
+
+        $this->render('pages/leave/history', $data);
+    }
+
+    // 11. Leave Details View
+    public function details($id)
+    {
+        $app = $this->Leave_model->get_by_id($id);
+        if (!$app) {
+            $this->session->set_flashdata('error', 'Leave request not found.');
+            redirect('leave/dashboard');
+            return;
+        }
+
+        $data['title'] = 'Leave Request Details #' . $app->application_id;
+        $data['app'] = $app;
+        $data['history'] = $this->Leave_model->get_history($id);
+
+        $this->render('pages/leave/details', $data);
+    }
+
+    // 12. Leave Reports
+    public function reports()
+    {
+        $filters = [
+            'applicant_type' => $this->input->get('applicant_type') ?: NULL,
+            'status'         => $this->input->get('status') ?: NULL,
+            'class_id'       => $this->input->get('class_id') ?: NULL,
+        ];
+
+        $applications = $this->Leave_model->get_applications($filters, 500);
+
+        // CSV Export
+        if ($this->input->get('export') === 'csv') {
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename=leave_report_' . date('Ymd_His') . '.csv');
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['App ID', 'Type', 'Applicant Name', 'Class/Dept', 'Leave Type', 'From', 'To', 'Days', 'Status', 'Reason']);
+            foreach ($applications as $a) {
+                $name = ($a->applicant_type === 'Student') ? $a->first_name . ' ' . $a->last_name : $a->staff_name;
+                $scope = ($a->applicant_type === 'Student') ? ($a->class_name . ' ' . $a->section_name) : $a->department_name;
+                fputcsv($out, [$a->application_id, $a->applicant_type, $name, $scope, $a->type_name, $a->from_date, $a->to_date, $a->duration_days, $a->status, $a->reason]);
+            }
+            fclose($out);
+            exit;
+        }
+
+        $data['title'] = 'Leave Analytics & Reports';
+        $data['stats'] = $this->Leave_model->get_dashboard_stats();
+        $data['filters'] = $filters;
+        $data['classes'] = $this->Class_model->get_all(TRUE);
+        $data['applications'] = $applications;
+
+        $this->render('pages/leave/reports', $data);
+    }
+
+    // 13. Leave Settings
+    public function settings()
+    {
+        if ($this->input->post()) {
+            $postData = [
+                'enable_student_leave'     => $this->input->post('enable_student_leave') ? 1 : 0,
+                'enable_staff_leave'       => $this->input->post('enable_staff_leave') ? 1 : 0,
+                'enable_half_day'          => $this->input->post('enable_half_day') ? 1 : 0,
+                'working_days_only'        => $this->input->post('working_days_only') ? 1 : 0,
+                'student_approval_workflow'=> trim($this->input->post('student_approval_workflow')),
+                'staff_approval_workflow'  => trim($this->input->post('staff_approval_workflow')),
+                'enable_balance_tracking'  => $this->input->post('enable_balance_tracking') ? 1 : 0,
+                'allow_carry_forward'      => $this->input->post('allow_carry_forward') ? 1 : 0,
+                'max_carry_forward_days'   => (int)$this->input->post('max_carry_forward_days'),
+                'require_document_default' => $this->input->post('require_document_default') ? 1 : 0,
+                'max_file_size_mb'         => (int)$this->input->post('max_file_size_mb'),
+            ];
+
+            $this->Leave_setting_model->update_settings($postData);
+            $this->session->set_flashdata('success', 'Leave settings updated.');
+            redirect('leave/settings');
+            return;
+        }
+
+        $data['title'] = 'Leave Settings';
+        $data['settings'] = $this->Leave_setting_model->get_settings();
+        $data['audit_logs'] = $this->Leave_setting_model->get_audit_logs(25);
+
+        $this->render('pages/leave/settings', $data);
     }
 }

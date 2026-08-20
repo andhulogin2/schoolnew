@@ -1447,20 +1447,125 @@ CREATE TABLE `tbl_homework_audit_logs` (
   KEY `idx_hw_entity` (`entity_type`, `entity_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `tbl_leave_requests`;
-CREATE TABLE `tbl_leave_requests` (
-  `leave_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `applicant_type` ENUM('Staff', 'Student') NOT NULL,
-  `staff_id` INT UNSIGNED NULL,
-  `student_id` INT UNSIGNED NULL,
-  `leave_type` VARCHAR(50) NOT NULL,
-  `from_date` DATE NOT NULL,
-  `to_date` DATE NOT NULL,
-  `reason` TEXT NOT NULL,
-  `approval_status` ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
+-- ----------------------------------------------------------------------------
+-- 23. Leave Management Module
+-- ----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `tbl_leave_types`;
+CREATE TABLE `tbl_leave_types` (
+  `type_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(100) NOT NULL,
+  `type_code` VARCHAR(20) NOT NULL,
+  `applicable_to` ENUM('Students', 'Staff', 'Both') NOT NULL DEFAULT 'Both',
+  `description` VARCHAR(255) NULL,
+  `max_days` INT UNSIGNED NOT NULL DEFAULT 12,
+  `requires_document` TINYINT(1) NOT NULL DEFAULT 0,
+  `requires_approval` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_half_day` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_carry_forward` TINYINT(1) NOT NULL DEFAULT 0,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`leave_id`)
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`type_id`),
+  UNIQUE KEY `uk_leave_code` (`type_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_leave_applications`;
+CREATE TABLE `tbl_leave_applications` (
+  `application_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `applicant_type` ENUM('Student', 'Staff') NOT NULL DEFAULT 'Student',
+  `student_id` INT UNSIGNED NULL,
+  `staff_id` INT UNSIGNED NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `class_id` INT UNSIGNED NULL,
+  `section_id` INT UNSIGNED NULL,
+  `leave_type_id` INT UNSIGNED NOT NULL,
+  `from_date` DATE NOT NULL,
+  `to_date` DATE NOT NULL,
+  `duration_days` DECIMAL(4,1) NOT NULL DEFAULT 1.0,
+  `is_half_day` TINYINT(1) NOT NULL DEFAULT 0,
+  `half_day_type` ENUM('Full Day', 'First Half', 'Second Half') NOT NULL DEFAULT 'Full Day',
+  `reason` TEXT NOT NULL,
+  `attachment` VARCHAR(255) NULL,
+  `status` ENUM('Draft', 'Pending', 'Clarification Required', 'Approved', 'Rejected', 'Cancelled', 'Completed') NOT NULL DEFAULT 'Pending',
+  `rejection_reason` TEXT NULL,
+  `clarification_notes` TEXT NULL,
+  `approved_by` INT UNSIGNED NULL,
+  `approved_at` DATETIME NULL,
+  `applied_date` DATE NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`application_id`),
+  KEY `idx_leave_app_type` (`applicant_type`),
+  KEY `idx_leave_app_student` (`student_id`),
+  KEY `idx_leave_app_staff` (`staff_id`),
+  KEY `idx_leave_app_dates` (`from_date`, `to_date`),
+  KEY `idx_leave_app_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_leave_balances`;
+CREATE TABLE `tbl_leave_balances` (
+  `balance_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `entity_type` ENUM('Student', 'Staff') NOT NULL DEFAULT 'Staff',
+  `entity_id` INT UNSIGNED NOT NULL,
+  `leave_type_id` INT UNSIGNED NOT NULL,
+  `allocated_days` DECIMAL(4,1) NOT NULL DEFAULT 12.0,
+  `used_days` DECIMAL(4,1) NOT NULL DEFAULT 0.0,
+  `pending_days` DECIMAL(4,1) NOT NULL DEFAULT 0.0,
+  `carry_forward_days` DECIMAL(4,1) NOT NULL DEFAULT 0.0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`balance_id`),
+  UNIQUE KEY `uk_leave_balance` (`academic_year_id`, `entity_type`, `entity_id`, `leave_type_id`),
+  KEY `idx_lb_entity` (`entity_type`, `entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_leave_history`;
+CREATE TABLE `tbl_leave_history` (
+  `history_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `application_id` INT UNSIGNED NOT NULL,
+  `action` VARCHAR(50) NOT NULL,
+  `performed_by` INT UNSIGNED NULL,
+  `performed_by_type` VARCHAR(50) NOT NULL DEFAULT 'Staff',
+  `previous_status` VARCHAR(50) NULL,
+  `new_status` VARCHAR(50) NOT NULL,
+  `comments` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`history_id`),
+  KEY `idx_lh_app` (`application_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_leave_settings`;
+CREATE TABLE `tbl_leave_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `enable_student_leave` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_staff_leave` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_half_day` TINYINT(1) NOT NULL DEFAULT 1,
+  `working_days_only` TINYINT(1) NOT NULL DEFAULT 1,
+  `student_approval_workflow` VARCHAR(100) NOT NULL DEFAULT 'Class Teacher -> Principal',
+  `staff_approval_workflow` VARCHAR(100) NOT NULL DEFAULT 'Department Head -> Principal',
+  `enable_balance_tracking` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_carry_forward` TINYINT(1) NOT NULL DEFAULT 1,
+  `max_carry_forward_days` INT UNSIGNED NOT NULL DEFAULT 5,
+  `require_document_default` TINYINT(1) NOT NULL DEFAULT 0,
+  `max_file_size_mb` INT UNSIGNED NOT NULL DEFAULT 10,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_leave_audit_logs`;
+CREATE TABLE `tbl_leave_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `details` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_leave_action` (`action`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `tbl_transport_routes`;

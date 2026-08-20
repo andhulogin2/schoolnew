@@ -89,9 +89,25 @@ $route['academics/subject_teachers'] = 'academics/subject_teachers';
 $route['academics/timetable']        = 'academics/timetable';
 $route['academics/calendar']         = 'academics/calendar';
 
-$route['attendance']         = 'attendance/index';
+$route['attendance']                       = 'attendance/index';
+$route['attendance/dashboard']             = 'attendance/index';
+$route['attendance/daily']                 = 'attendance/daily';
+$route['attendance/periods']               = 'attendance/periods';
+$route['attendance/periods/(:any)']        = 'attendance/periods/$1';
+$route['attendance/period_wise']           = 'attendance/period_wise';
+$route['attendance/class_attendance']      = 'attendance/class_attendance';
+$route['attendance/section_attendance']    = 'attendance/section_attendance';
+$route['attendance/history']               = 'attendance/history';
+$route['attendance/tracking']              = 'attendance/tracking';
+$route['attendance/calendar']              = 'attendance/calendar';
+$route['attendance/reports']               = 'attendance/reports';
+$route['attendance/notifications']         = 'attendance/notifications';
+$route['attendance/notification_history']  = 'attendance/notification_history';
+$route['attendance/settings']              = 'attendance/settings';
+
 $route['examinations']       = 'examinations/index';
 $route['fees']                = 'fees/index';
 $route['homework']           = 'homework/index';
 $route['communication']      = 'communication/index';
 $route['unauthorized']       = 'unauthorized/index';
+

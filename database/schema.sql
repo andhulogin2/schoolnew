@@ -517,18 +517,69 @@ CREATE TABLE `tbl_attendance` (
   `class_id` INT UNSIGNED NOT NULL,
   `section_id` INT UNSIGNED NOT NULL,
   `attendance_date` DATE NOT NULL,
-  `attendance_status` ENUM('Present', 'Absent', 'Late', 'Leave') NOT NULL DEFAULT 'Present',
+  `attendance_type` ENUM('Daily', 'Period-wise') NOT NULL DEFAULT 'Daily',
+  `period_id` INT UNSIGNED NULL,
+  `attendance_status` ENUM('Present', 'Absent', 'Late', 'Excused', 'Leave') NOT NULL DEFAULT 'Present',
   `remarks` VARCHAR(255) NULL,
+  `marked_by` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`attendance_id`),
-  UNIQUE KEY `uk_student_attendance_date` (`student_id`, `attendance_date`),
+  KEY `idx_student_date_type_period` (`student_id`, `attendance_date`, `attendance_type`, `period_id`),
   KEY `idx_att_date_class_sec` (`attendance_date`, `class_id`, `section_id`),
   KEY `idx_att_student` (`student_id`),
+  KEY `idx_att_period` (`period_id`),
   CONSTRAINT `fk_att_student` FOREIGN KEY (`student_id`) REFERENCES `tbl_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_att_academic_year` FOREIGN KEY (`academic_year_id`) REFERENCES `tbl_academic_years` (`academic_year_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_att_class` FOREIGN KEY (`class_id`) REFERENCES `tbl_classes` (`class_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_att_section` FOREIGN KEY (`section_id`) REFERENCES `tbl_sections` (`section_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 12b. Table: tbl_attendance_notifications
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_attendance_notifications`;
+CREATE TABLE `tbl_attendance_notifications` (
+  `notification_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_id` INT UNSIGNED NOT NULL,
+  `parent_name` VARCHAR(100) NULL,
+  `parent_phone` VARCHAR(20) NULL,
+  `parent_email` VARCHAR(100) NULL,
+  `attendance_id` INT UNSIGNED NULL,
+  `attendance_date` DATE NOT NULL,
+  `notification_type` ENUM('Absent', 'Late', 'Excused', 'Attendance Summary') NOT NULL,
+  `message` TEXT NOT NULL,
+  `status` ENUM('Pending', 'Sent', 'Failed') NOT NULL DEFAULT 'Pending',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`notification_id`),
+  KEY `idx_notif_student` (`student_id`),
+  KEY `idx_notif_date` (`attendance_date`),
+  KEY `idx_notif_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 12c. Table: tbl_attendance_settings
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_attendance_settings`;
+CREATE TABLE `tbl_attendance_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `enable_present` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_absent` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_late` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_excused` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_period_attendance` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_absent_notification` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_late_notification` TINYINT(1) NOT NULL DEFAULT 1,
+  `enable_summary_notification` TINYINT(1) NOT NULL DEFAULT 1,
+  `absent_template` TEXT NULL,
+  `late_template` TEXT NULL,
+  `excused_template` TEXT NULL,
+  `summary_template` TEXT NULL,
+  `notification_timing` VARCHAR(50) NOT NULL DEFAULT 'On Marking',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

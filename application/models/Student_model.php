@@ -140,15 +140,8 @@ class Student_model extends CI_Model {
             ->row();
 
         // 4. Attendance Summary
-        $att_total = $this->db->where('student_id', $id)->count_all_results('tbl_attendance');
-        $att_present = $this->db->where('student_id', $id)->where('attendance_status', 'Present')->count_all_results('tbl_attendance');
-        $att_absent = $this->db->where('student_id', $id)->where('attendance_status', 'Absent')->count_all_results('tbl_attendance');
-        $student->attendance = (object) array(
-            'total_days' => $att_total,
-            'present'    => $att_present,
-            'absent'     => $att_absent,
-            'percentage' => ($att_total > 0) ? round(($att_present / $att_total) * 100, 1) : 100
-        );
+        $this->load->model('Attendance_model');
+        $student->attendance = $this->Attendance_model->get_student_profile_attendance($id);
 
         return $student;
     }

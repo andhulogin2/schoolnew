@@ -355,27 +355,126 @@
 
   <!-- TAB 6: ATTENDANCE SUMMARY -->
   <div id="tab-attendance" class="tab-pane hidden space-y-5">
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6">
-      <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Attendance Summary & Records</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 text-center">
-          <div class="text-headline-md font-bold text-on-surface"><?php echo $student->attendance->total_days; ?></div>
-          <div class="text-body-md text-on-surface-variant mt-1">Total Academic Days</div>
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-6 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/50 pb-4">
+        <div>
+          <h3 class="font-headline-md text-headline-md text-on-surface">Student Attendance Profile</h3>
+          <p class="text-body-md text-on-surface-variant mt-0.5">Summary, monthly trend, and historical logs for <?php echo html_escape($fullName); ?>.</p>
         </div>
-        <div class="p-4 rounded-lg bg-secondary-container/20 border border-secondary/20 text-center">
-          <div class="text-headline-md font-bold text-secondary"><?php echo $student->attendance->present; ?></div>
-          <div class="text-body-md text-on-secondary-container mt-1">Present</div>
-        </div>
-        <div class="p-4 rounded-lg bg-error-container/20 border border-error/20 text-center">
-          <div class="text-headline-md font-bold text-error"><?php echo $student->attendance->absent; ?></div>
-          <div class="text-body-md text-on-error-container mt-1">Absent</div>
-        </div>
-        <div class="p-4 rounded-lg bg-primary-fixed/20 border border-primary/20 text-center">
-          <div class="text-headline-md font-bold text-primary"><?php echo $student->attendance->percentage; ?>%</div>
-          <div class="text-body-md text-on-surface-variant mt-1">Attendance Percentage</div>
+        <div class="flex items-center gap-2">
+          <a href="<?php echo site_url('attendance/calendar?student_id=' . $student_id . '&class_id=' . $student->class_id . '&section_id=' . $student->section_id); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-secondary text-on-secondary text-label-md font-semibold hover:bg-on-secondary-fixed-variant transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">calendar_month</span>View Interactive Calendar
+          </a>
         </div>
       </div>
-      <p class="text-body-md text-on-surface-variant">To view detailed day-by-day attendance reports, visit the <a href="<?php echo site_url('attendance/reports'); ?>" class="text-primary font-medium hover:underline">Attendance Reports</a> module.</p>
+
+      <!-- 1. Attendance Summary Metrics -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 text-center">
+          <div class="text-2xl font-bold text-on-surface"><?php echo $student->attendance->total_days; ?></div>
+          <div class="text-[12px] text-on-surface-variant mt-1">Total Academic Days</div>
+        </div>
+        <div class="p-4 rounded-xl bg-secondary-container/20 border border-secondary/20 text-center">
+          <div class="text-2xl font-bold text-secondary"><?php echo $student->attendance->present; ?></div>
+          <div class="text-[12px] text-on-secondary-container mt-1">Days Present</div>
+        </div>
+        <div class="p-4 rounded-xl bg-error-container/20 border border-error/20 text-center">
+          <div class="text-2xl font-bold text-error"><?php echo $student->attendance->absent; ?></div>
+          <div class="text-[12px] text-on-error-container mt-1">Days Absent</div>
+        </div>
+        <div class="p-4 rounded-xl bg-amber-100 dark:bg-amber-950/30 border border-amber-300 text-center">
+          <div class="text-2xl font-bold text-amber-900 dark:text-amber-300"><?php echo isset($student->attendance->late) ? $student->attendance->late : 0; ?></div>
+          <div class="text-[12px] text-on-surface-variant mt-1">Late Arrivals</div>
+        </div>
+        <div class="p-4 rounded-xl bg-primary-fixed/20 border border-primary/20 text-center">
+          <div class="text-2xl font-bold text-primary"><?php echo isset($student->attendance->excused) ? $student->attendance->excused : 0; ?></div>
+          <div class="text-[12px] text-on-surface-variant mt-1">Excused / Leave</div>
+        </div>
+        <div class="p-4 rounded-xl bg-secondary-container/30 border border-secondary/40 text-center">
+          <div class="text-2xl font-bold text-secondary"><?php echo $student->attendance->percentage; ?>%</div>
+          <div class="text-[12px] text-on-surface-variant mt-1">Overall Percentage</div>
+        </div>
+      </div>
+
+      <!-- 2. Monthly Attendance Breakdown Table -->
+      <div>
+        <h4 class="font-title-md text-title-md font-bold text-on-surface mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">date_range</span>Month-wise Attendance Breakdown
+        </h4>
+        <div class="overflow-x-auto rounded-xl border border-outline-variant/50">
+          <table class="w-full data-table zebra border-collapse text-body-md">
+            <thead>
+              <tr class="border-b border-outline-variant/60 bg-surface-container-low/50">
+                <th class="text-left px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase">Month</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-secondary uppercase">Present</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-error uppercase">Absent</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-amber-600 uppercase">Late</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-primary uppercase">Excused</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-on-surface uppercase">Total Days</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-on-surface uppercase">Percentage</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/30">
+              <?php if (empty($student->attendance->monthly)): ?>
+                <tr><td colspan="7" class="px-4 py-4 text-center text-on-surface-variant">No monthly attendance logged yet.</td></tr>
+              <?php else: ?>
+                <?php foreach ($student->attendance->monthly as $m): ?>
+                  <tr>
+                    <td class="px-4 py-2.5 font-semibold text-on-surface"><?php echo html_escape($m->month_name); ?></td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-secondary"><?php echo $m->present_count ?: 0; ?></td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-error"><?php echo $m->absent_count ?: 0; ?></td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-amber-600"><?php echo $m->late_count ?: 0; ?></td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-primary"><?php echo $m->excused_count ?: 0; ?></td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-on-surface"><?php echo $m->total_days; ?></td>
+                    <td class="px-4 py-2.5 text-right font-bold <?php echo ($m->percentage >= 90) ? 'text-secondary' : 'text-amber-600'; ?>"><?php echo $m->percentage; ?>%</td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. Recent Attendance Activity -->
+      <div>
+        <h4 class="font-title-md text-title-md font-bold text-on-surface mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-[20px]">history</span>Recent Attendance Logs
+        </h4>
+        <div class="overflow-x-auto rounded-xl border border-outline-variant/50 max-h-[300px]">
+          <table class="w-full data-table zebra border-collapse text-body-md">
+            <thead>
+              <tr class="border-b border-outline-variant/60 bg-surface-container-low/50">
+                <th class="text-left px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase">Date</th>
+                <th class="text-center px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase">Status</th>
+                <th class="text-left px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase">Remarks</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/30">
+              <?php if (empty($student->attendance->recent_records)): ?>
+                <tr><td colspan="3" class="px-4 py-4 text-center text-on-surface-variant">No attendance records logged.</td></tr>
+              <?php else: ?>
+                <?php foreach ($student->attendance->recent_records as $rec): ?>
+                  <?php
+                    $badgeClass = 'bg-secondary-container text-on-secondary-container';
+                    if ($rec->attendance_status === 'Absent') $badgeClass = 'bg-error-container text-on-error-container';
+                    elseif ($rec->attendance_status === 'Late') $badgeClass = 'bg-amber-100 text-amber-900';
+                    elseif (in_array($rec->attendance_status, array('Excused', 'Leave'))) $badgeClass = 'bg-primary-fixed text-on-primary-fixed';
+                  ?>
+                  <tr>
+                    <td class="px-4 py-2.5 font-mono text-on-surface"><?php echo date('d M Y', strtotime($rec->attendance_date)); ?></td>
+                    <td class="px-4 py-2.5 text-center">
+                      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold <?php echo $badgeClass; ?>">
+                        <?php echo html_escape($rec->attendance_status); ?>
+                      </span>
+                    </td>
+                    <td class="px-4 py-2.5 text-on-surface-variant"><?php echo html_escape($rec->remarks ?: '—'); ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 

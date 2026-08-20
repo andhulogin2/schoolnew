@@ -1,95 +1,229 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 
-  
+    <!-- Flash Messages -->
+    <?php if ($this->session->flashdata('success')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-secondary-container text-on-secondary-container text-body-md font-medium flex items-center gap-2 border border-secondary/20">
+        <span class="material-symbols-outlined text-[20px] text-secondary">check_circle</span>
+        <?php echo html_escape($this->session->flashdata('success')); ?>
+      </div>
+    <?php endif; ?>
+    <?php if ($this->session->flashdata('error')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-error-container text-on-error-container text-body-md font-medium flex items-center gap-2 border border-error/20">
+        <span class="material-symbols-outlined text-[20px] text-error">error</span>
+        <?php echo html_escape($this->session->flashdata('error')); ?>
+      </div>
+    <?php endif; ?>
+
+    <!-- Header & Quick Actions -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
-        <h2 class="font-headline-md text-headline-md text-on-surface">Fee Dashboard</h2>
-        <p class="text-body-md font-body-md text-on-surface-variant mt-1">Overview of collections, pending and overdue fees.</p>
+        <h2 class="font-headline-md text-headline-md text-on-surface">Fees & Finance Dashboard</h2>
+        <p class="text-body-md font-body-md text-on-surface-variant mt-1">Live fee collections, outstanding balances, payment tracking, and revenue overview.</p>
       </div>
-      <div class="flex items-center gap-2 shrink-0"><a href="<?php echo site_url('reports'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md text-label-md hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_right</span>View Reports</a></div>
+      <div class="flex items-center gap-2 flex-wrap shrink-0">
+        <a href="<?php echo site_url('fees/collection'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md font-semibold hover:bg-on-secondary-fixed-variant transition-colors shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">add_card</span>Collect Fee
+        </a>
+        <a href="<?php echo site_url('fees/assignments'); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-[18px]">assignment_ind</span>Assign Fee
+        </a>
+        <a href="<?php echo site_url('fees/due_fees'); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-[18px]">pending_actions</span>View Due Fees
+        </a>
+      </div>
     </div>
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-4">
-      <div class="flex items-center justify-between">
-        <div class="w-10 h-10 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">payments</span></div>
-        <span class="text-[12px] font-semibold text-on-secondary-container">+8%</span>
+
+    <!-- 1. Primary KPI Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <!-- Total Expected -->
+      <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+          <span class="material-symbols-outlined text-[26px]">account_balance</span>
+        </div>
+        <div>
+          <span class="text-label-md font-medium text-on-surface-variant block">Total Fee Expected</span>
+          <span class="text-2xl font-bold font-mono text-on-surface">₹<?php echo number_format($metrics['total_expected'], 2); ?></span>
+        </div>
       </div>
-      <div class="mt-3 font-headline-lg text-headline-lg text-on-surface">₹ <?php echo number_format($metrics['today_collection']); ?></div>
-      <div class="text-body-md font-body-md text-on-surface-variant">Today's Collection</div>
+
+      <!-- Total Collected -->
+      <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-secondary-container flex items-center justify-center text-secondary shrink-0">
+          <span class="material-symbols-outlined text-[26px]">check_circle</span>
+        </div>
+        <div>
+          <span class="text-label-md font-medium text-on-surface-variant block">Total Fee Collected</span>
+          <span class="text-2xl font-bold font-mono text-secondary">₹<?php echo number_format($metrics['total_collected'], 2); ?></span>
+        </div>
+      </div>
+
+      <!-- Total Pending -->
+      <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-900 shrink-0">
+          <span class="material-symbols-outlined text-[26px]">pending</span>
+        </div>
+        <div>
+          <span class="text-label-md font-medium text-on-surface-variant block">Total Pending Dues</span>
+          <span class="text-2xl font-bold font-mono text-amber-900">₹<?php echo number_format($metrics['total_pending'], 2); ?></span>
+        </div>
+      </div>
+
+      <!-- Total Overdue -->
+      <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-error-container flex items-center justify-center text-error shrink-0">
+          <span class="material-symbols-outlined text-[26px]">warning</span>
+        </div>
+        <div>
+          <span class="text-label-md font-medium text-on-surface-variant block">Total Overdue Dues</span>
+          <span class="text-2xl font-bold font-mono text-error">₹<?php echo number_format($metrics['total_overdue'], 2); ?></span>
+        </div>
+      </div>
     </div>
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-4">
-      <div class="flex items-center justify-between">
-        <div class="w-10 h-10 rounded-lg bg-primary-fixed text-primary flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span></div>
-        <span class="text-[12px] font-semibold text-on-secondary-container">+12%</span>
+
+    <!-- 2. Collection Velocity & Student Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+        <div class="text-xl font-bold font-mono text-primary">₹<?php echo number_format($metrics['today_collection'], 2); ?></div>
+        <div class="text-[12px] text-on-surface-variant mt-0.5">Today's Collection</div>
       </div>
-      <div class="mt-3 font-headline-lg text-headline-lg text-on-surface">₹ <?php echo number_format($metrics['monthly_collection']); ?></div>
-      <div class="text-body-md font-body-md text-on-surface-variant">Monthly Collection</div>
+      <div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+        <div class="text-xl font-bold font-mono text-secondary">₹<?php echo number_format($metrics['monthly_collection'], 2); ?></div>
+        <div class="text-[12px] text-on-surface-variant mt-0.5">This Month's Collection</div>
+      </div>
+      <div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+        <div class="text-xl font-bold font-mono text-amber-800"><?php echo $metrics['students_with_dues']; ?> Students</div>
+        <div class="text-[12px] text-on-surface-variant mt-0.5">Students with Dues</div>
+      </div>
+      <div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+        <div class="text-xl font-bold font-mono text-emerald-700"><?php echo $metrics['fully_paid_students']; ?> Students</div>
+        <div class="text-[12px] text-on-surface-variant mt-0.5">Fully Paid Students</div>
+      </div>
     </div>
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-4">
-      <div class="flex items-center justify-between">
-        <div class="w-10 h-10 rounded-lg bg-tertiary-container/10 text-on-tertiary-container flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">hourglass_top</span></div>
+
+    <!-- 3. Collection Summary & Outstanding Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      
+      <!-- Collection Summary Card -->
+      <div class="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 elevation-1">
+        <div class="flex items-center justify-between pb-3 border-b border-outline-variant/50 mb-4">
+          <h3 class="font-headline-md text-title-lg font-bold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary text-[22px]">trending_up</span>Collection Summary
+          </h3>
+          <a href="<?php echo site_url('fees/reports?type=collection'); ?>" class="text-[13px] text-primary hover:underline font-medium">Full Report</a>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-body-md">
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Daily Collection (Today)</span>
+            <strong class="text-on-surface font-mono text-title-md">₹<?php echo number_format($collection_summary['daily'], 2); ?></strong>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Weekly Collection (7 Days)</span>
+            <strong class="text-on-surface font-mono text-title-md">₹<?php echo number_format($collection_summary['weekly'], 2); ?></strong>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Monthly Collection</span>
+            <strong class="text-secondary font-mono text-title-md">₹<?php echo number_format($collection_summary['monthly'], 2); ?></strong>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Academic Year Collection</span>
+            <strong class="text-primary font-mono text-title-md">₹<?php echo number_format($collection_summary['yearly'], 2); ?></strong>
+          </div>
+        </div>
       </div>
-      <div class="mt-3 font-headline-lg text-headline-lg text-on-surface">₹ <?php echo number_format($metrics['pending_fees']); ?></div>
-      <div class="text-body-md font-body-md text-on-surface-variant">Pending Fees</div>
+
+      <!-- Outstanding Fees Card -->
+      <div class="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/50 elevation-1">
+        <div class="flex items-center justify-between pb-3 border-b border-outline-variant/50 mb-4">
+          <h3 class="font-headline-md text-title-lg font-bold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-700 text-[22px]">error_outline</span>Outstanding Dues Summary
+          </h3>
+          <a href="<?php echo site_url('fees/due_fees'); ?>" class="text-[13px] text-primary hover:underline font-medium">View Due List</a>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-body-md">
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Total Outstanding</span>
+            <strong class="text-on-surface font-mono text-title-md">₹<?php echo number_format($outstanding_summary['total_outstanding'], 2); ?></strong>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Overdue Amount</span>
+            <strong class="text-error font-mono text-title-md">₹<?php echo number_format($outstanding_summary['overdue_amount'], 2); ?></strong>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Upcoming Dues</span>
+            <strong class="text-amber-800 font-mono text-title-md">₹<?php echo number_format($outstanding_summary['upcoming_dues'], 2); ?></strong>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+            <span class="text-[12px] text-on-surface-variant block">Students with Dues</span>
+            <strong class="text-primary font-mono text-title-md"><?php echo $metrics['students_with_dues']; ?> Enrolled</strong>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-4">
-      <div class="flex items-center justify-between">
-        <div class="w-10 h-10 rounded-lg bg-error-container text-on-error-container flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">error</span></div>
-        <span class="text-[12px] font-semibold text-error">-4%</span>
+
+    <!-- 4. Recent Payment Transactions -->
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden mb-6">
+      <div class="p-4 border-b border-outline-variant/50 flex items-center justify-between">
+        <h3 class="font-headline-md text-title-md font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>Recent Fee Payments
+        </h3>
+        <a href="<?php echo site_url('fees/payments'); ?>" class="text-[13px] text-primary hover:underline font-medium">View All Payments</a>
       </div>
-      <div class="mt-3 font-headline-lg text-headline-lg text-on-surface">₹ <?php echo number_format($metrics['overdue_fees']); ?></div>
-      <div class="text-body-md font-body-md text-on-surface-variant">Overdue Fees</div>
-    </div></div>
-  
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
-        <h3 class="font-headline-md text-headline-md text-on-surface">Recent Fee Activity</h3>
-        <div class="flex items-center gap-2"></div>
-      </div>
-      <div class="p-5">
-    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
+
       <div class="table-scroll overflow-x-auto">
-        <table class="w-full data-table zebra border-collapse">
-          <thead><tr class="border-b border-outline-variant/60"><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Student</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Fee Head</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Amount</th><th class="text-left px-4 py-3 text-label-md text-label-md text-on-surface-variant uppercase tracking-wide whitespace-nowrap">Status</th></tr></thead>
+        <table class="w-full data-table zebra border-collapse text-body-md">
+          <thead>
+            <tr class="border-b border-outline-variant/60 bg-surface-container-low/50">
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Receipt #</th>
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Student</th>
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Class</th>
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Fee Category</th>
+              <th class="text-right px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Amount Paid</th>
+              <th class="text-center px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Payment Mode</th>
+              <th class="text-center px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Date</th>
+              <th class="text-center px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Action</th>
+            </tr>
+          </thead>
           <tbody class="divide-y divide-outline-variant/40">
-            <?php foreach ($recent_activity as $act): ?>
-              <?php
-                $nameParts = explode(' ', trim($act->first_name . ' ' . $act->last_name));
-                $initials = '';
-                foreach ($nameParts as $np) { if (!empty($np)) $initials .= strtoupper($np[0]); }
-                if (strlen($initials) > 2) $initials = substr($initials, 0, 2);
-                $statusBadge = ($act->payment_status == 'Paid')
-                  ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-secondary-container text-on-secondary-container">Paid</span>'
-                  : (($act->payment_status == 'Overdue')
-                    ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-error-container text-on-error-container">Overdue</span>'
-                    : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-tertiary-container/10 text-on-tertiary-container">Pending</span>');
-              ?>
-              <tr class='hover:bg-surface-container-low transition-colors'>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-[11px] font-semibold shrink-0"><?php echo html_escape($initials); ?></div>
-                    <div>
-                      <div class="font-medium text-on-surface"><?php echo html_escape($act->first_name . ' ' . $act->last_name); ?></div>
-                      <div class="text-[12px] text-on-surface-variant"><?php echo html_escape($act->class_name . ' ' . $act->section_name); ?></div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo html_escape($act->head_name ?: 'Term Fees'); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap">₹ <?php echo number_format($act->amount); ?></td>
-                <td class="px-4 py-3 text-body-md font-body-md text-on-surface whitespace-nowrap"><?php echo $statusBadge; ?></td>
-              </tr>
-            <?php endforeach; ?>
+            <?php if (empty($recent_payments)): ?>
+              <tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">No fee payments recorded yet.</td></tr>
+            <?php else: ?>
+              <?php foreach ($recent_payments as $p): ?>
+                <tr class="hover:bg-surface-container-low transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-primary whitespace-nowrap">
+                    <a href="<?php echo site_url('fees/receipt/' . $p->payment_id); ?>" class="hover:underline">
+                      <?php echo html_escape($p->receipt_no); ?>
+                    </a>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap font-bold text-on-surface">
+                    <?php echo html_escape($p->first_name . ' ' . $p->last_name); ?>
+                    <span class="text-[11px] text-on-surface-variant block font-mono font-normal"><?php echo html_escape($p->admission_number); ?></span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-on-surface-variant">
+                    <?php echo html_escape($p->class_name . ' ' . $p->section_name); ?>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap font-medium text-on-surface">
+                    <?php echo html_escape($p->category_name ?: 'General Fee'); ?>
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono font-bold text-secondary whitespace-nowrap">
+                    ₹<?php echo number_format($p->amount_paid, 2); ?>
+                  </td>
+                  <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container-high text-on-surface">
+                      <?php echo html_escape($p->payment_mode); ?>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-center font-mono text-[12px] text-on-surface-variant whitespace-nowrap">
+                    <?php echo date('d M Y', strtotime($p->payment_date)); ?>
+                  </td>
+                  <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <a href="<?php echo site_url('fees/receipt/' . $p->payment_id); ?>" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container-high text-primary hover:bg-primary-fixed transition-colors text-[12px] font-semibold">
+                      <span class="material-symbols-outlined text-[16px]">receipt</span>Receipt
+                    </a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </tbody>
         </table>
       </div>
-      <div class="flex items-center justify-between px-4 py-3 border-t border-outline-variant/50 text-body-md font-body-md text-on-surface-variant">
-        <span>Showing <?php echo count($recent_activity); ?> of <?php echo count($recent_activity); ?> records</span>
-        <div class="flex items-center gap-1">
-          <button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high disabled:opacity-40" disabled>Previous</button>
-          <button class="px-3 py-1.5 rounded-lg bg-primary-fixed text-primary font-medium">1</button>
-          <button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high disabled:opacity-40" disabled>Next</button>
-        </div>
-      </div>
-    </div></div>
     </div>
-

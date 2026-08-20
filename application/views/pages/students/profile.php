@@ -48,6 +48,7 @@
     <button onclick="switchTab('academic')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="academic">Academic & Promotion History</button>
     <button onclick="switchTab('documents')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="documents">Documents (<?php echo count($student->documents); ?>)</button>
     <button onclick="switchTab('attendance')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="attendance">Attendance Summary</button>
+    <button onclick="switchTab('fees')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="fees">Fees & Finance</button>
     <button onclick="switchTab('transfer')" class="tab-btn px-4 py-2.5 text-body-md text-on-surface-variant hover:text-on-surface border-b-2 border-transparent cursor-pointer" data-tab="transfer">Transfer / TC</button>
   </div>
 
@@ -476,6 +477,144 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- TAB: FEES & FINANCE -->
+  <div id="tab-fees" class="tab-pane hidden space-y-5">
+    <?php if (isset($student->fee_profile)): ?>
+      <?php $fp = $student->fee_profile; ?>
+      
+      <!-- Fee Summary KPI Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+          <span class="text-[11px] text-on-surface-variant uppercase font-semibold block">Total Assigned</span>
+          <div class="text-lg font-bold font-mono text-on-surface mt-1">₹<?php echo number_format($fp->summary->total_assigned, 2); ?></div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+          <span class="text-[11px] text-on-surface-variant uppercase font-semibold block">Total Paid</span>
+          <div class="text-lg font-bold font-mono text-secondary mt-1">₹<?php echo number_format($fp->summary->total_paid, 2); ?></div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+          <span class="text-[11px] text-on-surface-variant uppercase font-semibold block">Discounts</span>
+          <div class="text-lg font-bold font-mono text-primary mt-1">₹<?php echo number_format($fp->summary->total_discount, 2); ?></div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+          <span class="text-[11px] text-on-surface-variant uppercase font-semibold block">Concessions</span>
+          <div class="text-lg font-bold font-mono text-amber-700 mt-1">₹<?php echo number_format($fp->summary->total_concession, 2); ?></div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+          <span class="text-[11px] text-on-surface-variant uppercase font-semibold block">Total Due</span>
+          <div class="text-lg font-bold font-mono text-amber-900 mt-1">₹<?php echo number_format($fp->summary->total_due, 2); ?></div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/50 elevation-1 text-center">
+          <span class="text-[11px] text-on-surface-variant uppercase font-semibold block">Overdue Amount</span>
+          <div class="text-lg font-bold font-mono text-error mt-1">₹<?php echo number_format($fp->summary->total_overdue, 2); ?></div>
+        </div>
+      </div>
+
+      <!-- Itemized Invoices Table -->
+      <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
+          <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>Assigned Fee Invoices
+          </h3>
+          <a href="<?php echo site_url('fees/collection?student_id=' . $student_id); ?>" class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-secondary text-on-secondary text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm font-semibold">
+            <span class="material-symbols-outlined text-[16px]">add_card</span>Collect Payment
+          </a>
+        </div>
+        <div class="table-scroll overflow-x-auto">
+          <table class="w-full data-table zebra border-collapse text-body-md">
+            <thead>
+              <tr class="border-b border-outline-variant/60 bg-surface-container-low/50">
+                <th class="text-left px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Invoice #</th>
+                <th class="text-left px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Fee Particulars</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Original</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Discount</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-secondary uppercase whitespace-nowrap">Paid</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-error uppercase whitespace-nowrap">Due</th>
+                <th class="text-center px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Due Date</th>
+                <th class="text-center px-4 py-2.5 text-label-md font-semibold text-on-surface uppercase whitespace-nowrap">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/40">
+              <?php if (empty($fp->fees)): ?>
+                <tr><td colspan="8" class="px-4 py-6 text-center text-on-surface-variant">No fee invoices assigned to this student.</td></tr>
+              <?php else: ?>
+                <?php foreach ($fp->fees as $f): ?>
+                  <?php
+                    $badgeClass = 'bg-surface-container-high text-on-surface-variant';
+                    if ($f->payment_status === 'Paid') $badgeClass = 'bg-secondary-container text-on-secondary-container';
+                    elseif ($f->payment_status === 'Partially Paid') $badgeClass = 'bg-amber-100 text-amber-900 font-semibold';
+                    elseif ($f->payment_status === 'Overdue') $badgeClass = 'bg-error-container text-on-error-container font-semibold';
+                  ?>
+                  <tr>
+                    <td class="px-4 py-2.5 font-mono font-bold text-primary whitespace-nowrap"><?php echo html_escape($f->invoice_no); ?></td>
+                    <td class="px-4 py-2.5 font-bold text-on-surface whitespace-nowrap"><?php echo html_escape($f->category_name); ?></td>
+                    <td class="px-4 py-2.5 text-right font-mono whitespace-nowrap">₹<?php echo number_format($f->original_amount, 2); ?></td>
+                    <td class="px-4 py-2.5 text-right font-mono text-on-surface-variant whitespace-nowrap">
+                      <?php echo ($f->discount_amount > 0) ? '₹' . number_format($f->discount_amount, 2) : '—'; ?>
+                    </td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-secondary whitespace-nowrap">₹<?php echo number_format($f->paid_amount, 2); ?></td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold <?php echo ($f->due_amount > 0) ? 'text-error' : 'text-on-surface-variant'; ?> whitespace-nowrap">₹<?php echo number_format($f->due_amount, 2); ?></td>
+                    <td class="px-4 py-2.5 text-center font-mono text-[12px] whitespace-nowrap"><?php echo date('d M Y', strtotime($f->due_date)); ?></td>
+                    <td class="px-4 py-2.5 text-center whitespace-nowrap">
+                      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold <?php echo $badgeClass; ?>">
+                        <?php echo html_escape($f->payment_status); ?>
+                      </span>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment Receipts History Table -->
+      <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden">
+        <div class="px-5 py-4 border-b border-outline-variant/50">
+          <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary text-[20px]">payments</span>Payment Transactions & Receipts
+          </h3>
+        </div>
+        <div class="table-scroll overflow-x-auto">
+          <table class="w-full data-table zebra border-collapse text-body-md">
+            <thead>
+              <tr class="border-b border-outline-variant/60 bg-surface-container-low/50">
+                <th class="text-left px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Receipt #</th>
+                <th class="text-left px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Particulars</th>
+                <th class="text-right px-4 py-2.5 text-label-md font-semibold text-secondary uppercase whitespace-nowrap">Amount Paid</th>
+                <th class="text-center px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Mode</th>
+                <th class="text-center px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Date</th>
+                <th class="text-center px-4 py-2.5 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Receipt</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/40">
+              <?php if (empty($fp->payments)): ?>
+                <tr><td colspan="6" class="px-4 py-6 text-center text-on-surface-variant">No payment receipts logged yet.</td></tr>
+              <?php else: ?>
+                <?php foreach ($fp->payments as $p): ?>
+                  <tr>
+                    <td class="px-4 py-2.5 font-mono font-bold text-primary whitespace-nowrap"><?php echo html_escape($p->receipt_no); ?></td>
+                    <td class="px-4 py-2.5 font-medium text-on-surface whitespace-nowrap"><?php echo html_escape($p->category_name); ?></td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-secondary whitespace-nowrap">₹<?php echo number_format($p->amount_paid, 2); ?></td>
+                    <td class="px-4 py-2.5 text-center whitespace-nowrap">
+                      <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container-high text-on-surface"><?php echo html_escape($p->payment_mode); ?></span>
+                    </td>
+                    <td class="px-4 py-2.5 text-center font-mono text-[12px] whitespace-nowrap"><?php echo date('d M Y', strtotime($p->payment_date)); ?></td>
+                    <td class="px-4 py-2.5 text-center whitespace-nowrap">
+                      <a href="<?php echo site_url('fees/receipt/' . $p->payment_id); ?>" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container-high text-primary hover:bg-primary-fixed transition-colors text-[12px] font-semibold">
+                        <span class="material-symbols-outlined text-[15px]">print</span>Print
+                      </a>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <?php endif; ?>
   </div>
 
   <!-- TAB 7: TRANSFER / TC -->

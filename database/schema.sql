@@ -589,7 +589,10 @@ DROP TABLE IF EXISTS `tbl_fee_heads`;
 CREATE TABLE `tbl_fee_heads` (
   `fee_head_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `head_name` VARCHAR(100) NOT NULL,
+  `category_code` VARCHAR(20) NULL,
   `description` TEXT NULL,
+  `applicable_to` VARCHAR(50) NOT NULL DEFAULT 'All Students',
+  `frequency` ENUM('One Time', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly', 'Custom') NOT NULL DEFAULT 'Yearly',
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -607,17 +610,18 @@ CREATE TABLE `tbl_fee_structures` (
   `academic_year_id` INT UNSIGNED NOT NULL,
   `class_id` INT UNSIGNED NOT NULL,
   `amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `frequency` VARCHAR(50) NOT NULL DEFAULT 'Yearly',
   `due_date` DATE NOT NULL,
+  `applicable_from` DATE NULL,
+  `applicable_to` DATE NULL,
+  `is_optional` TINYINT(1) NOT NULL DEFAULT 0,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`fee_structure_id`),
   KEY `idx_fee_head` (`fee_head_id`),
   KEY `idx_fee_academic_year` (`academic_year_id`),
-  KEY `idx_fee_class` (`class_id`),
-  CONSTRAINT `fk_feestruct_head` FOREIGN KEY (`fee_head_id`) REFERENCES `tbl_fee_heads` (`fee_head_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_feestruct_year` FOREIGN KEY (`academic_year_id`) REFERENCES `tbl_academic_years` (`academic_year_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_feestruct_class` FOREIGN KEY (`class_id`) REFERENCES `tbl_classes` (`class_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  KEY `idx_fee_class` (`class_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -626,20 +630,29 @@ CREATE TABLE `tbl_fee_structures` (
 DROP TABLE IF EXISTS `tbl_student_fees`;
 CREATE TABLE `tbl_student_fees` (
   `student_fee_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `invoice_no` VARCHAR(50) NULL,
   `student_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `class_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `section_id` INT UNSIGNED NOT NULL DEFAULT 1,
   `fee_structure_id` INT UNSIGNED NOT NULL,
-  `amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `original_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `concession_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `final_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `paid_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `due_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `due_date` DATE NOT NULL,
-  `payment_status` ENUM('Paid', 'Pending', 'Overdue') NOT NULL DEFAULT 'Pending',
+  `payment_status` ENUM('Pending', 'Partially Paid', 'Paid', 'Overdue', 'Cancelled') NOT NULL DEFAULT 'Pending',
+  `remarks` VARCHAR(255) NULL,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`student_fee_id`),
   KEY `idx_studfee_student` (`student_id`),
   KEY `idx_studfee_structure` (`fee_structure_id`),
-  CONSTRAINT `fk_studfee_student` FOREIGN KEY (`student_id`) REFERENCES `tbl_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_studfee_structure` FOREIGN KEY (`fee_structure_id`) REFERENCES `tbl_fee_structures` (`fee_structure_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  KEY `idx_studfee_status` (`payment_status`),
+  KEY `idx_studfee_due` (`due_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -651,10 +664,12 @@ CREATE TABLE `tbl_fee_payments` (
   `student_fee_id` INT UNSIGNED NOT NULL,
   `student_id` INT UNSIGNED NOT NULL,
   `amount_paid` DECIMAL(10,2) NOT NULL,
-  `payment_mode` ENUM('Cash', 'Bank Transfer', 'UPI', 'Cheque', 'Card') NOT NULL DEFAULT 'Cash',
+  `payment_mode` ENUM('Cash', 'Bank Transfer', 'UPI', 'Cheque', 'Card', 'Other') NOT NULL DEFAULT 'Cash',
   `transaction_reference` VARCHAR(100) NULL,
   `payment_date` DATE NOT NULL,
   `receipt_no` VARCHAR(50) NOT NULL,
+  `collected_by` INT UNSIGNED NULL,
+  `remarks` VARCHAR(255) NULL,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -662,7 +677,135 @@ CREATE TABLE `tbl_fee_payments` (
   UNIQUE KEY `uk_receipt_no` (`receipt_no`),
   KEY `idx_pay_student_fee` (`student_fee_id`),
   KEY `idx_pay_student` (`student_id`),
-  CONSTRAINT `fk_pay_student_fee` FOREIGN KEY (`student_fee_id`) REFERENCES `tbl_student_fees` (`student_fee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `idx_pay_date` (`payment_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 17. Table: tbl_fee_discounts
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_fee_discounts`;
+CREATE TABLE `tbl_fee_discounts` (
+  `discount_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `discount_type` ENUM('Percentage', 'Fixed Amount') NOT NULL DEFAULT 'Fixed Amount',
+  `discount_value` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `max_discount` DECIMAL(10,2) NULL,
+  `applicable_classes` TEXT NULL,
+  `applicable_categories` TEXT NULL,
+  `is_concession` TINYINT(1) NOT NULL DEFAULT 0,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`discount_id`),
+  UNIQUE KEY `uk_discount_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 18. Table: tbl_fee_adjustments
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_fee_adjustments`;
+CREATE TABLE `tbl_fee_adjustments` (
+  `adjustment_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_fee_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `adjustment_type` ENUM('Waiver', 'Adjustment', 'Correction', 'Concession') NOT NULL,
+  `previous_amount` DECIMAL(10,2) NOT NULL,
+  `new_amount` DECIMAL(10,2) NOT NULL,
+  `adjustment_amount` DECIMAL(10,2) NOT NULL,
+  `reason` TEXT NOT NULL,
+  `adjusted_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`adjustment_id`),
+  KEY `idx_adj_fee` (`student_fee_id`),
+  KEY `idx_adj_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 19. Table: tbl_fee_refunds
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_fee_refunds`;
+CREATE TABLE `tbl_fee_refunds` (
+  `refund_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `payment_id` INT UNSIGNED NOT NULL,
+  `student_fee_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `refund_amount` DECIMAL(10,2) NOT NULL,
+  `refund_reason` TEXT NOT NULL,
+  `refund_mode` VARCHAR(50) NOT NULL DEFAULT 'Bank Transfer',
+  `approved_by` INT UNSIGNED NULL,
+  `status` ENUM('Pending', 'Approved', 'Processed', 'Rejected') NOT NULL DEFAULT 'Approved',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`refund_id`),
+  KEY `idx_ref_pay` (`payment_id`),
+  KEY `idx_ref_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 20. Table: tbl_fee_reminders
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_fee_reminders`;
+CREATE TABLE `tbl_fee_reminders` (
+  `reminder_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_id` INT UNSIGNED NOT NULL,
+  `parent_name` VARCHAR(100) NULL,
+  `parent_phone` VARCHAR(20) NULL,
+  `parent_email` VARCHAR(100) NULL,
+  `student_fee_id` INT UNSIGNED NULL,
+  `reminder_type` ENUM('Upcoming Due', 'Due Today', 'Overdue', 'Payment Confirmation') NOT NULL,
+  `message` TEXT NOT NULL,
+  `scheduled_date` DATE NOT NULL,
+  `status` ENUM('Pending', 'Sent', 'Failed', 'Cancelled') NOT NULL DEFAULT 'Pending',
+  `created_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`reminder_id`),
+  KEY `idx_rem_student` (`student_id`),
+  KEY `idx_rem_fee` (`student_fee_id`),
+  KEY `idx_rem_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 21. Table: tbl_finance_settings
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_finance_settings`;
+CREATE TABLE `tbl_finance_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `currency_symbol` VARCHAR(10) NOT NULL DEFAULT '₹',
+  `currency_code` VARCHAR(10) NOT NULL DEFAULT 'INR',
+  `receipt_prefix` VARCHAR(20) NOT NULL DEFAULT 'REC-',
+  `next_receipt_number` INT UNSIGNED NOT NULL DEFAULT 1001,
+  `receipt_footer` TEXT NULL,
+  `authorized_signature_title` VARCHAR(100) NOT NULL DEFAULT 'Accounts Officer',
+  `allow_partial_payments` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_overpayment` TINYINT(1) NOT NULL DEFAULT 0,
+  `require_transaction_ref` TINYINT(1) NOT NULL DEFAULT 0,
+  `grace_period_days` INT UNSIGNED NOT NULL DEFAULT 7,
+  `discount_approval_required` TINYINT(1) NOT NULL DEFAULT 1,
+  `reminder_template_upcoming` TEXT NULL,
+  `reminder_template_overdue` TEXT NULL,
+  `reminder_template_payment` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 22. Table: tbl_finance_audit_logs
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_finance_audit_logs`;
+CREATE TABLE `tbl_finance_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `details` TEXT NULL,
+  `previous_value` TEXT NULL,
+  `new_value` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_fin_action` (`action`),
+  KEY `idx_fin_entity` (`entity_type`, `entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   CONSTRAINT `fk_pay_student` FOREIGN KEY (`student_id`) REFERENCES `tbl_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

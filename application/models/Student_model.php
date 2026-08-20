@@ -143,6 +143,10 @@ class Student_model extends CI_Model {
         $this->load->model('Attendance_model');
         $student->attendance = $this->Attendance_model->get_student_profile_attendance($id);
 
+        // 5. Fees & Finance Summary
+        $this->load->model('Fee_model');
+        $student->fee_profile = $this->Fee_model->get_student_fee_profile($id);
+
         return $student;
     }
 

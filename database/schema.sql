@@ -17,12 +17,55 @@ DROP TABLE IF EXISTS `tbl_roles`;
 CREATE TABLE `tbl_roles` (
   `role_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `role_name` VARCHAR(50) NOT NULL,
+  `role_code` VARCHAR(50) NOT NULL,
+  `user_type` VARCHAR(50) NOT NULL DEFAULT 'Staff',
   `description` TEXT NULL,
-  `status` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1=Active, 0=Inactive',
+  `is_system` TINYINT(1) NOT NULL DEFAULT 0,
+  `status` ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`role_id`),
-  UNIQUE KEY `uk_role_name` (`role_name`)
+  UNIQUE KEY `uk_role_name` (`role_name`),
+  UNIQUE KEY `uk_role_code` (`role_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_permissions`;
+CREATE TABLE `tbl_permissions` (
+  `permission_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `module` VARCHAR(50) NOT NULL,
+  `action` VARCHAR(50) NOT NULL,
+  `permission_key` VARCHAR(100) NOT NULL,
+  `permission_name` VARCHAR(150) NOT NULL,
+  `description` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`permission_id`),
+  UNIQUE KEY `uk_perm_key` (`permission_key`),
+  KEY `idx_perm_module` (`module`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_role_permissions`;
+CREATE TABLE `tbl_role_permissions` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `role_id` INT UNSIGNED NOT NULL,
+  `permission_id` INT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_perm` (`role_id`, `permission_id`),
+  KEY `idx_rp_role` (`role_id`),
+  KEY `idx_rp_perm` (`permission_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_user_permissions`;
+CREATE TABLE `tbl_user_permissions` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `permission_id` INT UNSIGNED NOT NULL,
+  `override_type` ENUM('Grant', 'Revoke') NOT NULL DEFAULT 'Grant',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_perm` (`user_id`, `permission_id`),
+  KEY `idx_up_user` (`user_id`),
+  KEY `idx_up_perm` (`permission_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -185,20 +228,91 @@ DROP TABLE IF EXISTS `tbl_users`;
 CREATE TABLE `tbl_users` (
   `user_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `role_id` INT UNSIGNED NOT NULL,
+  `username` VARCHAR(100) NULL,
+  `user_type` VARCHAR(50) NOT NULL DEFAULT 'Admin',
   `staff_id` INT UNSIGNED NULL,
+  `student_id` INT UNSIGNED NULL,
+  `parent_id` INT UNSIGNED NULL,
   `name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NULL,
+  `avatar` VARCHAR(255) NULL,
   `password` VARCHAR(255) NOT NULL,
-  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `failed_login_attempts` INT UNSIGNED NOT NULL DEFAULT 0,
+  `locked_until` DATETIME NULL,
+  `last_login_at` DATETIME NULL,
+  `status` ENUM('Active', 'Inactive', 'Suspended', 'Locked') NOT NULL DEFAULT 'Active',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `uk_user_email` (`email`),
+  UNIQUE KEY `uk_user_username` (`username`),
   KEY `idx_user_role` (`role_id`),
   KEY `idx_user_staff` (`staff_id`),
+  KEY `idx_user_student` (`student_id`),
+  KEY `idx_user_status` (`status`),
   CONSTRAINT `fk_user_role` FOREIGN KEY (`role_id`) REFERENCES `tbl_roles` (`role_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_user_staff` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `fk_user_staff` FOREIGN KEY (`staff_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_user_student` FOREIGN KEY (`student_id`) REFERENCES `tbl_students` (`student_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_parent_students`;
+CREATE TABLE `tbl_parent_students` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `parent_user_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `relationship` VARCHAR(50) NOT NULL DEFAULT 'Parent',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_parent_student` (`parent_user_id`, `student_id`),
+  KEY `idx_ps_parent` (`parent_user_id`),
+  KEY `idx_ps_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_user_login_activity`;
+CREATE TABLE `tbl_user_login_activity` (
+  `activity_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `username` VARCHAR(100) NOT NULL,
+  `ip_address` VARCHAR(50) NULL,
+  `user_agent` VARCHAR(255) NULL,
+  `status` ENUM('Successful', 'Failed', 'Locked') NOT NULL DEFAULT 'Successful',
+  `failure_reason` VARCHAR(255) NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`activity_id`),
+  KEY `idx_la_user` (`user_id`),
+  KEY `idx_la_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_permission_audit_logs`;
+CREATE TABLE `tbl_permission_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `target_type` ENUM('Role', 'User', 'Permission', 'Security') NOT NULL DEFAULT 'Role',
+  `target_id` INT UNSIGNED NOT NULL,
+  `previous_value` TEXT NULL,
+  `new_value` TEXT NULL,
+  `details` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_pal_action` (`action`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_user_security_settings`;
+CREATE TABLE `tbl_user_security_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `max_failed_attempts` INT UNSIGNED NOT NULL DEFAULT 5,
+  `lockout_duration_minutes` INT UNSIGNED NOT NULL DEFAULT 30,
+  `session_timeout_minutes` INT UNSIGNED NOT NULL DEFAULT 120,
+  `password_min_length` INT UNSIGNED NOT NULL DEFAULT 8,
+  `require_special_chars` TINYINT(1) NOT NULL DEFAULT 1,
+  `require_numbers` TINYINT(1) NOT NULL DEFAULT 1,
+  `password_expiry_days` INT UNSIGNED NOT NULL DEFAULT 90,
+  `allow_concurrent_sessions` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -936,45 +1050,96 @@ DROP TABLE IF EXISTS `tbl_communication_templates`;
 CREATE TABLE `tbl_communication_templates` (
   `template_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `template_name` VARCHAR(150) NOT NULL,
-  `communication_type` ENUM('General', 'Attendance', 'Fee Reminder', 'Homework', 'Examination', 'Event', 'Emergency') NOT NULL DEFAULT 'General',
+  `template_code` VARCHAR(100) NOT NULL,
+  `category` VARCHAR(50) NOT NULL DEFAULT 'General',
+  `communication_type` ENUM('General', 'Attendance', 'Fee Reminder', 'Homework', 'Examination', 'Leave', 'Transport', 'Certificate', 'Emergency') NOT NULL DEFAULT 'General',
   `channel` ENUM('In-App', 'SMS', 'WhatsApp', 'Email') NOT NULL DEFAULT 'SMS',
   `subject` VARCHAR(255) NULL,
   `message_template` TEXT NOT NULL,
   `variables` VARCHAR(255) NOT NULL DEFAULT '{student_name}, {parent_name}, {date}, {school_name}',
-  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `character_limit` INT UNSIGNED NULL,
+  `description` TEXT NULL,
+  `is_system` TINYINT(1) NOT NULL DEFAULT 0,
+  `status` ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`template_id`)
+  PRIMARY KEY (`template_id`),
+  UNIQUE KEY `uk_comm_tmpl_code` (`template_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_notification_rules`;
+CREATE TABLE `tbl_notification_rules` (
+  `rule_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `rule_name` VARCHAR(150) NOT NULL,
+  `event_name` VARCHAR(100) NOT NULL,
+  `source_module` ENUM('Attendance', 'Fees', 'Homework', 'Examination', 'Leave', 'Transport', 'Certificates', 'General') NOT NULL DEFAULT 'General',
+  `template_id` INT UNSIGNED NOT NULL,
+  `channel` ENUM('In-App', 'SMS', 'WhatsApp', 'Email') NOT NULL DEFAULT 'In-App',
+  `recipient_type` ENUM('Student', 'Parent', 'Teacher', 'Staff', 'Principal', 'Admin', 'Class', 'Section', 'Group') NOT NULL DEFAULT 'Parent',
+  `conditions_json` JSON NULL,
+  `frequency` ENUM('Once per event', 'Once per day', 'Once per week') NOT NULL DEFAULT 'Once per event',
+  `cooldown_minutes` INT UNSIGNED NOT NULL DEFAULT 60,
+  `priority` ENUM('Normal', 'Important', 'Urgent') NOT NULL DEFAULT 'Normal',
+  `status` ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+  `created_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`rule_id`),
+  KEY `idx_nr_event` (`event_name`),
+  KEY `idx_nr_module` (`source_module`),
+  KEY `idx_nr_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `tbl_communication_messages`;
 CREATE TABLE `tbl_communication_messages` (
   `message_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `source_module` ENUM('Direct', 'Attendance', 'Fees', 'Homework', 'Examination', 'Timetable') NOT NULL DEFAULT 'Direct',
+  `event_name` VARCHAR(100) NULL,
+  `source_module` ENUM('Attendance', 'Fees', 'Homework', 'Examination', 'Leave', 'Transport', 'Certificates', 'Direct', 'General') NOT NULL DEFAULT 'Direct',
   `source_ref_id` INT UNSIGNED NULL,
   `channel` ENUM('In-App', 'SMS', 'WhatsApp', 'Email') NOT NULL DEFAULT 'In-App',
   `template_id` INT UNSIGNED NULL,
+  `template_code` VARCHAR(100) NULL,
   `sender_id` INT UNSIGNED NULL,
-  `recipient_type` ENUM('All', 'Role', 'Class', 'Section', 'Individual') NOT NULL DEFAULT 'Individual',
+  `recipient_type` ENUM('All', 'Role', 'Class', 'Section', 'Individual', 'Student', 'Parent', 'Teacher', 'Staff') NOT NULL DEFAULT 'Individual',
   `recipient_id` INT UNSIGNED NULL,
   `recipient_name` VARCHAR(150) NULL,
   `recipient_contact` VARCHAR(150) NULL,
   `subject` VARCHAR(255) NULL,
   `message` TEXT NOT NULL,
+  `rendered_message` LONGTEXT NULL,
   `attachment` VARCHAR(255) NULL,
+  `priority` ENUM('Normal', 'Important', 'Urgent') NOT NULL DEFAULT 'Normal',
+  `idempotency_key` VARCHAR(100) NULL,
   `scheduled_at` DATETIME NULL,
   `sent_at` DATETIME NULL,
   `delivered_at` DATETIME NULL,
-  `status` ENUM('Draft', 'Scheduled', 'Processing', 'Sent', 'Delivered', 'Failed', 'Cancelled') NOT NULL DEFAULT 'Sent',
+  `status` ENUM('Pending', 'Scheduled', 'Processing', 'Sent', 'Delivered', 'Failed', 'Cancelled') NOT NULL DEFAULT 'Sent',
   `failure_reason` TEXT NULL,
   `retry_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `max_retries` INT UNSIGNED NOT NULL DEFAULT 3,
+  `last_attempt_at` DATETIME NULL,
+  `next_retry_at` DATETIME NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`message_id`),
   KEY `idx_msg_channel` (`channel`),
   KEY `idx_msg_status` (`status`),
   KEY `idx_msg_scheduled` (`scheduled_at`),
-  KEY `idx_msg_source` (`source_module`, `source_ref_id`)
+  KEY `idx_msg_source` (`source_module`, `source_ref_id`),
+  KEY `idx_msg_idempotency` (`idempotency_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_notification_preferences`;
+CREATE TABLE `tbl_notification_preferences` (
+  `preference_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `user_type` ENUM('Parent', 'Teacher', 'Student', 'Staff') NOT NULL DEFAULT 'Parent',
+  `preference_key` VARCHAR(50) NOT NULL,
+  `is_enabled` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`preference_id`),
+  UNIQUE KEY `uk_user_pref` (`user_id`, `user_type`, `preference_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `tbl_conversations`;

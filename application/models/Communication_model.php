@@ -8,63 +8,63 @@ class Communication_model extends CI_Model {
 
     public function get_dashboard_stats()
     {
-        $total_notices = (int)$this->db->where('status', 'Published')->count_all_results('tbl_notices');
-        $total_announcements = (int)$this->db->where('status', 'Published')->count_all_results('tbl_announcements');
-        
+        $total_notifications = (int)$this->db->count_all_results($this->table);
         $total_sent = (int)$this->db->where_in('status', ['Sent', 'Delivered'])->count_all_results($this->table);
-        $sms_sent = (int)$this->db->where('channel', 'SMS')->where_in('status', ['Sent', 'Delivered'])->count_all_results($this->table);
-        $whatsapp_sent = (int)$this->db->where('channel', 'WhatsApp')->where_in('status', ['Sent', 'Delivered'])->count_all_results($this->table);
-        $email_sent = (int)$this->db->where('channel', 'Email')->where_in('status', ['Sent', 'Delivered'])->count_all_results($this->table);
-        $inapp_sent = (int)$this->db->where('channel', 'In-App')->where_in('status', ['Sent', 'Delivered'])->count_all_results($this->table);
-
-        $pending = (int)$this->db->where_in('status', ['Scheduled', 'Processing', 'Draft'])->count_all_results($this->table);
-        $failed = (int)$this->db->where('status', 'Failed')->count_all_results($this->table);
-
         $delivered = (int)$this->db->where('status', 'Delivered')->count_all_results($this->table);
+        $pending = (int)$this->db->where_in('status', ['Pending', 'Processing'])->count_all_results($this->table);
+        $failed = (int)$this->db->where('status', 'Failed')->count_all_results($this->table);
+        $scheduled = (int)$this->db->where('status', 'Scheduled')->count_all_results($this->table);
+        $cancelled = (int)$this->db->where('status', 'Cancelled')->count_all_results($this->table);
+
+        // Channels
+        $inapp_sent = (int)$this->db->where('channel', 'In-App')->count_all_results($this->table);
+        $sms_sent = (int)$this->db->where('channel', 'SMS')->count_all_results($this->table);
+        $whatsapp_sent = (int)$this->db->where('channel', 'WhatsApp')->count_all_results($this->table);
+        $email_sent = (int)$this->db->where('channel', 'Email')->count_all_results($this->table);
+
         $delivery_pct = ($total_sent > 0) ? round(($delivered / $total_sent) * 100, 1) : 100;
 
         return (object)[
-            'total_notices'       => $total_notices,
-            'total_announcements' => $total_announcements,
+            'total_notifications' => $total_notifications,
             'total_sent'          => $total_sent,
+            'delivered'           => $delivered,
+            'pending'             => $pending,
+            'failed'              => $failed,
+            'scheduled'           => $scheduled,
+            'cancelled'           => $cancelled,
+            'inapp_sent'          => $inapp_sent,
             'sms_sent'            => $sms_sent,
             'whatsapp_sent'       => $whatsapp_sent,
             'email_sent'          => $email_sent,
-            'inapp_sent'          => $inapp_sent,
-            'pending'             => $pending,
-            'failed'              => $failed,
-            'delivered'           => $delivered,
             'delivery_pct'        => $delivery_pct
         ];
-    }
-
-    public function parse_template($template_str, $vars = array())
-    {
-        $defaults = [
-            '{school_name}' => 'EduCore Model School',
-            '{date}'        => date('d M Y'),
-            '{time}'        => date('h:i A')
-        ];
-        $merged = array_merge($defaults, $vars);
-
-        foreach ($merged as $key => $val) {
-            $template_str = str_ireplace($key, (string)$val, $template_str);
-        }
-        return $template_str;
     }
 
     public function get_templates($filters = array())
     {
         $this->db->order_by('template_name', 'ASC');
         if (!empty($filters['channel'])) $this->db->where('channel', $filters['channel']);
+        if (!empty($filters['category'])) $this->db->where('category', $filters['category']);
         if (!empty($filters['type'])) $this->db->where('communication_type', $filters['type']);
-        if (isset($filters['status'])) $this->db->where('status', $filters['status']);
+        if (isset($filters['status']) && $filters['status'] !== '') $this->db->where('status', $filters['status']);
+        if (!empty($filters['search'])) {
+            $this->db->group_start()
+                ->like('template_name', $filters['search'])
+                ->or_like('template_code', $filters['search'])
+                ->or_like('message_template', $filters['search'])
+                ->group_end();
+        }
         return $this->db->get('tbl_communication_templates')->result();
     }
 
     public function get_template_by_id($id)
     {
         return $this->db->where('template_id', $id)->get('tbl_communication_templates')->row();
+    }
+
+    public function get_template_by_code($code)
+    {
+        return $this->db->where('template_code', $code)->get('tbl_communication_templates')->row();
     }
 
     public function insert_template($data)
@@ -80,71 +80,124 @@ class Communication_model extends CI_Model {
         return $this->db->where('template_id', $id)->update('tbl_communication_templates', $data);
     }
 
-    public function delete_template($id)
+    public function duplicate_template($template_id)
     {
-        return $this->db->where('template_id', $id)->delete('tbl_communication_templates');
+        $tmpl = $this->get_template_by_id($template_id);
+        if (!$tmpl) return FALSE;
+
+        $new_code = $tmpl->template_code . '_COPY_' . time();
+        $newData = [
+            'template_name'      => $tmpl->template_name . ' (Copy)',
+            'template_code'      => $new_code,
+            'category'           => $tmpl->category,
+            'communication_type' => $tmpl->communication_type,
+            'channel'            => $tmpl->channel,
+            'subject'            => $tmpl->subject,
+            'message_template'   => $tmpl->message_template,
+            'variables'          => $tmpl->variables,
+            'character_limit'    => $tmpl->character_limit,
+            'description'        => 'Duplicate of ' . $tmpl->template_name,
+            'is_system'          => 0,
+            'status'             => 'Active',
+            'created_at'         => date('Y-m-d H:i:s')
+        ];
+        $this->db->insert('tbl_communication_templates', $newData);
+        return $this->db->insert_id();
     }
 
-    public function dispatch_message($data)
+    public function delete_template($id)
     {
-        $data['created_at'] = date('Y-m-d H:i:s');
-        if (empty($data['sent_at']) && ($data['status'] ?? '') === 'Sent') {
-            $data['sent_at'] = date('Y-m-d H:i:s');
-            $data['delivered_at'] = date('Y-m-d H:i:s'); // In simulated local mode
+        // Check if used in history
+        $used = $this->db->where('template_id', $id)->count_all_results($this->table);
+        if ($used > 0) {
+            // Soft deactivate instead of permanently delete
+            return $this->update_template($id, ['status' => 'Inactive']);
         }
-        $this->db->insert($this->table, $data);
-        return $this->db->insert_id();
+        return $this->db->where('template_id', $id)->delete('tbl_communication_templates');
     }
 
     public function get_messages($filters = array(), $limit = 50, $offset = 0)
     {
-        $this->db
-            ->select('m.*, t.template_name, s.full_name as sender_name')
-            ->from('tbl_communication_messages m')
-            ->join('tbl_communication_templates t', 't.template_id = m.template_id', 'left')
-            ->join('tbl_staff s', 's.staff_id = m.sender_id', 'left')
-            ->order_by('m.created_at', 'DESC');
+        $this->db->select('m.*, t.template_name')
+            ->from($this->table . ' m')
+            ->join('tbl_communication_templates t', 't.template_id = m.template_id', 'left');
 
         if (!empty($filters['channel'])) $this->db->where('m.channel', $filters['channel']);
-        if (!empty($filters['status'])) $this->db->where('m.status', $filters['status']);
         if (!empty($filters['source_module'])) $this->db->where('m.source_module', $filters['source_module']);
-        if (!empty($filters['date_from'])) $this->db->where('m.created_at >=', $filters['date_from'] . ' 00:00:00');
-        if (!empty($filters['date_to'])) $this->db->where('m.created_at <=', $filters['date_to'] . ' 23:59:59');
+        if (!empty($filters['status'])) $this->db->where('m.status', $filters['status']);
+        if (!empty($filters['recipient_type'])) $this->db->where('m.recipient_type', $filters['recipient_type']);
+        if (!empty($filters['start_date'])) $this->db->where('DATE(m.created_at) >=', $filters['start_date']);
+        if (!empty($filters['end_date'])) $this->db->where('DATE(m.created_at) <=', $filters['end_date']);
 
         if (!empty($filters['search'])) {
-            $q = $filters['search'];
             $this->db->group_start()
-                ->like('m.recipient_name', $q)
-                ->or_like('m.recipient_contact', $q)
-                ->or_like('m.subject', $q)
-                ->or_like('m.message', $q)
-            ->group_end();
+                ->like('m.recipient_name', $filters['search'])
+                ->or_like('m.recipient_contact', $filters['search'])
+                ->or_like('m.subject', $filters['search'])
+                ->or_like('m.template_code', $filters['search'])
+                ->or_like('m.rendered_message', $filters['search'])
+                ->group_end();
         }
 
-        if ($limit) $this->db->limit($limit, $offset);
-
+        $this->db->order_by('m.message_id', 'DESC');
+        if ($limit > 0) $this->db->limit($limit, $offset);
         return $this->db->get()->result();
     }
 
-    public function get_scheduled_messages($limit = 50)
+    public function get_message_by_id($message_id)
     {
-        return $this->db
-            ->select('m.*, t.template_name, s.full_name as sender_name')
-            ->from('tbl_communication_messages m')
+        return $this->db->select('m.*, t.template_name')
+            ->from($this->table . ' m')
             ->join('tbl_communication_templates t', 't.template_id = m.template_id', 'left')
-            ->join('tbl_staff s', 's.staff_id = m.sender_id', 'left')
-            ->where_in('m.status', ['Scheduled', 'Processing'])
-            ->order_by('m.scheduled_at', 'ASC')
-            ->limit($limit)
-            ->get()
-            ->result();
+            ->where('m.message_id', $message_id)
+            ->get()->row();
     }
 
-    public function cancel_scheduled($id)
+    public function get_delivery_reports($filters = [])
     {
-        return $this->db->where($this->primaryKey, $id)->update($this->table, [
-            'status'     => 'Cancelled',
-            'updated_at' => date('Y-m-d H:i:s')
-        ]);
+        // Channel stats
+        $channels = ['In-App', 'SMS', 'WhatsApp', 'Email'];
+        $channel_report = [];
+
+        foreach ($channels as $ch) {
+            $total = (int)$this->db->where('channel', $ch)->count_all_results($this->table);
+            $delivered = (int)$this->db->where('channel', $ch)->where('status', 'Delivered')->count_all_results($this->table);
+            $failed = (int)$this->db->where('channel', $ch)->where('status', 'Failed')->count_all_results($this->table);
+            $pending = (int)$this->db->where('channel', $ch)->where_in('status', ['Pending', 'Scheduled', 'Processing'])->count_all_results($this->table);
+            $pct = ($total > 0) ? round(($delivered / $total) * 100, 1) : 0;
+
+            $channel_report[] = (object)[
+                'channel'   => $ch,
+                'total'     => $total,
+                'delivered' => $delivered,
+                'failed'    => $failed,
+                'pending'   => $pending,
+                'rate'      => $pct
+            ];
+        }
+
+        // Module stats
+        $modules = ['Attendance', 'Fees', 'Homework', 'Examination', 'Leave', 'Transport', 'Certificates', 'Direct'];
+        $module_report = [];
+
+        foreach ($modules as $mod) {
+            $total = (int)$this->db->where('source_module', $mod)->count_all_results($this->table);
+            $delivered = (int)$this->db->where('source_module', $mod)->where('status', 'Delivered')->count_all_results($this->table);
+            $failed = (int)$this->db->where('source_module', $mod)->where('status', 'Failed')->count_all_results($this->table);
+            $pct = ($total > 0) ? round(($delivered / $total) * 100, 1) : 0;
+
+            $module_report[] = (object)[
+                'module'    => $mod,
+                'total'     => $total,
+                'delivered' => $delivered,
+                'failed'    => $failed,
+                'rate'      => $pct
+            ];
+        }
+
+        return [
+            'channel_report' => $channel_report,
+            'module_report'  => $module_report
+        ];
     }
 }

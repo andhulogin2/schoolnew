@@ -1,0 +1,165 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Transport_assignment_model extends CI_Model {
+
+    protected $table = 'tbl_student_transport_assignments';
+    protected $primaryKey = 'assignment_id';
+
+    public function get_all($filters = array(), $limit = 100, $offset = 0)
+    {
+        $this->db
+            ->select('ta.*, st.first_name, st.last_name, st.admission_no, st.guardian_name, st.emergency_phone, c.class_name, sec.section_name, r.route_name, r.route_code, v.vehicle_number, v.registration_number, pstop.stop_name as pickup_stop_name, pstop.pickup_time, dstop.stop_name as drop_stop_name, dstop.drop_time, d.driver_name, d.phone as driver_phone')
+            ->from('tbl_student_transport_assignments ta')
+            ->join('tbl_students st', 'st.student_id = ta.student_id', 'left')
+            ->join('tbl_classes c', 'c.class_id = ta.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = ta.section_id', 'left')
+            ->join('tbl_transport_routes r', 'r.route_id = ta.route_id', 'left')
+            ->join('tbl_vehicles v', 'v.vehicle_id = ta.vehicle_id', 'left')
+            ->join('tbl_transport_drivers d', 'd.driver_id = v.assigned_driver_id', 'left')
+            ->join('tbl_route_stops pstop', 'pstop.stop_id = ta.pickup_stop_id', 'left')
+            ->join('tbl_route_stops dstop', 'dstop.stop_id = ta.drop_stop_id', 'left')
+            ->order_by('ta.assignment_id', 'DESC');
+
+        if (!empty($filters['academic_year_id'])) $this->db->where('ta.academic_year_id', $filters['academic_year_id']);
+        if (!empty($filters['class_id'])) $this->db->where('ta.class_id', $filters['class_id']);
+        if (!empty($filters['section_id'])) $this->db->where('ta.section_id', $filters['section_id']);
+        if (!empty($filters['route_id'])) $this->db->where('ta.route_id', $filters['route_id']);
+        if (!empty($filters['vehicle_id'])) $this->db->where('ta.vehicle_id', $filters['vehicle_id']);
+        if (!empty($filters['stop_id'])) {
+            $this->db->group_start()
+                ->where('ta.pickup_stop_id', $filters['stop_id'])
+                ->or_where('ta.drop_stop_id', $filters['stop_id'])
+            ->group_end();
+        }
+        if (!empty($filters['status'])) $this->db->where('ta.status', $filters['status']);
+
+        if (!empty($filters['search'])) {
+            $q = $filters['search'];
+            $this->db->group_start()
+                ->like('st.first_name', $q)
+                ->or_like('st.last_name', $q)
+                ->or_like('st.admission_no', $q)
+            ->group_end();
+        }
+
+        if ($limit) $this->db->limit($limit, $offset);
+
+        return $this->db->get()->result();
+    }
+
+    public function get_by_id($id)
+    {
+        return $this->db
+            ->select('ta.*, st.first_name, st.last_name, st.admission_no, st.guardian_name, st.emergency_phone, c.class_name, sec.section_name, r.route_name, r.route_code, v.vehicle_number, v.registration_number, pstop.stop_name as pickup_stop_name, pstop.pickup_time, dstop.stop_name as drop_stop_name, dstop.drop_time, d.driver_name, d.phone as driver_phone')
+            ->from('tbl_student_transport_assignments ta')
+            ->join('tbl_students st', 'st.student_id = ta.student_id', 'left')
+            ->join('tbl_classes c', 'c.class_id = ta.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = ta.section_id', 'left')
+            ->join('tbl_transport_routes r', 'r.route_id = ta.route_id', 'left')
+            ->join('tbl_vehicles v', 'v.vehicle_id = ta.vehicle_id', 'left')
+            ->join('tbl_transport_drivers d', 'd.driver_id = v.assigned_driver_id', 'left')
+            ->join('tbl_route_stops pstop', 'pstop.stop_id = ta.pickup_stop_id', 'left')
+            ->join('tbl_route_stops dstop', 'dstop.stop_id = ta.drop_stop_id', 'left')
+            ->where('ta.' . $this->primaryKey, $id)
+            ->get()
+            ->row();
+    }
+
+    public function get_active_by_student($student_id)
+    {
+        return $this->db
+            ->select('ta.*, r.route_name, r.route_code, v.vehicle_number, v.registration_number, pstop.stop_name as pickup_stop_name, dstop.stop_name as drop_stop_name, d.driver_name, d.phone as driver_phone')
+            ->from('tbl_student_transport_assignments ta')
+            ->join('tbl_transport_routes r', 'r.route_id = ta.route_id', 'left')
+            ->join('tbl_vehicles v', 'v.vehicle_id = ta.vehicle_id', 'left')
+            ->join('tbl_transport_drivers d', 'd.driver_id = v.assigned_driver_id', 'left')
+            ->join('tbl_route_stops pstop', 'pstop.stop_id = ta.pickup_stop_id', 'left')
+            ->join('tbl_route_stops dstop', 'dstop.stop_id = ta.drop_stop_id', 'left')
+            ->where('ta.student_id', $student_id)
+            ->where('ta.status', 'Active')
+            ->get()
+            ->row();
+    }
+
+    public function validate_capacity($vehicle_id, $additional_seats = 1)
+    {
+        $v = $this->db->where('vehicle_id', $vehicle_id)->get('tbl_vehicles')->row();
+        if (!$v) return false;
+
+        $occupied = (int)$this->db
+            ->where('vehicle_id', $vehicle_id)
+            ->where('status', 'Active')
+            ->count_all_results($this->table);
+
+        return (($occupied + $additional_seats) <= (int)$v->seating_capacity);
+    }
+
+    public function assign_student($data)
+    {
+        $existing = $this->db
+            ->where('student_id', $data['student_id'])
+            ->where('status', 'Active')
+            ->get($this->table)
+            ->row();
+
+        if ($existing) {
+            // Cancel existing before creating new
+            $this->db->where('assignment_id', $existing->assignment_id)->update($this->table, ['status' => 'Cancelled', 'updated_at' => date('Y-m-d H:i:s')]);
+        }
+
+        $data['start_date'] = $data['start_date'] ?? date('Y-m-d');
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $this->db->insert($this->table, $data);
+        $new_id = $this->db->insert_id();
+
+        // Add history log
+        $this->db->insert('tbl_transport_assignment_history', [
+            'assignment_id'       => $new_id,
+            'student_id'          => $data['student_id'],
+            'action'              => $existing ? 'Reassigned' : 'Assigned',
+            'previous_route_id'   => $existing ? $existing->route_id : NULL,
+            'new_route_id'        => $data['route_id'],
+            'previous_stop_id'    => $existing ? $existing->pickup_stop_id : NULL,
+            'new_stop_id'         => $data['pickup_stop_id'],
+            'previous_vehicle_id' => $existing ? $existing->vehicle_id : NULL,
+            'new_vehicle_id'      => $data['vehicle_id'],
+            'effective_date'      => date('Y-m-d'),
+            'changed_by'          => 1,
+            'comments'            => 'Transport assignment created.',
+            'created_at'          => date('Y-m-d H:i:s')
+        ]);
+
+        return $new_id;
+    }
+
+    public function remove_assignment($assignment_id, $reason = 'Cancelled by admin')
+    {
+        $assign = $this->get_by_id($assignment_id);
+        if (!$assign) return false;
+
+        $this->db->where($this->primaryKey, $assignment_id)->update($this->table, [
+            'status'     => 'Cancelled',
+            'end_date'   => date('Y-m-d'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $this->db->insert('tbl_transport_assignment_history', [
+            'assignment_id'       => $assignment_id,
+            'student_id'          => $assign->student_id,
+            'action'              => 'Cancelled',
+            'previous_route_id'   => $assign->route_id,
+            'new_route_id'        => NULL,
+            'previous_stop_id'    => $assign->pickup_stop_id,
+            'new_stop_id'         => NULL,
+            'previous_vehicle_id' => $assign->vehicle_id,
+            'new_vehicle_id'      => NULL,
+            'effective_date'      => date('Y-m-d'),
+            'changed_by'          => 1,
+            'comments'            => $reason,
+            'created_at'          => date('Y-m-d H:i:s')
+        ]);
+
+        return true;
+    }
+}

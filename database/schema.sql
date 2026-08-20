@@ -1568,16 +1568,218 @@ CREATE TABLE `tbl_leave_audit_logs` (
   KEY `idx_leave_action` (`action`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ----------------------------------------------------------------------------
+-- 24. Transport Management Module
+-- ----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `tbl_vehicles`;
+CREATE TABLE `tbl_vehicles` (
+  `vehicle_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `vehicle_number` VARCHAR(50) NOT NULL,
+  `registration_number` VARCHAR(50) NOT NULL,
+  `vehicle_type` ENUM('School Bus', 'Van', 'Mini Bus', 'Other') NOT NULL DEFAULT 'School Bus',
+  `manufacturer` VARCHAR(100) NULL,
+  `model` VARCHAR(100) NULL,
+  `manufacturing_year` YEAR NULL,
+  `seating_capacity` INT UNSIGNED NOT NULL DEFAULT 40,
+  `vehicle_color` VARCHAR(50) NULL DEFAULT 'Yellow',
+  `registration_date` DATE NULL,
+  `registration_expiry` DATE NULL,
+  `insurance_number` VARCHAR(100) NULL,
+  `insurance_expiry` DATE NULL,
+  `fitness_number` VARCHAR(100) NULL,
+  `fitness_expiry` DATE NULL,
+  `pollution_number` VARCHAR(100) NULL,
+  `pollution_expiry` DATE NULL,
+  `permit_number` VARCHAR(100) NULL,
+  `permit_expiry` DATE NULL,
+  `assigned_driver_id` INT UNSIGNED NULL,
+  `assigned_route_id` INT UNSIGNED NULL,
+  `status` ENUM('Active', 'Inactive', 'Maintenance', 'Retired') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`vehicle_id`),
+  UNIQUE KEY `uk_vehicle_reg` (`registration_number`),
+  KEY `idx_veh_driver` (`assigned_driver_id`),
+  KEY `idx_veh_route` (`assigned_route_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_transport_drivers`;
+CREATE TABLE `tbl_transport_drivers` (
+  `driver_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `driver_name` VARCHAR(100) NOT NULL,
+  `staff_id` INT UNSIGNED NULL,
+  `photo` VARCHAR(255) NULL,
+  `dob` DATE NULL,
+  `phone` VARCHAR(20) NOT NULL,
+  `alternate_phone` VARCHAR(20) NULL,
+  `address` TEXT NULL,
+  `license_number` VARCHAR(50) NOT NULL,
+  `license_type` VARCHAR(50) NOT NULL DEFAULT 'Heavy Commercial Vehicle (HCV)',
+  `license_issue_date` DATE NULL,
+  `license_expiry_date` DATE NOT NULL,
+  `experience_years` INT UNSIGNED NOT NULL DEFAULT 5,
+  `assigned_vehicle_id` INT UNSIGNED NULL,
+  `status` ENUM('Active', 'Inactive', 'On Leave', 'Suspended') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`driver_id`),
+  UNIQUE KEY `uk_driver_license` (`license_number`),
+  KEY `idx_driver_staff` (`staff_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `tbl_transport_routes`;
 CREATE TABLE `tbl_transport_routes` (
   `route_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `route_name` VARCHAR(100) NOT NULL,
-  `vehicle_number` VARCHAR(50) NOT NULL,
-  `driver_name` VARCHAR(100) NOT NULL,
-  `driver_phone` VARCHAR(20) NOT NULL,
+  `route_code` VARCHAR(50) NOT NULL,
+  `description` TEXT NULL,
+  `start_point` VARCHAR(100) NOT NULL,
+  `end_point` VARCHAR(100) NOT NULL,
+  `estimated_distance_km` DECIMAL(5,2) NOT NULL DEFAULT 15.00,
+  `estimated_travel_time_min` INT UNSIGNED NOT NULL DEFAULT 45,
+  `assigned_vehicle_id` INT UNSIGNED NULL,
+  `assigned_driver_id` INT UNSIGNED NULL,
+  `status` ENUM('Active', 'Inactive', 'Suspended') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`route_id`),
+  UNIQUE KEY `uk_route_code` (`route_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_route_stops`;
+CREATE TABLE `tbl_route_stops` (
+  `stop_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `route_id` INT UNSIGNED NOT NULL,
+  `stop_name` VARCHAR(100) NOT NULL,
+  `stop_code` VARCHAR(50) NULL,
+  `sequence_order` INT UNSIGNED NOT NULL DEFAULT 1,
+  `pickup_time` TIME NOT NULL DEFAULT '07:30:00',
+  `drop_time` TIME NOT NULL DEFAULT '15:30:00',
+  `landmark` VARCHAR(150) NULL,
+  `distance_km` DECIMAL(5,2) NOT NULL DEFAULT 2.00,
+  `fare_amount` DECIMAL(10,2) NOT NULL DEFAULT 1200.00,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`route_id`)
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`stop_id`),
+  KEY `idx_stop_route` (`route_id`),
+  KEY `idx_stop_seq` (`route_id`, `sequence_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_student_transport_assignments`;
+CREATE TABLE `tbl_student_transport_assignments` (
+  `assignment_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `student_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NULL,
+  `section_id` INT UNSIGNED NULL,
+  `route_id` INT UNSIGNED NOT NULL,
+  `pickup_stop_id` INT UNSIGNED NOT NULL,
+  `drop_stop_id` INT UNSIGNED NOT NULL,
+  `vehicle_id` INT UNSIGNED NOT NULL,
+  `transport_type` ENUM('Two Way', 'One Way', 'Pickup Only', 'Drop Only') NOT NULL DEFAULT 'Two Way',
+  `monthly_fee` DECIMAL(10,2) NOT NULL DEFAULT 1500.00,
+  `start_date` DATE NOT NULL,
+  `end_date` DATE NULL,
+  `status` ENUM('Active', 'Suspended', 'Cancelled') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`assignment_id`),
+  UNIQUE KEY `uk_student_trans_assign` (`academic_year_id`, `student_id`, `status`),
+  KEY `idx_ta_route` (`route_id`),
+  KEY `idx_ta_vehicle` (`vehicle_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_transport_assignment_history`;
+CREATE TABLE `tbl_transport_assignment_history` (
+  `history_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `assignment_id` INT UNSIGNED NOT NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `action` VARCHAR(50) NOT NULL,
+  `previous_route_id` INT UNSIGNED NULL,
+  `new_route_id` INT UNSIGNED NULL,
+  `previous_stop_id` INT UNSIGNED NULL,
+  `new_stop_id` INT UNSIGNED NULL,
+  `previous_vehicle_id` INT UNSIGNED NULL,
+  `new_vehicle_id` INT UNSIGNED NULL,
+  `effective_date` DATE NOT NULL,
+  `changed_by` INT UNSIGNED NULL,
+  `comments` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`history_id`),
+  KEY `idx_tah_student` (`student_id`),
+  KEY `idx_tah_assign` (`assignment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_vehicle_maintenance`;
+CREATE TABLE `tbl_vehicle_maintenance` (
+  `maintenance_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `vehicle_id` INT UNSIGNED NOT NULL,
+  `maintenance_type` ENUM('Routine Service', 'Engine', 'Tyres', 'Brake', 'Electrical', 'Insurance', 'Fitness', 'Cleaning', 'Repair', 'Other') NOT NULL DEFAULT 'Routine Service',
+  `service_date` DATE NOT NULL,
+  `next_service_date` DATE NOT NULL,
+  `description` TEXT NOT NULL,
+  `service_provider` VARCHAR(150) NOT NULL,
+  `cost` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `invoice_number` VARCHAR(100) NULL,
+  `remarks` VARCHAR(255) NULL,
+  `document_file` VARCHAR(255) NULL,
+  `status` ENUM('Completed', 'Scheduled', 'Overdue') NOT NULL DEFAULT 'Completed',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`maintenance_id`),
+  KEY `idx_vm_vehicle` (`vehicle_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_transport_documents`;
+CREATE TABLE `tbl_transport_documents` (
+  `document_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `entity_type` ENUM('Vehicle', 'Driver') NOT NULL DEFAULT 'Vehicle',
+  `entity_id` INT UNSIGNED NOT NULL,
+  `document_type` ENUM('Registration', 'Insurance', 'Fitness Certificate', 'Pollution Certificate', 'Permit', 'Driving License', 'ID Proof', 'Medical Certificate', 'Police Verification', 'Other') NOT NULL DEFAULT 'Registration',
+  `document_number` VARCHAR(100) NULL,
+  `issue_date` DATE NULL,
+  `expiry_date` DATE NULL,
+  `file_path` VARCHAR(255) NULL,
+  `status` ENUM('Active', 'Expiring Soon', 'Expired') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`document_id`),
+  KEY `idx_td_entity` (`entity_type`, `entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_transport_settings`;
+CREATE TABLE `tbl_transport_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `enable_transport` TINYINT(1) NOT NULL DEFAULT 1,
+  `enforce_capacity` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_capacity_override` TINYINT(1) NOT NULL DEFAULT 0,
+  `default_monthly_fee` DECIMAL(10,2) NOT NULL DEFAULT 1500.00,
+  `fee_frequency` VARCHAR(50) NOT NULL DEFAULT 'Monthly',
+  `maintenance_reminder_days` INT UNSIGNED NOT NULL DEFAULT 15,
+  `document_expiry_reminder_days` INT UNSIGNED NOT NULL DEFAULT 30,
+  `driver_license_reminder_days` INT UNSIGNED NOT NULL DEFAULT 30,
+  `allow_one_way` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_pickup_only` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_drop_only` TINYINT(1) NOT NULL DEFAULT 1,
+  `allow_bulk_assignment` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_transport_audit_logs`;
+CREATE TABLE `tbl_transport_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `details` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_trans_action` (`action`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

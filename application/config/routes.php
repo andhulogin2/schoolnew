@@ -224,5 +224,24 @@ $route['leave/details/(:num)']                    = 'leave/details/$1';
 $route['leave/reports']                           = 'leave/reports';
 $route['leave/settings']                          = 'leave/settings';
 
+$route['transport']                               = 'transport/index';
+$route['transport/dashboard']                     = 'transport/index';
+$route['transport/vehicles']                      = 'transport/vehicles';
+$route['transport/vehicle_details/(:num)']        = 'transport/vehicle_details/$1';
+$route['transport/drivers']                       = 'transport/drivers';
+$route['transport/driver_details/(:num)']         = 'transport/driver_details/$1';
+$route['transport/routes']                        = 'transport/routes';
+$route['transport/route_details/(:num)']          = 'transport/route_details/$1';
+$route['transport/stops']                         = 'transport/stops';
+$route['transport/assignments']                   = 'transport/assignments';
+$route['transport/remove_assignment/(:num)']      = 'transport/remove_assignment_action/$1';
+$route['transport/bulk_assign']                   = 'transport/bulk_assign';
+$route['transport/fees']                          = 'transport/fees';
+$route['transport/maintenance']                   = 'transport/maintenance';
+$route['transport/maintenance_history']           = 'transport/maintenance_history';
+$route['transport/documents']                     = 'transport/documents';
+$route['transport/reports']                       = 'transport/reports';
+$route['transport/settings']                      = 'transport/settings';
+
 $route['unauthorized']       = 'unauthorized/index';
 

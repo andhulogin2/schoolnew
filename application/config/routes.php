@@ -243,5 +243,32 @@ $route['transport/documents']                     = 'transport/documents';
 $route['transport/reports']                       = 'transport/reports';
 $route['transport/settings']                      = 'transport/settings';
 
+$route['certificates']                            = 'certificates/index';
+$route['certificates/dashboard']                  = 'certificates/index';
+$route['certificates/requests']                   = 'certificates/requests';
+$route['certificates/request_create']             = 'certificates/request_create';
+$route['certificates/approve_request/(:num)']     = 'certificates/approve_request/$1';
+$route['certificates/reject_request/(:num)']      = 'certificates/reject_request/$1';
+$route['certificates/types']                      = 'certificates/types';
+$route['certificates/bonafide']                   = 'certificates/bonafide';
+$route['certificates/transfer_certificate']       = 'certificates/transfer_certificate';
+$route['certificates/study_certificate']          = 'certificates/study_certificate';
+$route['certificates/conduct_certificate']        = 'certificates/conduct_certificate';
+$route['certificates/generate']                   = 'certificates/generate';
+$route['certificates/generate/(:num)']            = 'certificates/generate/$1';
+$route['certificates/preview/(:num)']             = 'certificates/preview/$1';
+$route['certificates/print/(:num)']               = 'certificates/print_cert/$1';
+$route['certificates/issue/(:num)']               = 'certificates/issue/$1';
+$route['certificates/templates']                  = 'certificates/templates';
+$route['certificates/documents']                  = 'certificates/documents';
+$route['certificates/document_categories']        = 'certificates/document_categories';
+$route['certificates/document_verification']      = 'certificates/document_verification';
+$route['certificates/verify_doc/(:num)']          = 'certificates/verify_doc/$1';
+$route['certificates/reject_doc/(:num)']          = 'certificates/reject_doc/$1';
+$route['certificates/history']                    = 'certificates/history';
+$route['certificates/reissue/(:num)']             = 'certificates/reissue/$1';
+$route['certificates/reports']                    = 'certificates/reports';
+$route['certificates/settings']                   = 'certificates/settings';
+
 $route['unauthorized']       = 'unauthorized/index';
 

@@ -1782,6 +1782,185 @@ CREATE TABLE `tbl_transport_audit_logs` (
   KEY `idx_trans_action` (`action`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ----------------------------------------------------------------------------
+-- 25. Certificate & Document Management Module
+-- ----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `tbl_certificate_types`;
+CREATE TABLE `tbl_certificate_types` (
+  `type_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(100) NOT NULL,
+  `type_code` VARCHAR(50) NOT NULL,
+  `prefix` VARCHAR(20) NOT NULL DEFAULT 'CERT-',
+  `description` TEXT NULL,
+  `is_system` TINYINT(1) NOT NULL DEFAULT 0,
+  `status` ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`type_id`),
+  UNIQUE KEY `uk_cert_type_code` (`type_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_certificate_templates`;
+CREATE TABLE `tbl_certificate_templates` (
+  `template_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `template_name` VARCHAR(100) NOT NULL,
+  `type_code` VARCHAR(50) NOT NULL,
+  `header_content` TEXT NULL,
+  `body_content` LONGTEXT NOT NULL,
+  `footer_content` TEXT NULL,
+  `logo_position` ENUM('Top-Left', 'Top-Center', 'Top-Right', 'None') NOT NULL DEFAULT 'Top-Center',
+  `signature_layout` ENUM('Principal-Only', 'Principal-And-Officer', 'Officer-Only') NOT NULL DEFAULT 'Principal-Only',
+  `paper_size` ENUM('A4', 'Letter', 'Legal') NOT NULL DEFAULT 'A4',
+  `orientation` ENUM('Portrait', 'Landscape') NOT NULL DEFAULT 'Portrait',
+  `status` ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`template_id`),
+  KEY `idx_tmpl_code` (`type_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_certificate_requests`;
+CREATE TABLE `tbl_certificate_requests` (
+  `request_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `certificate_type_id` INT UNSIGNED NOT NULL,
+  `reason` TEXT NOT NULL,
+  `requested_date` DATE NOT NULL,
+  `required_date` DATE NULL,
+  `remarks` TEXT NULL,
+  `supporting_document` VARCHAR(255) NULL,
+  `status` ENUM('Draft', 'Pending', 'Under Verification', 'Correction Required', 'Approved', 'Rejected', 'Generated', 'Printed', 'Issued', 'Cancelled') NOT NULL DEFAULT 'Pending',
+  `rejection_reason` TEXT NULL,
+  `requested_by` INT UNSIGNED NULL,
+  `verified_by` INT UNSIGNED NULL,
+  `approved_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`request_id`),
+  KEY `idx_cr_student` (`student_id`),
+  KEY `idx_cr_type` (`certificate_type_id`),
+  KEY `idx_cr_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_certificates`;
+CREATE TABLE `tbl_certificates` (
+  `certificate_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `certificate_no` VARCHAR(50) NOT NULL,
+  `request_id` INT UNSIGNED NULL,
+  `student_id` INT UNSIGNED NOT NULL,
+  `academic_year_id` INT UNSIGNED NOT NULL DEFAULT 1,
+  `certificate_type_id` INT UNSIGNED NULL,
+  `certificate_type` VARCHAR(100) NOT NULL,
+  `template_id` INT UNSIGNED NULL,
+  `issue_date` DATE NOT NULL,
+  `student_data_snapshot` JSON NULL,
+  `generated_content` LONGTEXT NULL,
+  `version` INT UNSIGNED NOT NULL DEFAULT 1,
+  `is_reissued` TINYINT(1) NOT NULL DEFAULT 0,
+  `reissue_reason` TEXT NULL,
+  `remarks` TEXT NULL,
+  `generated_by` INT UNSIGNED NULL,
+  `issued_by` INT UNSIGNED NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'Generated',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`certificate_id`),
+  UNIQUE KEY `uk_cert_no` (`certificate_no`),
+  KEY `idx_cert_student` (`student_id`),
+  KEY `idx_cert_req` (`request_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_certificate_versions`;
+CREATE TABLE `tbl_certificate_versions` (
+  `version_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `certificate_id` INT UNSIGNED NOT NULL,
+  `version_number` INT UNSIGNED NOT NULL,
+  `certificate_no` VARCHAR(50) NOT NULL,
+  `content_snapshot` LONGTEXT NOT NULL,
+  `reason` TEXT NOT NULL,
+  `changed_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`version_id`),
+  KEY `idx_cv_cert` (`certificate_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_document_categories`;
+CREATE TABLE `tbl_document_categories` (
+  `category_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `category_name` VARCHAR(100) NOT NULL,
+  `code` VARCHAR(50) NOT NULL,
+  `description` TEXT NULL,
+  `applicable_to` ENUM('All', 'Student', 'Staff') NOT NULL DEFAULT 'Student',
+  `is_required` TINYINT(1) NOT NULL DEFAULT 0,
+  `expiry_required` TINYINT(1) NOT NULL DEFAULT 0,
+  `verification_required` TINYINT(1) NOT NULL DEFAULT 1,
+  `status` ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`category_id`),
+  UNIQUE KEY `uk_doc_cat_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_student_documents`;
+CREATE TABLE `tbl_student_documents` (
+  `document_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_id` INT UNSIGNED NOT NULL,
+  `category_id` INT UNSIGNED NULL,
+  `document_type` VARCHAR(100) NOT NULL,
+  `document_name` VARCHAR(255) NOT NULL,
+  `document_number` VARCHAR(100) NULL,
+  `issue_date` DATE NULL,
+  `expiry_date` DATE NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `remarks` TEXT NULL,
+  `verification_status` ENUM('Pending', 'Verified', 'Rejected', 'Expired') NOT NULL DEFAULT 'Pending',
+  `rejection_reason` TEXT NULL,
+  `verified_by` INT UNSIGNED NULL,
+  `verified_at` DATETIME NULL,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`document_id`),
+  KEY `idx_sd_student` (`student_id`),
+  KEY `idx_sd_cat` (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_certificate_settings`;
+CREATE TABLE `tbl_certificate_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `numbering_format` VARCHAR(100) NOT NULL DEFAULT '{PREFIX}{YEAR}-{NUMBER}',
+  `number_sequence_length` INT UNSIGNED NOT NULL DEFAULT 5,
+  `require_approval` TINYINT(1) NOT NULL DEFAULT 1,
+  `require_document_verification` TINYINT(1) NOT NULL DEFAULT 0,
+  `require_fee_clearance_for_tc` TINYINT(1) NOT NULL DEFAULT 1,
+  `require_library_clearance_for_tc` TINYINT(1) NOT NULL DEFAULT 0,
+  `require_transport_clearance_for_tc` TINYINT(1) NOT NULL DEFAULT 0,
+  `principal_signature_path` VARCHAR(255) NULL,
+  `authorized_signature_path` VARCHAR(255) NULL,
+  `watermark_enabled` TINYINT(1) NOT NULL DEFAULT 1,
+  `default_paper_size` VARCHAR(20) NOT NULL DEFAULT 'A4',
+  `default_orientation` VARCHAR(20) NOT NULL DEFAULT 'Portrait',
+  `document_expiry_reminder_days` INT UNSIGNED NOT NULL DEFAULT 30,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `tbl_certificate_audit_logs`;
+CREATE TABLE `tbl_certificate_audit_logs` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `details` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_cert_audit_action` (`action`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================================

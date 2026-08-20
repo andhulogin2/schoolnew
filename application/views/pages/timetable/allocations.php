@@ -1,0 +1,245 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+
+    <!-- Flash Messages -->
+    <?php if ($this->session->flashdata('success')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-secondary-container text-on-secondary-container text-body-md font-medium flex items-center gap-2 border border-secondary/20">
+        <span class="material-symbols-outlined text-[20px] text-secondary">check_circle</span>
+        <?php echo html_escape($this->session->flashdata('success')); ?>
+      </div>
+    <?php endif; ?>
+    <?php if ($this->session->flashdata('error')): ?>
+      <div class="mb-4 p-3.5 rounded-xl bg-error-container text-on-error-container text-body-md font-medium flex items-center gap-2 border border-error/20">
+        <span class="material-symbols-outlined text-[20px] text-error">error</span>
+        <?php echo html_escape($this->session->flashdata('error')); ?>
+      </div>
+    <?php endif; ?>
+
+    <!-- Header & Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="font-headline-md text-headline-md text-on-surface">Subject Weekly Quota Allocation</h2>
+        <p class="text-body-md font-body-md text-on-surface-variant mt-1">Configure weekly period quotas for each subject and monitor scheduled vs remaining slots.</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap shrink-0">
+        <button type="button" onclick="openAllocModal()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md font-semibold hover:bg-on-secondary-fixed-variant transition-colors shadow-sm cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">add_circle</span>Set Subject Quota
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 p-4 mb-6">
+      <form method="get" action="<?php echo site_url('timetable/allocations'); ?>" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Academic Year</label>
+          <select name="academic_year_id" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
+            <?php foreach ($academic_years as $ay): ?>
+              <option value="<?php echo $ay->academic_year_id; ?>" <?php echo ($selected_year == $ay->academic_year_id) ? 'selected' : ''; ?>>
+                <?php echo html_escape($ay->year_name); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Filter Class</label>
+          <select name="class_id" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
+            <option value="">All Classes</option>
+            <?php foreach ($classes as $c): ?>
+              <option value="<?php echo $c->class_id; ?>" <?php echo ($selected_class == $c->class_id) ? 'selected' : ''; ?>>
+                <?php echo html_escape($c->class_name); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Filter Section</label>
+          <select name="section_id" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
+            <option value="">All Sections</option>
+            <?php foreach ($sections as $s): ?>
+              <option value="<?php echo $s->section_id; ?>" <?php echo ($selected_section == $s->section_id) ? 'selected' : ''; ?>>
+                <?php echo html_escape($s->section_name); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Allocations Table -->
+    <div class="elevation-1 rounded-xl bg-surface-container-lowest border border-outline-variant/50 overflow-hidden mb-6">
+      <div class="p-4 border-b border-outline-variant/50 flex items-center justify-between">
+        <span class="text-body-md font-semibold text-on-surface">Configured Subject Quotas (<?php echo count($allocations); ?>)</span>
+      </div>
+
+      <div class="table-scroll overflow-x-auto">
+        <table class="w-full data-table zebra border-collapse text-body-md">
+          <thead>
+            <tr class="border-b border-outline-variant/60 bg-surface-container-low/50">
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Class & Section</th>
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Subject</th>
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Primary Faculty</th>
+              <th class="text-center px-4 py-3 text-label-md font-semibold text-primary uppercase whitespace-nowrap">Target Quota</th>
+              <th class="text-center px-4 py-3 text-label-md font-semibold text-secondary uppercase whitespace-nowrap">Scheduled</th>
+              <th class="text-left px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase min-w-[180px]">Fulfillment</th>
+              <th class="text-center px-4 py-3 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/40">
+            <?php if (empty($allocations)): ?>
+              <tr><td colspan="7" class="px-4 py-8 text-center text-on-surface-variant">No subject allocations configured yet.</td></tr>
+            <?php else: ?>
+              <?php foreach ($allocations as $a): ?>
+                <?php
+                  $pct = ($a->weekly_periods_target > 0) ? min(100, round(($a->actual_allocated / $a->weekly_periods_target) * 100)) : 0;
+                  $barColor = ($pct >= 100) ? 'bg-secondary' : (($pct >= 50) ? 'bg-primary' : 'bg-amber-500');
+                ?>
+                <tr class="hover:bg-surface-container-low transition-colors">
+                  <td class="px-4 py-3 font-bold text-on-surface whitespace-nowrap">
+                    <?php echo html_escape($a->class_name . ' ' . $a->section_name); ?>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <strong class="text-primary"><?php echo html_escape($a->subject_name); ?></strong>
+                    <span class="text-[11px] font-mono text-on-surface-variant block"><?php echo html_escape($a->subject_code); ?></span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-on-surface">
+                    <?php echo html_escape($a->teacher_name ?: '— Unassigned —'); ?>
+                  </td>
+                  <td class="px-4 py-3 text-center font-mono font-bold text-primary whitespace-nowrap">
+                    <?php echo $a->weekly_periods_target; ?> / wk
+                  </td>
+                  <td class="px-4 py-3 text-center font-mono font-bold text-secondary whitespace-nowrap">
+                    <?php echo $a->actual_allocated; ?> / wk
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+                        <div class="<?php echo $barColor; ?> h-2 rounded-full" style="width: <?php echo $pct; ?>%"></div>
+                      </div>
+                      <span class="text-[11px] font-mono font-semibold text-on-surface-variant shrink-0"><?php echo $pct; ?>%</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <div class="flex items-center justify-center gap-1">
+                      <button type="button" onclick='editAlloc(<?php echo json_encode($a); ?>)' class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors cursor-pointer" title="Edit">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <?php echo form_open('timetable/allocations', array('class' => 'inline', 'onsubmit' => 'return confirm("Remove this subject quota allocation?");')); ?>
+                        <input type="hidden" name="action" value="delete"/>
+                        <input type="hidden" name="allocation_id" value="<?php echo $a->allocation_id; ?>"/>
+                        <button type="submit" class="p-1.5 rounded-lg hover:bg-error-container text-error transition-colors cursor-pointer" title="Delete">
+                          <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      <?php echo form_close(); ?>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SET SUBJECT QUOTA MODAL -->
+    <div id="alloc-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant max-w-md w-full p-6 elevation-3 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-outline-variant/50">
+          <h3 id="modal-alloc-title" class="font-headline-md text-title-lg text-on-surface font-semibold flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[22px]">tune</span>Set Subject Weekly Quota
+          </h3>
+          <button onclick="closeAllocModal()" class="p-1 rounded-lg hover:bg-surface-container-high text-on-surface-variant cursor-pointer">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        <?php echo form_open('timetable/allocations', array('class' => 'space-y-4')); ?>
+          <input type="hidden" name="allocation_id" id="modal-alloc-id" value="0"/>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Class *</label>
+              <select name="class_id" id="modal-alloc-class" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                <?php foreach ($classes as $c): ?>
+                  <option value="<?php echo $c->class_id; ?>"><?php echo html_escape($c->class_name); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Section *</label>
+              <select name="section_id" id="modal-alloc-sec" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                <option value="1">A</option>
+                <option value="2">B</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Subject *</label>
+            <select name="subject_id" id="modal-alloc-sub" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <option value="">-- Choose Subject --</option>
+              <?php foreach ($subjects as $sub): ?>
+                <option value="<?php echo $sub->subject_id; ?>"><?php echo html_escape($sub->subject_name . ' (' . $sub->subject_code . ')'); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Assigned Faculty (Optional)</label>
+            <select name="teacher_id" id="modal-alloc-teacher" class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <option value="">-- Select Teacher --</option>
+              <?php foreach ($teachers as $t): ?>
+                <option value="<?php echo $t->staff_id; ?>"><?php echo html_escape($t->full_name); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Weekly Target Periods *</label>
+            <input type="number" min="1" max="20" name="weekly_periods_target" id="modal-alloc-target" value="6" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md font-mono font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-4 border-t border-outline-variant/50">
+            <button type="button" onclick="closeAllocModal()" class="px-4 py-2 rounded-lg bg-surface-container-high text-on-surface text-label-md font-medium hover:bg-surface-container-highest cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit" class="px-5 py-2 rounded-lg bg-secondary text-on-secondary text-label-md font-semibold hover:bg-on-secondary-fixed-variant cursor-pointer">
+              Save Quota
+            </button>
+          </div>
+        <?php echo form_close(); ?>
+      </div>
+    </div>
+
+    <script>
+      function openAllocModal() {
+        document.getElementById('modal-alloc-id').value = '0';
+        document.getElementById('modal-alloc-title').textContent = 'Set Subject Weekly Quota';
+        document.getElementById('modal-alloc-target').value = '6';
+
+        var modal = document.getElementById('alloc-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function editAlloc(a) {
+        document.getElementById('modal-alloc-id').value = a.allocation_id;
+        document.getElementById('modal-alloc-title').textContent = 'Edit Subject Weekly Quota';
+        document.getElementById('modal-alloc-class').value = a.class_id;
+        document.getElementById('modal-alloc-sec').value = a.section_id;
+        document.getElementById('modal-alloc-sub').value = a.subject_id;
+        document.getElementById('modal-alloc-teacher').value = a.teacher_id || '';
+        document.getElementById('modal-alloc-target').value = a.weekly_periods_target;
+
+        var modal = document.getElementById('alloc-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeAllocModal() {
+        var modal = document.getElementById('alloc-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    </script>

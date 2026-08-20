@@ -148,6 +148,20 @@ $route['fees/refunds']                  = 'fees/refunds';
 $route['fees/reports']                  = 'fees/reports';
 $route['fees/settings']                 = 'fees/settings';
 
+$route['timetable']                     = 'timetable/index';
+$route['timetable/dashboard']           = 'timetable/index';
+$route['timetable/classes']             = 'timetable/classes';
+$route['timetable/teachers']            = 'timetable/teachers';
+$route['timetable/allocations']         = 'timetable/allocations';
+$route['timetable/builder']             = 'timetable/builder';
+$route['timetable/free_periods']        = 'timetable/free_periods';
+$route['timetable/conflicts']           = 'timetable/conflicts';
+$route['timetable/publish_lock']        = 'timetable/publish_lock';
+$route['timetable/reports']             = 'timetable/reports';
+$route['timetable/settings']            = 'timetable/settings';
+$route['timetable/delete_slot/(:num)']  = 'timetable/delete_slot/$1';
+$route['timetable/ajax_get_entry/(:num)']= 'timetable/ajax_get_entry/$1';
+
 $route['homework']           = 'homework/index';
 $route['communication']      = 'communication/index';
 $route['unauthorized']       = 'unauthorized/index';

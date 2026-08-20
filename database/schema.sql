@@ -358,18 +358,92 @@ CREATE TABLE `tbl_timetable` (
   `period_id` INT UNSIGNED NOT NULL,
   `subject_id` INT UNSIGNED NOT NULL,
   `teacher_id` INT UNSIGNED NOT NULL,
+  `room_no` VARCHAR(50) NULL,
+  `is_locked` TINYINT(1) NOT NULL DEFAULT 0,
   `status` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`timetable_id`),
   UNIQUE KEY `uk_class_day_period` (`academic_year_id`, `class_id`, `section_id`, `day`, `period_id`),
   KEY `idx_tt_teacher` (`teacher_id`),
-  CONSTRAINT `fk_tt_year` FOREIGN KEY (`academic_year_id`) REFERENCES `tbl_academic_years` (`academic_year_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_tt_class` FOREIGN KEY (`class_id`) REFERENCES `tbl_classes` (`class_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_tt_section` FOREIGN KEY (`section_id`) REFERENCES `tbl_sections` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_tt_period` FOREIGN KEY (`period_id`) REFERENCES `tbl_periods` (`period_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_tt_subject` FOREIGN KEY (`subject_id`) REFERENCES `tbl_subjects` (`subject_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_tt_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `tbl_staff` (`staff_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `idx_tt_period` (`period_id`),
+  KEY `idx_tt_subject` (`subject_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 9f. Table: tbl_subject_allocations
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_subject_allocations`;
+CREATE TABLE `tbl_subject_allocations` (
+  `allocation_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `subject_id` INT UNSIGNED NOT NULL,
+  `teacher_id` INT UNSIGNED NULL,
+  `weekly_periods_target` INT UNSIGNED NOT NULL DEFAULT 5,
+  `status` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`allocation_id`),
+  UNIQUE KEY `uk_class_sec_sub` (`academic_year_id`, `class_id`, `section_id`, `subject_id`),
+  KEY `idx_alloc_teacher` (`teacher_id`),
+  KEY `idx_alloc_subject` (`subject_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 9g. Table: tbl_timetable_publish
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_timetable_publish`;
+CREATE TABLE `tbl_timetable_publish` (
+  `publish_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `academic_year_id` INT UNSIGNED NOT NULL,
+  `class_id` INT UNSIGNED NOT NULL,
+  `section_id` INT UNSIGNED NOT NULL,
+  `status` ENUM('Draft', 'Published', 'Locked') NOT NULL DEFAULT 'Draft',
+  `published_at` DATETIME NULL,
+  `published_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`publish_id`),
+  UNIQUE KEY `uk_tt_publish_class` (`academic_year_id`, `class_id`, `section_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 9h. Table: tbl_teacher_substitutions
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_teacher_substitutions`;
+CREATE TABLE `tbl_teacher_substitutions` (
+  `substitution_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `timetable_id` INT UNSIGNED NOT NULL,
+  `substitution_date` DATE NOT NULL,
+  `original_teacher_id` INT UNSIGNED NOT NULL,
+  `substitute_teacher_id` INT UNSIGNED NOT NULL,
+  `reason` VARCHAR(255) NULL,
+  `status` ENUM('Scheduled', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Scheduled',
+  `created_by` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`substitution_id`),
+  KEY `idx_sub_tt` (`timetable_id`),
+  KEY `idx_sub_date` (`substitution_date`),
+  KEY `idx_sub_orig` (`original_teacher_id`),
+  KEY `idx_sub_subst` (`substitute_teacher_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 9i. Table: tbl_timetable_settings
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `tbl_timetable_settings`;
+CREATE TABLE `tbl_timetable_settings` (
+  `setting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `working_days` VARCHAR(255) NOT NULL DEFAULT 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
+  `max_periods_per_day` INT UNSIGNED NOT NULL DEFAULT 8,
+  `max_consecutive_periods` INT UNSIGNED NOT NULL DEFAULT 3,
+  `allow_teacher_overlap` TINYINT(1) NOT NULL DEFAULT 0,
+  `auto_publish` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

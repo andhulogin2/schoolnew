@@ -62,12 +62,18 @@ class Auth extends CI_Controller {
                         'user_name'     => $user->name,
                         'user_email'    => $user->email,
                         'user_role'     => $user->role_name,
+                        'role_id'       => $user->role_id,
                         'user_initials' => $initials,
                         'user'          => array(
-                            'name'     => $user->name,
-                            'role'     => $user->role_name,
-                            'email'    => $user->email,
-                            'initials' => $initials,
+                            'user_id'   => (int)$user->user_id,
+                            'name'      => $user->name,
+                            'username'  => $user->username,
+                            'email'     => $user->email,
+                            'role_id'   => (int)$user->role_id,
+                            'role'      => $user->role_name,
+                            'role_code' => $user->role_code ?: 'SUPER_ADMIN',
+                            'user_type' => $user->user_type ?: 'Admin',
+                            'initials'  => $initials,
                         ),
                     ));
 

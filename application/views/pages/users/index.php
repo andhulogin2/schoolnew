@@ -145,6 +145,9 @@
                           <span class="material-symbols-outlined text-[16px]">power_settings_new</span>
                         </a>
                       <?php endif; ?>
+                      <a href="<?php echo site_url('users/delete/' . $u->user_id); ?>" onclick="return confirm('Are you sure you want to delete user <?php echo html_escape($u->username); ?>?');" class="p-1 rounded hover:bg-error-container text-error font-semibold text-xs inline-flex items-center gap-1" title="Delete User">
+                        <span class="material-symbols-outlined text-[16px]">delete</span>
+                      </a>
                     </div>
                   </td>
                 </tr>

@@ -1,24 +1,29 @@
 <?php
-$mysqli = new mysqli('localhost', 'root', '', 'db_school');
-if ($mysqli->connect_error) {
-    die("Connect Error: " . $mysqli->connect_error . "\n");
-}
-echo "Connected successfully to db_school!\n";
-$res = $mysqli->query("SHOW TABLES");
-$tables = [];
-while ($row = $res->fetch_row()) {
-    $tables[] = $row[0];
-}
-echo "Tables found (" . count($tables) . "): " . implode(', ', $tables) . "\n";
+require_once __DIR__ . '/../index.php';
+$CI =& get_instance();
+$CI->load->database();
 
-echo "\n--- tbl_attendance columns ---\n";
-$res = $mysqli->query("DESCRIBE tbl_attendance");
-while ($row = $res->fetch_assoc()) {
-    echo "{$row['Field']} | {$row['Type']} | {$row['Null']} | {$row['Key']} | {$row['Default']}\n";
+echo "=== TABLES IN DB ===\n";
+$tables = $CI->db->list_tables();
+print_r($tables);
+
+echo "\n=== TBL_USERS STRUCTURE ===\n";
+$fields = $CI->db->field_data('tbl_users');
+foreach ($fields as $field) {
+    echo "{$field->name} ({$field->type}, max_len: {$field->max_length}, primary: {$field->primary_key})\n";
 }
 
-echo "\n--- tbl_periods columns ---\n";
-$res = $mysqli->query("DESCRIBE tbl_periods");
-while ($row = $res->fetch_assoc()) {
-    echo "{$row['Field']} | {$row['Type']} | {$row['Null']} | {$row['Key']} | {$row['Default']}\n";
+echo "\n=== TBL_USERS INDEXES ===\n";
+$indexes = $CI->db->query("SHOW INDEX FROM tbl_users")->result();
+foreach ($indexes as $idx) {
+    echo "Index: {$idx->Key_name} | Column: {$idx->Column_name} | Non_unique: {$idx->Non_unique}\n";
 }
+
+echo "\n=== TBL_USERS ALL RECORDS ===\n";
+$users = $CI->db->query("SELECT user_id, username, email, user_type, role_id, status, is_deleted FROM tbl_users")->result();
+foreach ($users as $u) {
+    echo "ID: {$u->user_id} | User: [{$u->username}] | Email: [{$u->email}] | Type: {$u->user_type} | Status: {$u->status} | is_deleted: [{$u->is_deleted}]\n";
+}
+
+echo "\n=== TOTAL USERS COUNT: " . count($users) . " ===\n";
+

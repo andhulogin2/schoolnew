@@ -2,7 +2,7 @@
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
-        <h2 class="font-headline-md text-headline-md text-on-surface">Welcome back, Anjali</h2>
+        <h2 class="font-headline-md text-headline-md text-on-surface">Welcome back, <?php echo html_escape(isset($current_user->name) ? $current_user->name : 'User'); ?></h2>
         <p class="text-body-md font-body-md text-on-surface-variant mt-1">Here's what's happening across your school today.</p>
       </div>
       <div class="flex items-center gap-2 shrink-0"><a href="<?php echo site_url('students/add'); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md text-label-md hover:bg-on-secondary-fixed-variant transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">person_add</span>Add Student</a></div>

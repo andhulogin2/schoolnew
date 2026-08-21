@@ -15,48 +15,13 @@ class MY_Controller extends CI_Controller {
         $this->load->library('Rbac');
         $this->load->model('User_model');
 
-        $user_obj = $this->session->userdata('user');
-        if (!$user_obj) {
-            $user_id = (int)$this->session->userdata('user_id') ?: 1;
-            $db_user = $this->User_model->get_by_id($user_id);
-            if ($db_user) {
-                $user_obj = (object)[
-                    'user_id'   => (int)$db_user->user_id,
-                    'name'      => $db_user->name,
-                    'username'  => $db_user->username,
-                    'email'     => $db_user->email,
-                    'role_id'   => (int)$db_user->role_id,
-                    'role'      => $db_user->role_name ?: 'Super Admin',
-                    'role_code' => $db_user->role_code ?: 'SUPER_ADMIN',
-                    'user_type' => $db_user->user_type,
-                    'initials'  => strtoupper(substr($db_user->name, 0, 2))
-                ];
-            } else {
-                $user_obj = (object)[
-                    'user_id'   => 1,
-                    'name'      => 'Anjali Menon',
-                    'username'  => 'admin',
-                    'email'     => 'anjali.menon@gmail.com',
-                    'role_id'   => 1,
-                    'role'      => 'Super Admin',
-                    'role_code' => 'SUPER_ADMIN',
-                    'user_type' => 'Admin',
-                    'initials'  => 'AM'
-                ];
-            }
-            $this->session->set_userdata([
-                'logged_in'     => TRUE,
-                'user'          => $user_obj,
-                'user_id'       => $user_obj->user_id,
-                'user_name'     => $user_obj->name,
-                'user_role'     => $user_obj->role,
-                'role_id'       => $user_obj->role_id,
-                'user_email'    => $user_obj->email,
-                'user_initials' => $user_obj->initials,
-            ]);
-        } else {
-            $user_obj = (object)$user_obj;
+        // Enforce authentication — redirect to login if no valid session exists
+        if (!$this->session->userdata('logged_in') || !$this->session->userdata('user')) {
+            redirect('auth/login');
+            exit;
         }
+
+        $user_obj = (object)$this->session->userdata('user');
 
         $this->current_user = $user_obj;
     }
@@ -66,9 +31,9 @@ class MY_Controller extends CI_Controller {
      */
     public function require_auth()
     {
-        if (!$this->session->userdata('logged_in') && !$this->session->userdata('user_id')) {
-            $this->session->set_userdata('logged_in', TRUE);
-            $this->session->set_userdata('user_id', 1);
+        if (!$this->session->userdata('logged_in') || !$this->session->userdata('user')) {
+            redirect('auth/login');
+            exit;
         }
     }
 

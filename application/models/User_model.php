@@ -69,6 +69,139 @@ class User_model extends CI_Model {
     }
 
     /**
+     * Check if a username is already taken among ACTIVE users (is_deleted = 'n')
+     */
+    public function is_username_exists($username, $exclude_user_id = null)
+    {
+        $username = trim((string)$username);
+        if ($username === '') {
+            return false;
+        }
+
+        $this->db->from($this->table)
+            ->where('username', $username)
+            ->where('is_deleted', 'n');
+
+        if (!empty($exclude_user_id)) {
+            $this->db->where($this->primaryKey . ' !=', (int)$exclude_user_id);
+        }
+
+        return $this->db->count_all_results() > 0;
+    }
+
+    /**
+     * Check if an email is already taken among ACTIVE users (is_deleted = 'n')
+     */
+    public function is_email_exists($email, $exclude_user_id = null)
+    {
+        $email = trim((string)$email);
+        if ($email === '') {
+            return false;
+        }
+
+        $this->db->from($this->table)
+            ->where('email', $email)
+            ->where('is_deleted', 'n');
+
+        if (!empty($exclude_user_id)) {
+            $this->db->where($this->primaryKey . ' !=', (int)$exclude_user_id);
+        }
+
+        return $this->db->count_all_results() > 0;
+    }
+
+    /**
+     * Verify user credentials for login (only active, non-deleted users)
+     */
+    public function verify_credentials($identifier, $password)
+    {
+        $identifier = trim((string)$identifier);
+        if ($identifier === '' || empty($password)) {
+            return false;
+        }
+
+        $user = $this->db
+            ->select('u.*, r.role_name, r.role_code')
+            ->from('tbl_users u')
+            ->join('tbl_roles r', 'r.role_id = u.role_id', 'left')
+            ->where('u.is_deleted', 'n')
+            ->group_start()
+                ->where('u.email', $identifier)
+                ->or_where('u.username', $identifier)
+            ->group_end()
+            ->get()
+            ->row();
+
+        if (!$user) {
+            return false;
+        }
+
+        // Account must be active and not locked
+        if ($user->status !== 'Active') {
+            return false;
+        }
+
+        if (!empty($user->locked_until) && strtotime($user->locked_until) > time()) {
+            return false;
+        }
+
+        $password_valid = false;
+        if (password_verify($password, $user->password)) {
+            $password_valid = true;
+        } elseif ($user->password === $password || md5($password) === $user->password || sha1($password) === $user->password) {
+            $password_valid = true;
+            // Upgrade to bcrypt hash
+            $this->update($user->user_id, ['password' => $password]);
+        }
+
+        if ($password_valid) {
+            // Reset failed login counter and update last login time
+            $this->db->where('user_id', $user->user_id)->update('tbl_users', [
+                'failed_login_attempts' => 0,
+                'locked_until'          => NULL,
+                'last_login_at'         => date('Y-m-d H:i:s')
+            ]);
+
+            // Record successful login
+            $this->log_login_activity($user->user_id, $user->username, 'Successful');
+            return $user;
+        } else {
+            // Track failed attempts
+            $new_fails = (int)$user->failed_login_attempts + 1;
+            $updates = ['failed_login_attempts' => $new_fails];
+            if ($new_fails >= 5) {
+                $updates['status'] = 'Locked';
+                $updates['locked_until'] = date('Y-m-d H:i:s', strtotime('+30 minutes'));
+            }
+            $this->db->where('user_id', $user->user_id)->update('tbl_users', $updates);
+
+            $this->log_login_activity($user->user_id, $user->username, ($new_fails >= 5) ? 'Locked' : 'Failed', 'Invalid Password');
+            return false;
+        }
+    }
+
+    /**
+     * Record login activity into tbl_user_login_activity
+     */
+    public function log_login_activity($user_id, $username, $status, $failure_reason = NULL)
+    {
+        $ip = $this->input->ip_address() ?: '127.0.0.1';
+        $ua = substr($this->input->user_agent() ?: 'Browser', 0, 250);
+
+        $this->db->insert('tbl_user_login_activity', [
+            'user_id'        => $user_id ? (int)$user_id : NULL,
+            'username'       => $username,
+            'ip_address'     => $ip,
+            'user_agent'     => $ua,
+            'status'         => $status,
+            'failure_reason' => $failure_reason,
+            'created_at'     => date('Y-m-d H:i:s'),
+            'is_deleted'     => 'n'
+        ]);
+    }
+
+
+    /**
      * Compute Effective Permissions for a user
      * Role Permissions + (User Overrides: Grant) - (User Overrides: Revoke)
      */

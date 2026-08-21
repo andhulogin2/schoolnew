@@ -73,28 +73,54 @@ class Users extends MY_Controller {
         $this->require_permission('users.create');
 
         if ($this->input->method() === 'post') {
-            $name       = trim($this->input->post('name', TRUE));
-            $username   = trim($this->input->post('username', TRUE));
-            $email      = trim($this->input->post('email', TRUE));
-            $phone      = trim($this->input->post('phone', TRUE));
-            $user_type  = $this->input->post('user_type', TRUE);
+            $name       = trim((string)$this->input->post('name', TRUE));
+            $username   = trim((string)$this->input->post('username', TRUE));
+            $email      = trim((string)$this->input->post('email', TRUE));
+            $phone      = trim((string)$this->input->post('phone', TRUE));
+            $user_type  = trim((string)$this->input->post('user_type', TRUE));
             $role_id    = (int)$this->input->post('role_id', TRUE);
-            $password   = $this->input->post('password');
+            $password   = (string)$this->input->post('password');
             $staff_id   = $this->input->post('staff_id') ? (int)$this->input->post('staff_id') : NULL;
             $student_id = $this->input->post('student_id') ? (int)$this->input->post('student_id') : NULL;
 
-            // Check duplicate username or email
-            $dup = $this->db->group_start()
-                ->where('username', $username)
-                ->or_where('email', $email)
-            ->group_end()->get('tbl_users')->row();
-
-            if ($dup) {
-                $this->session->set_flashdata('error', 'Username or Email is already registered.');
+            // 1. Basic required validation
+            if ($name === '' || $username === '' || $email === '' || $password === '' || empty($role_id) || $user_type === '') {
+                $this->session->set_flashdata('error', 'Please fill in all required fields.');
                 redirect('users/create');
                 return;
             }
 
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->session->set_flashdata('error', 'Please provide a valid email address.');
+                redirect('users/create');
+                return;
+            }
+
+            if (strlen($password) < 6) {
+                $this->session->set_flashdata('error', 'Password must be at least 6 characters long.');
+                redirect('users/create');
+                return;
+            }
+
+            // 2. Check duplicate username or email among active users
+            $username_exists = $this->User_model->is_username_exists($username);
+            $email_exists    = $this->User_model->is_email_exists($email);
+
+            if ($username_exists && $email_exists) {
+                $this->session->set_flashdata('error', 'Username and email are already registered.');
+                redirect('users/create');
+                return;
+            } elseif ($username_exists) {
+                $this->session->set_flashdata('error', 'Username is already registered.');
+                redirect('users/create');
+                return;
+            } elseif ($email_exists) {
+                $this->session->set_flashdata('error', 'Email is already registered.');
+                redirect('users/create');
+                return;
+            }
+
+            // 3. Create user
             $user_id = $this->User_model->insert([
                 'name'       => $name,
                 'username'   => $username,
@@ -105,7 +131,8 @@ class Users extends MY_Controller {
                 'password'   => $password,
                 'staff_id'   => $staff_id,
                 'student_id' => $student_id,
-                'status'     => 'Active'
+                'status'     => 'Active',
+                'is_deleted' => 'n'
             ]);
 
             // If Parent, link child if provided
@@ -239,6 +266,35 @@ class Users extends MY_Controller {
             $this->session->set_flashdata('error', 'Failed to update user status.');
         }
         redirect($this->agent->is_referral() ? $this->agent->referrer() : 'users/list');
+    }
+
+    /**
+     * Soft-Delete User Account with Last Admin Safety Guard
+     */
+    public function delete($id)
+    {
+        $this->require_permission('users.delete');
+
+        $user = $this->User_model->get_by_id($id);
+        if (!$user) {
+            $this->session->set_flashdata('error', 'User not found.');
+            redirect('users/list');
+            return;
+        }
+
+        // Safety Guard: Cannot delete the last active administrator
+        if ($user->user_type === 'Admin' && $user->status === 'Active') {
+            if ($this->User_model->count_active_admins() <= 1) {
+                $this->session->set_flashdata('error', 'Safety Restriction: Cannot delete the last remaining active Administrator.');
+                redirect('users/list');
+                return;
+            }
+        }
+
+        $this->User_model->soft_delete($id);
+        $this->rbac->log_audit('User Deleted', 'User', $id, NULL, NULL, "Soft deleted user account: {$user->username}");
+        $this->session->set_flashdata('success', "User account '{$user->username}' deleted successfully.");
+        redirect('users/list');
     }
 
     /**

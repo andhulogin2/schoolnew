@@ -75,7 +75,7 @@
 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 <span class="material-symbols-outlined text-on-surface-variant/70 text-sm">person</span>
 </div>
-<input class="block w-full pl-10 pr-3 py-2.5 border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors placeholder-on-surface-variant/50" id="email" name="email" placeholder="admin@gmail.com" required="" type="text" value="<?php echo set_value('email'); ?>"/>
+<input class="block w-full pl-10 pr-3 py-2.5 border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors placeholder-on-surface-variant/50" id="email" name="email" placeholder="Email address or username" required="" type="text" value="<?php echo set_value('email'); ?>"/>
 </div>
 </div>
 <div>

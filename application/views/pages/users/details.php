@@ -33,11 +33,17 @@
         <a href="<?php echo site_url('users/list'); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors">
           <span class="material-symbols-outlined text-[18px]">arrow_back</span>All Users
         </a>
+        <a href="<?php echo site_url('users/edit/' . $user->user_id); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-outline-variant text-secondary bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-[18px]">edit</span>Edit Profile
+        </a>
         <button onclick="document.getElementById('resetPwdModal').showModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-outline-variant text-on-surface bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors cursor-pointer">
           <span class="material-symbols-outlined text-[18px]">lock_reset</span>Reset Password
         </button>
         <a href="<?php echo site_url('users/user_permissions/' . $user->user_id); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md font-semibold hover:bg-on-secondary-fixed-variant transition-colors shadow-sm">
           <span class="material-symbols-outlined text-[18px]">tune</span>User Permissions
+        </a>
+        <a href="<?php echo site_url('users/delete/' . $user->user_id); ?>" onclick="return confirm('Are you sure you want to delete user <?php echo html_escape($user->username); ?>?');" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-error/30 text-error bg-surface-container-lowest text-label-md hover:bg-error-container transition-colors">
+          <span class="material-symbols-outlined text-[18px]">delete</span>Delete
         </a>
       </div>
     </div>

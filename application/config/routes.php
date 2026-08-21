@@ -306,6 +306,7 @@ $route['users/details']                      = 'users/details';
 $route['users/details/(:num)']               = 'users/details/$1';
 $route['users/edit/(:num)']                  = 'users/edit/$1';
 $route['users/toggle_status/(:num)']         = 'users/toggle_status/$1';
+$route['users/delete/(:num)']                = 'users/delete/$1';
 $route['users/unlock/(:num)']                = 'users/unlock/$1';
 $route['users/reset_password/(:num)']        = 'users/reset_password/$1';
 $route['users/roles']                        = 'users/roles';

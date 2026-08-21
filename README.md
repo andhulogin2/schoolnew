@@ -17,8 +17,5 @@ A fully normalized, database-driven CodeIgniter 3.1.11 MVC application with Tail
   - Certificate Generation & Reports
   - User Management & School Settings
 
-## Default Super Admin Credentials
-- **Email**: `anjali.menon@gmail.com`
-- **Password**: `Admin@123`
 
 

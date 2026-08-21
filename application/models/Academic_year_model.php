@@ -44,6 +44,11 @@ class Academic_year_model extends CI_Model {
         return $active;
     }
 
+    public function get_active()
+    {
+        return $this->get_active_year();
+    }
+
     public function set_active($id)
     {
         // Enforce single active academic year rule

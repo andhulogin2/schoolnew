@@ -50,6 +50,12 @@ class Role_model extends CI_Model {
 
     public function get_role_permission_ids($role_id)
     {
+        $role = $this->get_by_id($role_id);
+        if ($role && ($role->role_code === 'SUPER_ADMIN' || $role->role_name === 'Super Admin' || (int)$role_id === 1)) {
+            $all = $this->db->select('permission_id')->get('tbl_permissions')->result();
+            return array_map(function($r) { return (int)$r->permission_id; }, $all);
+        }
+
         $rows = $this->db
             ->select('permission_id')
             ->where('role_id', $role_id)
@@ -60,6 +66,12 @@ class Role_model extends CI_Model {
 
     public function get_role_permission_keys($role_id)
     {
+        $role = $this->get_by_id($role_id);
+        if ($role && ($role->role_code === 'SUPER_ADMIN' || $role->role_name === 'Super Admin' || (int)$role_id === 1)) {
+            $all = $this->db->select('permission_key')->get('tbl_permissions')->result();
+            return array_map(function($r) { return $r->permission_key; }, $all);
+        }
+
         $rows = $this->db
             ->select('p.permission_key')
             ->from('tbl_role_permissions rp')

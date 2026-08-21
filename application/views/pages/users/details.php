@@ -37,7 +37,7 @@
           <span class="material-symbols-outlined text-[18px]">lock_reset</span>Reset Password
         </button>
         <a href="<?php echo site_url('users/user_permissions/' . $user->user_id); ?>" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-label-md font-semibold hover:bg-on-secondary-fixed-variant transition-colors shadow-sm">
-          <span class="material-symbols-outlined text-[18px]">tune</span>User Overrides
+          <span class="material-symbols-outlined text-[18px]">tune</span>User Permissions
         </a>
       </div>
     </div>

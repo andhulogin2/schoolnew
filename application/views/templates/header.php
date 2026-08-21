@@ -57,6 +57,8 @@ tailwind.config = {
 window.APP_BASE_URL = "<?php echo base_url(); ?>";
 <?php if (isset($current_user)): ?>
 window.CURRENT_USER = <?php echo json_encode($current_user); ?>;
+window.IS_SUPER_ADMIN = <?php echo (!empty($is_super_admin)) ? 'true' : 'false'; ?>;
+window.USER_PERMISSIONS = <?php echo json_encode($effective_permissions ?? []); ?>;
 <?php endif; ?>
 </script>
 <div class="flex min-h-screen">

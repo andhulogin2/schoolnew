@@ -68,7 +68,11 @@ class Staff_model extends CI_Model {
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
             ->where('s.status >=', 0)
-            ->where('s.staff_type', 'teacher')
+            ->group_start()
+                ->where('s.staff_type', 'Teacher')
+                ->or_where('s.staff_type', 'teacher')
+                ->or_where('s.category', 'Teaching')
+            ->group_end()
             ->order_by('s.staff_id', 'ASC');
 
         if (!empty($filters['department_id'])) {
@@ -90,6 +94,11 @@ class Staff_model extends CI_Model {
         }
 
         return $this->db->get()->result();
+    }
+
+    public function get_teaching_staff($filters = array())
+    {
+        return $this->get_teachers($filters);
     }
 
     public function get_non_teaching($filters = array())

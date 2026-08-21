@@ -136,15 +136,25 @@ class Users extends MY_Controller {
     /**
      * 4. User Details & Effective Permissions View
      */
-    public function details($id)
+    public function details($id = NULL)
     {
         $this->require_permission('users.view');
 
+        if ($id === NULL) {
+            $id = $this->input->get('user_id') ? (int)$this->input->get('user_id') : (int)($this->session->userdata('user_id') ?: 1);
+        }
+
         $user = $this->User_model->get_by_id($id);
         if (!$user) {
-            $this->session->set_flashdata('error', 'User not found.');
-            redirect('users/list');
-            return;
+            $first = $this->User_model->get_all([], 1);
+            if (!empty($first)) {
+                $user = $first[0];
+                $id = $user->user_id;
+            } else {
+                $this->session->set_flashdata('error', 'User not found.');
+                redirect('users/list');
+                return;
+            }
         }
 
         $effective_perms = $this->User_model->get_effective_permissions($id);
@@ -314,15 +324,25 @@ class Users extends MY_Controller {
     /**
      * 10. Role Permissions Matrix
      */
-    public function role_permissions($role_id)
+    public function role_permissions($role_id = NULL)
     {
         $this->require_permission('users.manage_roles');
 
-        $role = $this->Role_model->get_by_id($role_id);
-        if (!$role) {
-            $this->session->set_flashdata('error', 'Role not found.');
+        $roles = $this->Role_model->get_all();
+        if (empty($roles)) {
+            $this->session->set_flashdata('error', 'No roles configured.');
             redirect('users/roles');
             return;
+        }
+
+        if ($role_id === NULL) {
+            $role_id = $this->input->get('role_id') ? (int)$this->input->get('role_id') : (int)$roles[0]->role_id;
+        }
+
+        $role = $this->Role_model->get_by_id($role_id);
+        if (!$role) {
+            $role = $roles[0];
+            $role_id = $role->role_id;
         }
 
         if ($this->input->method() === 'post') {
@@ -344,6 +364,7 @@ class Users extends MY_Controller {
             'title'               => "Role Permissions: {$role->role_name}",
             'page_key'            => 'user-role-permissions',
             'role'                => $role,
+            'roles'               => $roles,
             'grouped_permissions' => $grouped_permissions,
             'active_perm_ids'     => $active_perm_ids,
         ]);
@@ -368,15 +389,25 @@ class Users extends MY_Controller {
     /**
      * 12. User Specific Permission Overrides
      */
-    public function user_permissions($user_id)
+    public function user_permissions($user_id = NULL)
     {
         $this->require_permission('users.manage_roles');
 
+        if ($user_id === NULL) {
+            $user_id = $this->input->get('user_id') ? (int)$this->input->get('user_id') : (int)($this->session->userdata('user_id') ?: 1);
+        }
+
         $user = $this->User_model->get_by_id($user_id);
         if (!$user) {
-            $this->session->set_flashdata('error', 'User not found.');
-            redirect('users/list');
-            return;
+            $first = $this->User_model->get_all([], 1);
+            if (!empty($first)) {
+                $user = $first[0];
+                $user_id = $user->user_id;
+            } else {
+                $this->session->set_flashdata('error', 'User not found.');
+                redirect('users/list');
+                return;
+            }
         }
 
         if ($this->input->method() === 'post') {

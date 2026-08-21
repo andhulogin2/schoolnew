@@ -277,11 +277,7 @@ const NAV = [
         ],
       },
       {
-        label: "Student Profiles",
-        items: [
-          { key: "student-profile", label: "Student Profile" },
-          { key: "student-documents", label: "Student Documents" },
-        ],
+        key: "student-documents", label: "Student Documents" 
       },
       {
         label: "Student Services",
@@ -767,24 +763,15 @@ const NAV = [
     groups: [
       { key: "user-dashboard", label: "Overview" },
       {
-        label: "Users",
-        items: [
-          { key: "users", label: "Users" },
-          { key: "user-create", label: "Add User" },
-          { key: "user-details", label: "User Details" },
-        ],
+       
+           key: "users", label: "Users" 
+         
+       
       },
       {
         label: "Roles",
         items: [
           { key: "user-roles", label: "Roles" },
-          { key: "user-role-permissions", label: "User Roles" },
-        ],
-      },
-      {
-        label: "Permissions",
-        items: [
-          { key: "user-permissions", label: "Permissions" },
           { key: "user-role-permissions", label: "Role Permissions" },
         ],
       },
@@ -798,12 +785,7 @@ const NAV = [
         ],
       },
       {
-        label: "Security",
-        items: [
-          { key: "user-security-settings", label: "Account Status" },
-          { key: "user-security-settings", label: "Password Management" },
-          { key: "user-security-settings", label: "Security Settings" },
-        ],
+        label: "Security", key: "user-security-settings"
       },
       {
         label: "Activity",
@@ -836,7 +818,6 @@ const NAV = [
       { key: "settings", label: "System Settings" },
     ],
   },
-  { key: "unauthorized", label: "Access Restricted", icon: "lock" },
 ];
 
 const PAGE_TITLES = {
@@ -926,31 +907,29 @@ function iconSpan(name, extra) {
 
 // Find active hierarchy path: Module Key and Group Label for the current active page
 function findActiveHierarchy(activeKey) {
-  const reportKeys = [
-    "reports", "student-reports", "attendance-reports",
-    "fee-reports", "due-reports", "student-fee-reports", "collection-reports",
-    "exam-reports", "result-reports", "results",
-    "staff-reports", "academic-reports", "transport-reports",
-    "library-reports", "inventory-reports"
-  ];
+  const currentPath = (window.location && window.location.pathname ? window.location.pathname.toLowerCase() : "");
 
-  if (reportKeys.includes(activeKey)) {
-    const repMod = NAV.find((item) => item.key === "reports");
-    if (repMod && repMod.groups) {
-      for (const group of repMod.groups) {
-        if (group.key === activeKey || (group.aliases && group.aliases.includes(activeKey))) {
-          return { moduleKey: "reports", groupLabel: null, pageKey: group.key };
-        }
-        if (group.items) {
-          const matched = group.items.find((c) => c.key === activeKey || (c.aliases && c.aliases.includes(activeKey)));
-          if (matched) {
-            return { moduleKey: "reports", groupLabel: group.label, pageKey: matched.key };
+  // 1. Contextual matching: check the NAV module whose key appears in the current URL path
+  for (const item of NAV) {
+    const isModuleInPath = currentPath.includes("/" + item.key + "/") || currentPath.endsWith("/" + item.key);
+    if (isModuleInPath) {
+      if (item.key === activeKey) {
+        return { moduleKey: item.key, groupLabel: null, pageKey: activeKey };
+      }
+      if (item.groups) {
+        for (const group of item.groups) {
+          if (group.key === activeKey || (group.aliases && group.aliases.includes(activeKey))) {
+            return { moduleKey: item.key, groupLabel: null, pageKey: group.key };
+          }
+          if (group.items && group.items.some((c) => c.key === activeKey || (c.aliases && c.aliases.includes(activeKey)))) {
+            return { moduleKey: item.key, groupLabel: group.label, pageKey: activeKey };
           }
         }
       }
     }
   }
 
+  // 2. Standard matching across all NAV items
   for (const item of NAV) {
     if (item.key === activeKey) {
       return { moduleKey: item.key, groupLabel: null, pageKey: activeKey };
@@ -966,24 +945,25 @@ function findActiveHierarchy(activeKey) {
       }
     }
   }
+
   return { moduleKey: null, groupLabel: null, pageKey: activeKey };
 }
 
 function renderNavItem(item, activeKey, activeHierarchy) {
-  const isModuleOpen = item.key === activeHierarchy.moduleKey;
-
-  // Direct link item (e.g. Dashboard, Settings)
+  const isModuleOpen = item.key === activeHierarchy.moduleKey;  // Direct link module (e.g. Dashboard)
   if (!item.groups) {
     const active = item.key === activeKey;
     return `
-      <a href="${url(item.key)}" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-body-md font-body-md transition-colors
-        ${active ? "bg-primary-fixed text-primary font-medium" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"}">
-        <span class="flex items-center gap-3">
-          ${iconSpan(item.icon, "text-[20px]")}
-          <span class="sidebar-label truncate">${item.label}</span>
-        </span>
-        ${item.soon ? '<span class="sidebar-label shrink-0 rounded-full bg-tertiary-container/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-on-tertiary-container">Soon</span>' : ""}
-      </a>`;
+      <div class="nav-group mb-1">
+        <a href="${url(item.key)}" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-body-md font-body-md transition-all duration-200
+          ${active ? "bg-white text-secondary font-bold shadow-sm" : "text-white/90 hover:bg-white/10 hover:text-white"}">
+          <span class="flex items-center gap-3">
+            ${iconSpan(item.icon, `text-[20px] ${active ? "text-secondary" : "text-white"}`)}
+            <span class="sidebar-label truncate">${item.label}</span>
+          </span>
+          ${item.soon ? '<span class="sidebar-label shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Soon</span>' : ""}
+        </a>
+      </div>`;
   }
 
   // Expandable Module with Direct Items or Subgroups
@@ -993,9 +973,9 @@ function renderNavItem(item, activeKey, activeHierarchy) {
       const active = group.key === activeKey || (group.aliases && group.aliases.includes(activeKey));
       return `
         <a href="${url(group.key)}" class="flex items-center justify-between pl-7 pr-3 py-1.5 rounded-lg text-xs font-body-md transition-colors
-          ${active ? "bg-primary-fixed text-primary font-bold shadow-xs" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"}">
+          ${active ? "bg-secondary/15 text-secondary font-bold shadow-xs" : "text-secondary/80 hover:bg-secondary/10 hover:text-secondary"}">
           <span class="truncate">${group.label}</span>
-          ${group.soon ? '<span class="ml-1.5 shrink-0 rounded-full bg-tertiary-container/10 px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wide text-on-tertiary-container">Soon</span>' : ""}
+          ${group.soon ? '<span class="ml-1.5 shrink-0 rounded-full bg-secondary/10 px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wide text-secondary">Soon</span>' : ""}
         </a>`;
     }
 
@@ -1007,10 +987,10 @@ function renderNavItem(item, activeKey, activeHierarchy) {
     const itemsHtml = group.items.map((c) => {
       const active = c.key === activeKey || (c.aliases && c.aliases.includes(activeKey));
       return `
-        <a href="${url(c.key)}" class="flex items-center justify-between pl-11 pr-3 py-1.5 rounded-lg text-xs font-body-md transition-colors
-          ${active ? "bg-primary-fixed text-primary font-bold shadow-xs" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"}">
+        <a href="${url(c.key)}" class="flex items-center justify-between pl-10 pr-3 py-1.5 rounded-lg text-xs font-body-md transition-colors
+          ${active ? "bg-secondary/15 text-secondary font-bold shadow-xs" : "text-secondary/80 hover:bg-secondary/10 hover:text-secondary"}">
           <span class="truncate">${c.label}</span>
-          ${c.soon ? '<span class="ml-1.5 shrink-0 rounded-full bg-tertiary-container/10 px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wide text-on-tertiary-container">Soon</span>' : ""}
+          ${c.soon ? '<span class="ml-1.5 shrink-0 rounded-full bg-secondary/10 px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wide text-secondary">Soon</span>' : ""}
         </a>`;
     }).join("");
 
@@ -1018,26 +998,26 @@ function renderNavItem(item, activeKey, activeHierarchy) {
       <div class="nav-level-2" data-group-label="${group.label}">
         <button type="button" data-toggle-subgroup
           class="w-full flex items-center justify-between pl-7 pr-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-colors
-          ${isGroupOpen ? "text-primary font-bold" : "text-on-surface-variant/80 hover:bg-surface-container-high hover:text-on-surface"}">
+          ${isGroupOpen ? "text-secondary font-bold" : "text-secondary/75 hover:bg-secondary/10 hover:text-secondary"}">
           <span class="truncate">${group.label}</span>
-          ${iconSpan("chevron_right", `text-[16px] transition-transform ${isGroupOpen ? "rotate-90" : ""}`)}
+          ${iconSpan("chevron_right", `text-[16px] text-secondary transition-transform ${isGroupOpen ? "rotate-90" : ""}`)}
         </button>
         <div class="nav-sub-items mt-0.5 space-y-0.5 ${isGroupOpen ? "" : "hidden"}">${itemsHtml}</div>
       </div>`;
   }).join("");
 
   return `
-    <div class="nav-group" data-module-key="${item.key}">
+    <div class="nav-group mb-1 ${isModuleOpen ? "bg-white text-secondary rounded-xl p-1.5 shadow-sm" : ""}" data-module-key="${item.key}">
       <button type="button" data-toggle-module="${item.key}"
-        class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-body-md font-body-md transition-colors
-        ${isModuleOpen ? "text-on-surface font-semibold bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"}">
+        class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-body-md font-body-md transition-all duration-200
+        ${isModuleOpen ? "text-secondary font-bold bg-transparent" : "text-white/90 hover:bg-white/10 hover:text-white"}">
         <span class="flex items-center gap-3">
-          ${iconSpan(item.icon, `text-[20px] ${isModuleOpen ? "text-primary" : ""}`)}
+          ${iconSpan(item.icon, `text-[20px] ${isModuleOpen ? "text-secondary" : "text-white"}`)}
           <span class="sidebar-label truncate">${item.label}</span>
         </span>
-        ${item.soon ? '<span class="sidebar-label shrink-0 rounded-full bg-tertiary-container/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-on-tertiary-container">Soon</span>' : iconSpan("expand_more", `sidebar-label text-[18px] transition-transform ${isModuleOpen ? "rotate-180" : ""}`)}
+        ${item.soon ? '<span class="sidebar-label shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Soon</span>' : iconSpan("expand_more", `sidebar-label text-[18px] transition-transform ${isModuleOpen ? "rotate-180 text-secondary" : "text-white/80"}`)}
       </button>
-      <div class="nav-groups mt-1 space-y-1 ${isModuleOpen ? "" : "hidden"}">${groupsHtml}</div>
+      <div class="nav-groups mt-1 pt-1 border-t border-secondary/10 space-y-0.5 ${isModuleOpen ? "" : "hidden"}">${groupsHtml}</div>
     </div>`;
 }
 
@@ -1049,24 +1029,24 @@ function renderSidebar(activeKey) {
   <div id="sidebar-overlay" class="fixed inset-0 bg-on-surface/40 z-30 hidden lg:hidden"></div>
 
   <aside id="app-sidebar"
-    class="fixed lg:sticky top-0 left-0 h-screen w-[264px] shrink-0 bg-surface-container-lowest border-r border-outline-variant/60
+    class="fixed lg:sticky top-0 left-0 h-screen w-[264px] shrink-0 bg-secondary border-r border-emerald-900/40
     flex flex-col z-40 -translate-x-full lg:translate-x-0 transition-transform duration-200">
-    <div class="h-16 flex items-center gap-3 px-4 border-b border-outline-variant/60 shrink-0">
-      <div class="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
-        ${iconSpan("school", "text-primary text-[20px]")}
+    <div class="h-16 flex items-center gap-3 px-4 border-b border-white/10 shrink-0">
+      <div class="w-9 h-9 rounded-full bg-white/15 text-white flex items-center justify-center shrink-0">
+        ${iconSpan("school", "text-white text-[20px]")}
       </div>
-      <a href="${url("dashboard")}" class="sidebar-label font-headline-md text-headline-md text-primary truncate">EduCore</a>
-      <button id="sidebar-collapse-btn" type="button" class="ml-auto hidden lg:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-surface-container-high text-on-surface-variant">
+      <a href="${url("dashboard")}" class="sidebar-label font-headline-md text-headline-md text-white font-bold tracking-tight truncate">EduCore</a>
+      <button id="sidebar-collapse-btn" type="button" class="ml-auto hidden lg:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors">
         ${iconSpan("dock_to_right", "text-[20px]")}
       </button>
-      <button id="sidebar-close-btn" type="button" class="ml-auto lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-surface-container-high text-on-surface-variant">
+      <button id="sidebar-close-btn" type="button" class="ml-auto lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors">
         ${iconSpan("close", "text-[20px]")}
       </button>
     </div>
-    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">${navHtml}</nav>
-    <div class="border-t border-outline-variant/60 p-3">
-      <a href="${url("logout")}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-body-md font-body-md text-on-surface-variant hover:bg-error-container hover:text-on-error-container transition-colors">
-        ${iconSpan("logout", "text-[20px]")}
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">${navHtml}</nav>
+    <div class="border-t border-white/10 p-3">
+      <a href="${url("logout")}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-body-md font-body-md text-white/80 hover:bg-white/10 hover:text-white transition-colors">
+        ${iconSpan("logout", "text-[20px] text-white/80")}
         <span class="sidebar-label">Log Out</span>
       </a>
     </div>
@@ -1155,20 +1135,70 @@ function initShell() {
     document.body.classList.toggle("sidebar-collapsed");
   });
 
-  // Level 1: Main Module expand/collapse
+  // Level 1: Main Module expand/collapse (Accordion: Only ONE module open at a time)
   document.querySelectorAll("[data-toggle-module]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const group = btn.closest(".nav-group");
-      const groupsDiv = group.querySelector(".nav-groups");
+      const groupsDiv = group ? group.querySelector(".nav-groups") : null;
+      const mainIcon = btn.querySelector(".material-symbols-outlined:first-child");
       const chevron = btn.querySelector(".material-symbols-outlined:last-child");
-      if (groupsDiv) {
-        groupsDiv.classList.toggle("hidden");
-        if (chevron) chevron.classList.toggle("rotate-180");
+      const isCurrentlyOpen = group && group.classList.contains("bg-white");
+
+      // Accordion behavior: Close ALL other open modules
+      document.querySelectorAll("#app-sidebar .nav-group").forEach((otherGroup) => {
+        if (otherGroup !== group) {
+          otherGroup.classList.remove("bg-white", "text-secondary", "rounded-xl", "p-1.5", "shadow-sm");
+          const otherBtn = otherGroup.querySelector("[data-toggle-module]");
+          const otherGroups = otherGroup.querySelector(".nav-groups");
+          const otherIcon = otherBtn ? otherBtn.querySelector(".material-symbols-outlined:first-child") : null;
+          const otherChevron = otherBtn ? otherBtn.querySelector(".material-symbols-outlined:last-child") : null;
+
+          if (otherGroups) otherGroups.classList.add("hidden");
+          if (otherBtn) {
+            otherBtn.className = "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-body-md font-body-md transition-all duration-200 text-white/90 hover:bg-white/10 hover:text-white";
+          }
+          if (otherIcon) {
+            otherIcon.classList.remove("text-secondary");
+            otherIcon.classList.add("text-white");
+          }
+          if (otherChevron) {
+            otherChevron.classList.remove("rotate-180", "text-secondary");
+            otherChevron.classList.add("text-white/80");
+          }
+        }
+      });
+
+      if (isCurrentlyOpen) {
+        // Toggle closed
+        group.classList.remove("bg-white", "text-secondary", "rounded-xl", "p-1.5", "shadow-sm");
+        if (groupsDiv) groupsDiv.classList.add("hidden");
+        btn.className = "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-body-md font-body-md transition-all duration-200 text-white/90 hover:bg-white/10 hover:text-white";
+        if (mainIcon) {
+          mainIcon.classList.remove("text-secondary");
+          mainIcon.classList.add("text-white");
+        }
+        if (chevron) {
+          chevron.classList.remove("rotate-180", "text-secondary");
+          chevron.classList.add("text-white/80");
+        }
+      } else {
+        // Expand as single active White Module Block
+        group.classList.add("bg-white", "text-secondary", "rounded-xl", "p-1.5", "shadow-sm");
+        if (groupsDiv) groupsDiv.classList.remove("hidden");
+        btn.className = "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-body-md font-body-md transition-all duration-200 text-secondary font-bold bg-transparent";
+        if (mainIcon) {
+          mainIcon.classList.remove("text-white");
+          mainIcon.classList.add("text-secondary");
+        }
+        if (chevron) {
+          chevron.classList.add("rotate-180", "text-secondary");
+          chevron.classList.remove("text-white/80");
+        }
       }
     });
   });
 
-  // Level 2: Subgroup expand/collapse (accordion behavior)
+  // Level 2: Subgroup expand/collapse (Accordion behavior within module)
   document.querySelectorAll("[data-toggle-subgroup]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1178,7 +1208,7 @@ function initShell() {
       const chevron = btn.querySelector(".material-symbols-outlined:last-child");
       const isCurrentlyOpen = subItems && !subItems.classList.contains("hidden");
 
-      // Accordion behavior: only one dropdown group remains expanded at a time inside module
+      // Accordion behavior: only one dropdown subgroup remains expanded at a time inside module
       if (parentContainer) {
         parentContainer.querySelectorAll(".nav-level-2").forEach((otherL2) => {
           if (otherL2 !== level2) {
@@ -1187,7 +1217,6 @@ function initShell() {
             if (otherSub) otherSub.classList.add("hidden");
             if (otherChevron) {
               otherChevron.classList.remove("rotate-90");
-              otherChevron.classList.remove("rotate-180");
             }
           }
         });
@@ -1198,7 +1227,6 @@ function initShell() {
           subItems.classList.add("hidden");
           if (chevron) {
             chevron.classList.remove("rotate-90");
-            chevron.classList.remove("rotate-180");
           }
         } else {
           subItems.classList.remove("hidden");

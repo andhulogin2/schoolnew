@@ -24,6 +24,16 @@ class Section_model extends CI_Model {
         return $this->db->get()->result();
     }
 
+    public function get_by_class($class_id)
+    {
+        return $this->get_all($class_id);
+    }
+
+    public function get_sections_by_class($class_id)
+    {
+        return $this->get_all($class_id);
+    }
+
     public function get_by_id($id)
     {
         return $this->db

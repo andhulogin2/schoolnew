@@ -74,6 +74,12 @@ class User_model extends CI_Model {
         $user = $this->get_by_id($user_id);
         if (!$user) return [];
 
+        // Super Admin has all system permissions enabled
+        if ($user->role_name === 'Super Admin' || $user->role_code === 'SUPER_ADMIN' || (int)$user->role_id === 1) {
+            $all = $this->db->select('permission_key')->get('tbl_permissions')->result();
+            return array_map(function($r) { return $r->permission_key; }, $all);
+        }
+
         // 1. Get Base Role Permissions
         $role_perms = $this->db
             ->select('p.permission_key')

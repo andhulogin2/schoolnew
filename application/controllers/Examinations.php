@@ -26,6 +26,10 @@ class Examinations extends MY_Controller {
 
     private function _check_permission($allowed_roles = array('Super Admin', 'Principal', 'Teacher'))
     {
+        if ($this->rbac->is_super_admin()) {
+            return;
+        }
+
         $role = $this->current_user->role ?? 'Teacher';
         if (!in_array($role, $allowed_roles)) {
             $this->session->set_flashdata('error', 'You do not have permission to access this examination feature.');

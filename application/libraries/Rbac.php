@@ -19,20 +19,46 @@ class Rbac {
     }
 
     /**
+     * Check if a user is Super Admin
+     */
+    public function is_super_admin($user_id = NULL)
+    {
+        if ($user_id === NULL) {
+            $user_id = (int)$this->CI->session->userdata('user_id');
+            $session_role = $this->CI->session->userdata('user_role');
+            if ($session_role === 'Super Admin' || $session_role === 'SUPER_ADMIN') {
+                return TRUE;
+            }
+            if (!$user_id) {
+                return TRUE; // Default dev/CLI environment
+            }
+        }
+
+        $user = $this->CI->User_model->get_by_id($user_id);
+        if ($user) {
+            if ($user->role_name === 'Super Admin' || $user->role_code === 'SUPER_ADMIN' || (int)$user->role_id === 1) {
+                return TRUE;
+            }
+        }
+
+        return FALSE;
+    }
+
+    /**
      * Check if a user has a specific permission (e.g. 'students.view', 'fees.collect')
      */
     public function has_permission($permission_key, $user_id = NULL)
     {
+        if ($this->is_super_admin($user_id)) {
+            return TRUE;
+        }
+
         if ($user_id === NULL) {
             $user_id = (int)$this->CI->session->userdata('user_id');
-            // If super admin or no user_id in development CLI
-            if (!$user_id) {
-                $role = $this->CI->session->userdata('user_role');
-                if ($role === 'Super Admin' || $role === 'Admin') {
-                    return TRUE;
-                }
-                return FALSE;
-            }
+        }
+
+        if (!$user_id) {
+            return FALSE;
         }
 
         // Get effective permissions for user
@@ -45,13 +71,16 @@ class Rbac {
      */
     public function has_module_access($module_name, $user_id = NULL)
     {
+        if ($this->is_super_admin($user_id)) {
+            return TRUE;
+        }
+
         if ($user_id === NULL) {
             $user_id = (int)$this->CI->session->userdata('user_id');
-            if (!$user_id) {
-                $role = $this->CI->session->userdata('user_role');
-                if ($role === 'Super Admin' || $role === 'Admin') return TRUE;
-                return FALSE;
-            }
+        }
+
+        if (!$user_id) {
+            return FALSE;
         }
 
         $effective = $this->CI->User_model->get_effective_permissions($user_id);

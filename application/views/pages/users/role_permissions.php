@@ -20,8 +20,20 @@
         <p class="text-body-md font-body-md text-on-surface-variant mt-1">Configure enabled modules, actions, and security capabilities for all users assigned to this role.</p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <a href="<?php echo site_url('users/roles'); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors">
+      <div class="flex items-center gap-3 flex-wrap">
+        <?php if (!empty($roles)): ?>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-semibold text-on-surface-variant">Switch Role:</label>
+            <select onchange="window.location.href='<?php echo site_url('users/role_permissions/'); ?>' + this.value" class="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-xs font-semibold text-on-surface focus:ring-2 focus:ring-secondary/20 focus:border-secondary cursor-pointer">
+              <?php foreach ($roles as $r): ?>
+                <option value="<?php echo $r->role_id; ?>" <?php echo ((int)$r->role_id === (int)$role->role_id) ? 'selected' : ''; ?>>
+                  <?php echo html_escape($r->role_name); ?> (<?php echo html_escape($r->role_code); ?>)
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        <?php endif; ?>
+        <a href="<?php echo site_url('users/roles'); ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-outline-variant text-on-surface-variant bg-surface-container-lowest text-label-md hover:bg-surface-container-high transition-colors">
           <span class="material-symbols-outlined text-[18px]">arrow_back</span>Back to Roles
         </a>
       </div>

@@ -17,7 +17,7 @@ body {
   backdrop-filter: blur(10px);
 }
 
-/* Thin, quiet scrollbars for the sidebar + tables */
+/* Thin, quiet scrollbars for tables + general scroll */
 .app-scroll::-webkit-scrollbar,
 nav.overflow-y-auto::-webkit-scrollbar,
 .table-scroll::-webkit-scrollbar {
@@ -29,6 +29,23 @@ nav.overflow-y-auto::-webkit-scrollbar-thumb,
 .table-scroll::-webkit-scrollbar-thumb {
   background-color: #c5c6cd;
   border-radius: 9999px;
+}
+
+/* Green sidebar scrollbar */
+#app-sidebar nav::-webkit-scrollbar {
+  width: 5px;
+}
+#app-sidebar nav::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+}
+#app-sidebar nav::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Smooth transition on module expansion */
+.nav-group {
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Desktop icon-rail collapse (toggled via body.sidebar-collapsed) */

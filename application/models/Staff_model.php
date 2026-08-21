@@ -6,6 +6,60 @@ class Staff_model extends CI_Model {
     protected $table = 'tbl_staff';
     protected $primaryKey = 'staff_id';
 
+    public function get_dashboard_stats()
+    {
+        $total_staff = $this->db->where('status >=', 0)->count_all_results('tbl_staff');
+        $active_staff = $this->db->where('status', 1)->count_all_results('tbl_staff');
+        $inactive_staff = $this->db->where('status', 0)->count_all_results('tbl_staff');
+
+        $total_teachers = $this->db->where('status', 1)
+            ->group_start()
+                ->where('staff_type', 'Teacher')
+                ->or_where('staff_type', 'teaching')
+                ->or_where('category', 'Teaching')
+            ->group_end()
+            ->count_all_results('tbl_staff');
+
+        $non_teaching = $this->db->where('status', 1)
+            ->group_start()
+                ->where('staff_type', 'non_teaching')
+                ->or_where('category', 'Non-Teaching')
+            ->group_end()
+            ->count_all_results('tbl_staff');
+
+        // Department breakdown
+        $departments = $this->db->query("
+            SELECT d.department_id, d.department_name, 
+                   COUNT(s.staff_id) as staff_count
+            FROM tbl_departments d
+            LEFT JOIN tbl_staff s ON s.department_id = d.department_id AND s.status = 1
+            GROUP BY d.department_id
+            ORDER BY d.department_name ASC
+        ")->result();
+
+        // Recent staff
+        $recent_staff = $this->db
+            ->select('s.*, d.department_name, dg.designation_name')
+            ->from('tbl_staff s')
+            ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
+            ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
+            ->where('s.status', 1)
+            ->order_by('s.staff_id', 'DESC')
+            ->limit(8)
+            ->get()
+            ->result();
+
+        return (object)[
+            'total_staff'        => $total_staff,
+            'active_staff'       => $active_staff,
+            'inactive_staff'     => $inactive_staff,
+            'total_teachers'     => $total_teachers,
+            'non_teaching_staff' => $non_teaching,
+            'departments'        => $departments,
+            'recent_staff'       => $recent_staff,
+        ];
+    }
+
     public function get_all($filters = array())
     {
         $this->db

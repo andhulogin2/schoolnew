@@ -6,6 +6,64 @@ class Student_model extends CI_Model {
     protected $table = 'tbl_students';
     protected $primaryKey = 'student_id';
 
+    public function get_dashboard_stats($year_id = NULL)
+    {
+        if (!$year_id) {
+            $active_year = $this->db->where('is_active', 1)->where('status', 1)->get('tbl_academic_years')->row();
+            $year_id = $active_year ? (int)$active_year->academic_year_id : NULL;
+        }
+
+        $total_students = $this->db->where('status >=', 0)->count_all_results('tbl_students');
+        $active_students = $this->db->where('status', 1)->count_all_results('tbl_students');
+        $inactive_students = $this->db->where('status', 0)->count_all_results('tbl_students');
+        
+        $male_students = $this->db->where('gender', 'Male')->where('status', 1)->count_all_results('tbl_students');
+        $female_students = $this->db->where('gender', 'Female')->where('status', 1)->count_all_results('tbl_students');
+
+        // New admissions
+        $this->db->where('status', 1);
+        if ($year_id) {
+            $this->db->where('academic_year_id', $year_id);
+        }
+        $new_admissions_count = $this->db->count_all_results('tbl_students');
+
+        // Class-wise breakdown
+        $class_counts = $this->db->query("
+            SELECT c.class_id, c.class_name, 
+                   COUNT(st.student_id) as student_count,
+                   SUM(CASE WHEN st.gender = 'Male' THEN 1 ELSE 0 END) as male_count,
+                   SUM(CASE WHEN st.gender = 'Female' THEN 1 ELSE 0 END) as female_count
+            FROM tbl_classes c
+            LEFT JOIN tbl_students st ON st.class_id = c.class_id AND st.status = 1
+            WHERE c.status = 1
+            GROUP BY c.class_id
+            ORDER BY c.class_id ASC
+        ")->result();
+
+        // Recent admissions
+        $recent_admissions = $this->db
+            ->select('st.*, c.class_name, sec.section_name')
+            ->from('tbl_students st')
+            ->join('tbl_classes c', 'c.class_id = st.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = st.section_id', 'left')
+            ->where('st.status', 1)
+            ->order_by('st.student_id', 'DESC')
+            ->limit(8)
+            ->get()
+            ->result();
+
+        return (object)[
+            'total_students'    => $total_students,
+            'active_students'   => $active_students,
+            'inactive_students' => $inactive_students,
+            'male_students'     => $male_students,
+            'female_students'   => $female_students,
+            'new_admissions'    => $new_admissions_count,
+            'class_counts'      => $class_counts,
+            'recent_admissions' => $recent_admissions,
+        ];
+    }
+
     public function get_all($filters = array(), $limit = NULL, $offset = NULL)
     {
         $this->db

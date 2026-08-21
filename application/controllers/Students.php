@@ -13,9 +13,27 @@ class Students extends MY_Controller {
     }
 
     /* =========================================================================
-       1. All Students Listing
+       1. Student Management Overview
        ========================================================================= */
     public function index()
+    {
+        $this->overview();
+    }
+
+    public function overview()
+    {
+        $year_id = $this->input->get('academic_year_id') ?: NULL;
+        $stats = $this->Student_model->get_dashboard_stats($year_id);
+
+        $this->render('pages/students/overview', array(
+            'title'      => 'Student Management Overview',
+            'page_key'   => 'students',
+            'breadcrumb' => array('Student Management', 'Overview'),
+            'stats'      => $stats,
+        ));
+    }
+
+    public function list_students()
     {
         $filters = array(
             'academic_year_id' => $this->input->get('academic_year_id'),
@@ -32,8 +50,8 @@ class Students extends MY_Controller {
         $years    = $this->Academic_year_model->get_all();
 
         $this->render('pages/students/index', array(
-            'title'    => 'All Students',
-            'page_key' => 'students',
+            'title'    => 'Student Directory',
+            'page_key' => 'student-directory',
             'students' => $students,
             'classes'  => $classes,
             'sections' => $sections,

@@ -17,9 +17,26 @@ class Staff extends MY_Controller {
     }
 
     /* =========================================================================
-       1. All Staff Listing
+       1. Staff Management Overview
        ========================================================================= */
     public function index()
+    {
+        $this->overview();
+    }
+
+    public function overview()
+    {
+        $stats = $this->Staff_model->get_dashboard_stats();
+
+        $this->render('pages/staff/overview', array(
+            'title'        => 'Staff Management Overview',
+            'page_key'     => 'staff',
+            'breadcrumb'   => array('Staff Management', 'Overview'),
+            'stats'        => $stats,
+        ));
+    }
+
+    public function directory()
     {
         $dept_id    = $this->input->get('department_id');
         $desig_id   = $this->input->get('designation_id');
@@ -40,7 +57,7 @@ class Staff extends MY_Controller {
 
         $this->render('pages/staff/index', array(
             'title'        => 'All Staff',
-            'page_key'     => 'staff',
+            'page_key'     => 'staff-directory',
             'breadcrumb'   => array('Staff Management', 'All Staff'),
             'staff'        => $staff,
             'departments'  => $departments,

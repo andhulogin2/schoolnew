@@ -19,9 +19,49 @@ class Academics extends MY_Controller {
         $this->load->library('form_validation');
     }
 
+    /* =========================================================================
+       1. Academic Management Overview
+       ========================================================================= */
     public function index()
     {
-        redirect('academics/years');
+        $this->overview();
+    }
+
+    public function overview()
+    {
+        $active_year = $this->Academic_year_model->get_active();
+        $year_id     = $active_year ? (int)$active_year->academic_year_id : NULL;
+
+        $total_classes  = $this->db->where('status', 1)->count_all_results('tbl_classes');
+        $total_sections = $this->db->where('status', 1)->count_all_results('tbl_sections');
+        $total_subjects = $this->db->where('status', 1)->count_all_results('tbl_subjects');
+        $assigned_teachers = $this->db->where('class_teacher_id IS NOT NULL', NULL, FALSE)->where('status', 1)->count_all_results('tbl_sections');
+
+        // Classes summary with sections and students
+        $classes_summary = $this->db->query("
+            SELECT c.class_id, c.class_name, 
+                   (SELECT COUNT(*) FROM tbl_sections sec WHERE sec.class_id = c.class_id AND sec.status = 1) as section_count,
+                   (SELECT COUNT(*) FROM tbl_students st WHERE st.class_id = c.class_id AND st.status = 1) as student_count
+            FROM tbl_classes c
+            WHERE c.status = 1
+            ORDER BY c.class_id ASC
+        ")->result();
+
+        // Calendar Highlights
+        $calendar_events = $this->db->where('status', 1)->order_by('start_date', 'ASC')->limit(6)->get('tbl_academic_calendar')->result();
+
+        $this->render('pages/academics/overview', array(
+            'title'             => 'Academic Management Overview',
+            'page_key'          => 'academics',
+            'breadcrumb'        => array('Academic Management', 'Overview'),
+            'active_year'       => $active_year,
+            'total_classes'     => $total_classes,
+            'total_sections'    => $total_sections,
+            'total_subjects'    => $total_subjects,
+            'assigned_teachers' => $assigned_teachers,
+            'classes_summary'   => $classes_summary,
+            'calendar_events'   => $calendar_events,
+        ));
     }
 
     /* =========================================================================

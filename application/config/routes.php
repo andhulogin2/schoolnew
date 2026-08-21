@@ -62,6 +62,9 @@ $route['translate_uri_dashes'] = FALSE;
  */
 $route['login']              = 'auth/login';
 $route['logout']             = 'auth/logout';
+$route['students']            = 'students/overview';
+$route['students/overview']   = 'students/overview';
+$route['students/list']       = 'students/list_students';
 $route['students/register']   = 'students/register';
 $route['students/admissions'] = 'students/admissions';
 $route['students/roll']       = 'students/index';
@@ -74,7 +77,10 @@ $route['students/transfers']  = 'students/transfers';
 $route['students/search']     = 'students/search';
 $route['students/tc/(:num)']  = 'students/tc/$1';
 
-$route['staff/directory']                   = 'staff/index';
+$route['staff']                             = 'staff/overview';
+$route['staff/overview']                    = 'staff/overview';
+$route['staff/list']                        = 'staff/directory';
+$route['staff/directory']                   = 'staff/directory';
 $route['staff/register']                    = 'staff/register';
 $route['staff/teachers']                    = 'staff/teachers';
 $route['staff/non_teaching']                = 'staff/non_teaching';
@@ -84,6 +90,8 @@ $route['staff/workload']                    = 'staff/workload';
 $route['staff/attendance']                  = 'staff/attendance';
 $route['staff/leave']                       = 'staff/leave';
 
+$route['academics']                   = 'academics/overview';
+$route['academics/overview']          = 'academics/overview';
 $route['academics/years']            = 'academics/years';
 $route['academics/classes']          = 'academics/classes';
 $route['academics/sections']         = 'academics/sections';
@@ -95,6 +103,7 @@ $route['academics/calendar']         = 'academics/calendar';
 
 $route['attendance']                       = 'attendance/index';
 $route['attendance/dashboard']             = 'attendance/index';
+$route['attendance/overview']              = 'attendance/index';
 $route['attendance/daily']                 = 'attendance/daily';
 $route['attendance/periods']               = 'attendance/periods';
 $route['attendance/periods/(:any)']        = 'attendance/periods/$1';
@@ -111,6 +120,7 @@ $route['attendance/settings']              = 'attendance/settings';
 
 $route['examinations']                      = 'examinations/index';
 $route['examinations/dashboard']            = 'examinations/index';
+$route['examinations/overview']             = 'examinations/index';
 $route['examinations/exams']                = 'examinations/exams';
 $route['examinations/types']                = 'examinations/types';
 $route['examinations/schedules']            = 'examinations/schedules';
@@ -132,6 +142,7 @@ $route['examinations/settings']             = 'examinations/settings';
 
 $route['fees']                          = 'fees/index';
 $route['fees/dashboard']                = 'fees/index';
+$route['fees/overview']                 = 'fees/index';
 $route['fees/categories']               = 'fees/categories';
 $route['fees/structures']               = 'fees/structures';
 $route['fees/structure']                = 'fees/structures';
@@ -154,6 +165,7 @@ $route['fees/settings']                 = 'fees/settings';
 
 $route['timetable']                     = 'timetable/index';
 $route['timetable/dashboard']           = 'timetable/index';
+$route['timetable/overview']            = 'timetable/index';
 $route['timetable/classes']             = 'timetable/classes';
 $route['timetable/teachers']            = 'timetable/teachers';
 $route['timetable/allocations']         = 'timetable/allocations';
@@ -168,6 +180,7 @@ $route['timetable/ajax_get_entry/(:num)']= 'timetable/ajax_get_entry/$1';
 
 $route['homework']                           = 'homework/index';
 $route['homework/dashboard']                 = 'homework/index';
+$route['homework/overview']                  = 'homework/index';
 $route['homework/assignments']               = 'homework/assignments';
 $route['homework/create']                    = 'homework/create';
 $route['homework/edit/(:num)']               = 'homework/edit/$1';
@@ -189,6 +202,7 @@ $route['homework/delete/(:num)']             = 'homework/delete/$1';
 
 $route['communication']                                     = 'communication/index';
 $route['communication/dashboard']                           = 'communication/index';
+$route['communication/overview']                            = 'communication/index';
 $route['communication/templates']                           = 'communication/templates';
 $route['communication/sms_templates']                       = 'communication/sms_templates';
 $route['communication/whatsapp_templates']                  = 'communication/whatsapp_templates';
@@ -217,6 +231,7 @@ $route['communication/groups']                              = 'communication/gro
 
 $route['leave']                                   = 'leave/index';
 $route['leave/dashboard']                         = 'leave/index';
+$route['leave/overview']                          = 'leave/index';
 $route['leave/student_leave']                     = 'leave/student_leave';
 $route['leave/staff_leave']                       = 'leave/staff_leave';
 $route['leave/types']                             = 'leave/types';
@@ -235,6 +250,7 @@ $route['leave/settings']                          = 'leave/settings';
 
 $route['transport']                               = 'transport/index';
 $route['transport/dashboard']                     = 'transport/index';
+$route['transport/overview']                      = 'transport/index';
 $route['transport/vehicles']                      = 'transport/vehicles';
 $route['transport/vehicle_details/(:num)']        = 'transport/vehicle_details/$1';
 $route['transport/drivers']                       = 'transport/drivers';
@@ -254,6 +270,7 @@ $route['transport/settings']                      = 'transport/settings';
 
 $route['certificates']                            = 'certificates/index';
 $route['certificates/dashboard']                  = 'certificates/index';
+$route['certificates/overview']                   = 'certificates/index';
 $route['certificates/requests']                   = 'certificates/requests';
 $route['certificates/request_create']             = 'certificates/request_create';
 $route['certificates/approve_request/(:num)']     = 'certificates/approve_request/$1';
@@ -276,8 +293,13 @@ $route['certificates/verify_doc/(:num)']          = 'certificates/verify_doc/$1'
 $route['certificates/reject_doc/(:num)']          = 'certificates/reject_doc/$1';
 $route['certificates/history']                    = 'certificates/history';
 $route['certificates/reissue/(:num)']             = 'certificates/reissue/$1';
+
+$route['reports']                                 = 'reports/index';
+$route['reports/overview']                        = 'reports/index';
+
 $route['users']                              = 'users/dashboard';
 $route['users/dashboard']                    = 'users/dashboard';
+$route['users/overview']                     = 'users/dashboard';
 $route['users/list']                         = 'users/list_users';
 $route['users/create']                       = 'users/create';
 $route['users/details']                      = 'users/details';
@@ -299,6 +321,9 @@ $route['users/staff']                        = 'users/staff';
 $route['users/login_activity']               = 'users/login_activity';
 $route['users/security_settings']            = 'users/security_settings';
 $route['users/audit_logs']                   = 'users/audit_logs';
+
+$route['settings']                           = 'settings/index';
+$route['settings/overview']                  = 'settings/index';
 
 $route['unauthorized']                       = 'unauthorized/index';
 

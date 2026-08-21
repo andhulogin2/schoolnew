@@ -9,6 +9,7 @@ class Fee_category_model extends CI_Model {
         if ($active_only) {
             $this->db->where('status', 1);
         }
+        $this->db->where('is_deleted', 'n');
         return $this->db->order_by('head_name', 'ASC')->get()->result();
     }
 
@@ -44,6 +45,6 @@ class Fee_category_model extends CI_Model {
         if ($linked > 0) {
             return false;
         }
-        return $this->db->delete('tbl_fee_heads', array('fee_head_id' => $id));
+        return $this->db->where('fee_head_id', $id)->update('tbl_fee_heads', ['is_deleted' => 'y']);
     }
 }

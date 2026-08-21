@@ -5,18 +5,19 @@ class Transport_model extends CI_Model {
 
     public function get_dashboard_stats()
     {
-        $total_vehicles = (int)$this->db->count_all_results('tbl_vehicles');
-        $active_vehicles = (int)$this->db->where('status', 'Active')->count_all_results('tbl_vehicles');
-        $inactive_vehicles = (int)$this->db->where('status !=', 'Active')->count_all_results('tbl_vehicles');
-        $total_drivers = (int)$this->db->count_all_results('tbl_transport_drivers');
-        $active_routes = (int)$this->db->where('status', 'Active')->count_all_results('tbl_transport_routes');
-        $total_stops = (int)$this->db->count_all_results('tbl_route_stops');
-        $students_using_transport = (int)$this->db->where('status', 'Active')->count_all_results('tbl_student_transport_assignments');
-        $vehicles_maintenance = (int)$this->db->where('status', 'Maintenance')->count_all_results('tbl_vehicles');
+        $total_vehicles = (int)$this->db->where('is_deleted', 'n')->count_all_results('tbl_vehicles');
+        $active_vehicles = (int)$this->db->where('status', 'Active')->where('is_deleted', 'n')->count_all_results('tbl_vehicles');
+        $inactive_vehicles = (int)$this->db->where('status !=', 'Active')->where('is_deleted', 'n')->count_all_results('tbl_vehicles');
+        $total_drivers = (int)$this->db->where('is_deleted', 'n')->count_all_results('tbl_transport_drivers');
+        $active_routes = (int)$this->db->where('status', 'Active')->where('is_deleted', 'n')->count_all_results('tbl_transport_routes');
+        $total_stops = (int)$this->db->where('is_deleted', 'n')->count_all_results('tbl_route_stops');
+        $students_using_transport = (int)$this->db->where('status', 'Active')->where('is_deleted', 'n')->count_all_results('tbl_student_transport_assignments');
+        $vehicles_maintenance = (int)$this->db->where('status', 'Maintenance')->where('is_deleted', 'n')->count_all_results('tbl_vehicles');
 
         // Total capacity & occupancy
         $this->db->select_sum('seating_capacity');
         $this->db->where('status', 'Active');
+        $this->db->where('is_deleted', 'n');
         $cap_row = $this->db->get('tbl_vehicles')->row();
         $total_capacity = (int)($cap_row->seating_capacity ?? 0);
 
@@ -24,6 +25,7 @@ class Transport_model extends CI_Model {
         $pending_fees = 0.0;
         $this->db->select_sum('due_amount');
         $this->db->where('payment_status !=', 'Paid');
+        $this->db->where('is_deleted', 'n');
         $due_row = $this->db->get('tbl_student_fees')->row();
         $pending_fees = (float)($due_row->due_amount ?? 0.0);
 

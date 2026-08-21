@@ -17,6 +17,7 @@ class Homework_model extends CI_Model {
             ->join('tbl_subjects sub', 'sub.subject_id = a.subject_id', 'left')
             ->join('tbl_staff s', 's.staff_id = a.teacher_id', 'left')
             ->join('tbl_academic_years y', 'y.academic_year_id = a.academic_year_id', 'left')
+            ->where('a.is_deleted', 'n')
             ->order_by('a.assigned_date', 'DESC')
             ->order_by('a.assignment_id', 'DESC');
 
@@ -214,14 +215,8 @@ class Homework_model extends CI_Model {
 
     public function delete($id)
     {
-        if ($this->can_permanently_delete($id)) {
-            $this->db->where($this->primaryKey, $id)->delete($this->table);
-            $this->log_audit('ASSIGNMENT_DELETED', $id, 'Permanently deleted assignment #' . $id);
-        } else {
-            // Archive instead
-            $this->update($id, ['status' => 'Archived']);
-            $this->log_audit('ASSIGNMENT_ARCHIVED', $id, 'Archived assignment due to existing student submissions');
-        }
+        $this->db->where($this->primaryKey, $id)->update($this->table, ['is_deleted' => 'y', 'status' => 'Archived']);
+        $this->log_audit('ASSIGNMENT_DELETED', $id, 'Soft deleted assignment #' . $id);
         return TRUE;
     }
 

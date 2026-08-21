@@ -17,11 +17,11 @@ class Leave_model extends CI_Model {
     {
         $today = date('Y-m-d');
 
-        $total_requests = (int)$this->db->count_all_results($this->table);
-        $pending = (int)$this->db->where('status', 'Pending')->count_all_results($this->table);
-        $approved = (int)$this->db->where('status', 'Approved')->count_all_results($this->table);
-        $rejected = (int)$this->db->where('status', 'Rejected')->count_all_results($this->table);
-        $cancelled = (int)$this->db->where('status', 'Cancelled')->count_all_results($this->table);
+        $total_requests = (int)$this->db->where('is_deleted', 'n')->count_all_results($this->table);
+        $pending = (int)$this->db->where('status', 'Pending')->where('is_deleted', 'n')->count_all_results($this->table);
+        $approved = (int)$this->db->where('status', 'Approved')->where('is_deleted', 'n')->count_all_results($this->table);
+        $rejected = (int)$this->db->where('status', 'Rejected')->where('is_deleted', 'n')->count_all_results($this->table);
+        $cancelled = (int)$this->db->where('status', 'Cancelled')->where('is_deleted', 'n')->count_all_results($this->table);
 
         // On leave today
         $students_on_leave_today = (int)$this->db
@@ -29,6 +29,7 @@ class Leave_model extends CI_Model {
             ->where('status', 'Approved')
             ->where('from_date <=', $today)
             ->where('to_date >=', $today)
+            ->where('is_deleted', 'n')
             ->count_all_results($this->table);
 
         $staff_on_leave_today = (int)$this->db
@@ -36,6 +37,7 @@ class Leave_model extends CI_Model {
             ->where('status', 'Approved')
             ->where('from_date <=', $today)
             ->where('to_date >=', $today)
+            ->where('is_deleted', 'n')
             ->count_all_results($this->table);
 
         return (object)[
@@ -61,6 +63,7 @@ class Leave_model extends CI_Model {
             ->join('tbl_classes c', 'c.class_id = a.class_id', 'left')
             ->join('tbl_sections sec', 'sec.section_id = a.section_id', 'left')
             ->join('tbl_staff approver', 'approver.staff_id = a.approved_by', 'left')
+            ->where('a.is_deleted', 'n')
             ->order_by('a.applied_date', 'DESC')
             ->order_by('a.application_id', 'DESC');
 
@@ -102,6 +105,7 @@ class Leave_model extends CI_Model {
             ->join('tbl_sections sec', 'sec.section_id = a.section_id', 'left')
             ->join('tbl_staff approver', 'approver.staff_id = a.approved_by', 'left')
             ->where('a.' . $this->primaryKey, $id)
+            ->where('a.is_deleted', 'n')
             ->get()
             ->row();
     }

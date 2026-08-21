@@ -78,7 +78,7 @@ class Class_teacher_model extends CI_Model {
         $ct = $this->db->where('class_teacher_id', $id)->get($this->table)->row();
         if ($ct) {
             $this->db->where('section_id', $ct->section_id)->update('tbl_sections', array('class_teacher_id' => NULL));
-            return $this->db->where('class_teacher_id', $id)->delete($this->table);
+            return $this->db->where('class_teacher_id', $id)->update($this->table, ['is_deleted' => 'y']);
         }
         return FALSE;
     }

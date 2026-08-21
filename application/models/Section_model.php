@@ -9,11 +9,12 @@ class Section_model extends CI_Model {
     public function get_all($class_id = NULL)
     {
         $this->db
-            ->select('sec.*, c.class_name, s.full_name as class_teacher_name, (SELECT COUNT(student_id) FROM tbl_students WHERE section_id = sec.section_id AND status = 1) as student_count')
+            ->select('sec.*, c.class_name, s.full_name as class_teacher_name, (SELECT COUNT(student_id) FROM tbl_students WHERE section_id = sec.section_id AND status = 1 AND is_deleted = \'n\') as student_count')
             ->from('tbl_sections sec')
             ->join('tbl_classes c', 'c.class_id = sec.class_id', 'left')
             ->join('tbl_staff s', 's.staff_id = sec.class_teacher_id', 'left')
             ->where('sec.status', 1)
+            ->where('sec.is_deleted', 'n')
             ->order_by('sec.class_id', 'ASC')
             ->order_by('sec.section_name', 'ASC');
 
@@ -64,7 +65,8 @@ class Section_model extends CI_Model {
         $this->db
             ->where('class_id', $class_id)
             ->where('section_name', $section_name)
-            ->where('status', 1);
+            ->where('status', 1)
+            ->where('is_deleted', 'n');
 
         if ($exclude_id) {
             $this->db->where($this->primaryKey . ' !=', $exclude_id);
@@ -77,6 +79,6 @@ class Section_model extends CI_Model {
     {
         return $this->db
             ->where($this->primaryKey, $id)
-            ->update($this->table, array('status' => 0));
+            ->update($this->table, ['status' => 0, 'is_deleted' => 'y']);
     }
 }

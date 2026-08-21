@@ -9,6 +9,7 @@ class Fee_discount_model extends CI_Model {
         if ($active_only) {
             $this->db->where('status', 1);
         }
+        $this->db->where('is_deleted', 'n');
         return $this->db->order_by('name', 'ASC')->get()->result();
     }
 
@@ -50,6 +51,6 @@ class Fee_discount_model extends CI_Model {
 
     public function delete($id)
     {
-        return $this->db->delete('tbl_fee_discounts', array('discount_id' => $id));
+        return $this->db->where('discount_id', $id)->update('tbl_fee_discounts', ['is_deleted' => 'y']);
     }
 }

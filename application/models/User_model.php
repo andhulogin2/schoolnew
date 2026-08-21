@@ -13,7 +13,8 @@ class User_model extends CI_Model {
             ->from('tbl_users u')
             ->join('tbl_roles r', 'r.role_id = u.role_id', 'left')
             ->join('tbl_staff s', 's.staff_id = u.staff_id', 'left')
-            ->join('tbl_students st', 'st.student_id = u.student_id', 'left');
+            ->join('tbl_students st', 'st.student_id = u.student_id', 'left')
+            ->where('u.is_deleted', 'n');
 
         if (!empty($filters['role_id'])) {
             $this->db->where('u.role_id', (int)$filters['role_id']);
@@ -47,6 +48,7 @@ class User_model extends CI_Model {
             ->join('tbl_staff s', 's.staff_id = u.staff_id', 'left')
             ->join('tbl_students st', 'st.student_id = u.student_id', 'left')
             ->where('u.user_id', $id)
+            ->where('u.is_deleted', 'n')
             ->get()
             ->row();
     }
@@ -57,6 +59,7 @@ class User_model extends CI_Model {
             ->select('u.*, r.role_name, r.role_code')
             ->from('tbl_users u')
             ->join('tbl_roles r', 'r.role_id = u.role_id', 'left')
+            ->where('u.is_deleted', 'n')
             ->group_start()
                 ->where('u.email', $identifier)
                 ->or_where('u.username', $identifier)
@@ -186,6 +189,7 @@ class User_model extends CI_Model {
                 SUM(CASE WHEN user_type = 'Parent' THEN 1 ELSE 0 END) as parent_users,
                 SUM(CASE WHEN user_type = 'Student' THEN 1 ELSE 0 END) as student_users
             FROM tbl_users
+            WHERE is_deleted = 'n'
         ")->row();
 
         return (object)[
@@ -210,6 +214,7 @@ class User_model extends CI_Model {
         return (int)$this->db
             ->where('user_type', 'Admin')
             ->where('status', 'Active')
+            ->where('is_deleted', 'n')
             ->count_all_results($this->table);
     }
 
@@ -256,6 +261,15 @@ class User_model extends CI_Model {
             'status'                => 'Active',
             'failed_login_attempts' => 0,
             'locked_until'          => NULL
+        ]);
+    }
+
+    public function soft_delete($id)
+    {
+        return $this->db->where($this->primaryKey, $id)->update($this->table, [
+            'status'     => 'Inactive',
+            'is_deleted' => 'y',
+            'updated_at' => date('Y-m-d H:i:s')
         ]);
     }
 

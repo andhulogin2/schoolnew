@@ -48,6 +48,6 @@ class Leave_type_model extends CI_Model {
         if ($hasHistory) {
             return $this->update($id, ['status' => 0]);
         }
-        return $this->db->where($this->primaryKey, $id)->delete($this->table);
+        return $this->db->where($this->primaryKey, $id)->update($this->table, ['is_deleted' => 'y']);
     }
 }

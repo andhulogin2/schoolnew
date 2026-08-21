@@ -16,6 +16,7 @@ class Exam_model extends CI_Model {
             ->from('tbl_exams e')
             ->join('tbl_exam_types t', 't.exam_type_id = e.exam_type_id', 'left')
             ->join('tbl_academic_years y', 'y.academic_year_id = e.academic_year_id', 'left')
+            ->where('e.is_deleted', 'n')
             ->order_by('e.start_date', 'DESC');
 
         if (!empty($filters['academic_year_id'])) {
@@ -62,6 +63,7 @@ class Exam_model extends CI_Model {
             ->join('tbl_exam_types t', 't.exam_type_id = e.exam_type_id', 'left')
             ->join('tbl_academic_years y', 'y.academic_year_id = e.academic_year_id', 'left')
             ->where('e.exam_id', $id)
+            ->where('e.is_deleted', 'n')
             ->get()
             ->row();
 
@@ -94,11 +96,10 @@ class Exam_model extends CI_Model {
 
     public function delete($id)
     {
-        // Safe delete / cascade cleanup
-        $this->db->where('exam_id', $id)->delete('tbl_exam_marks');
-        $this->db->where('exam_id', $id)->delete('tbl_exam_schedules');
-        $this->db->where('exam_id', $id)->delete('tbl_student_results');
-        return $this->db->where($this->primaryKey, $id)->delete($this->table);
+        $this->db->where('exam_id', $id)->update('tbl_exam_marks', ['is_deleted' => 'y']);
+        $this->db->where('exam_id', $id)->update('tbl_exam_schedules', ['is_deleted' => 'y']);
+        $this->db->where('exam_id', $id)->update('tbl_student_results', ['is_deleted' => 'y']);
+        return $this->db->where($this->primaryKey, $id)->update($this->table, ['is_deleted' => 'y', 'status' => 'Archived']);
     }
 
     /* =========================================================================
@@ -108,19 +109,19 @@ class Exam_model extends CI_Model {
     {
         $today = date('Y-m-d');
 
-        $this->db->from($this->table);
+        $this->db->from($this->table)->where('is_deleted', 'n');
         if ($year_id) $this->db->where('academic_year_id', $year_id);
         $total_exams = $this->db->count_all_results();
 
-        $this->db->from($this->table)->where('start_date >', $today);
+        $this->db->from($this->table)->where('start_date >', $today)->where('is_deleted', 'n');
         if ($year_id) $this->db->where('academic_year_id', $year_id);
         $upcoming_exams = $this->db->count_all_results();
 
-        $this->db->from($this->table)->where('end_date <', $today);
+        $this->db->from($this->table)->where('end_date <', $today)->where('is_deleted', 'n');
         if ($year_id) $this->db->where('academic_year_id', $year_id);
         $completed_exams = $this->db->count_all_results();
 
-        $this->db->from('tbl_student_results')->where('is_published', 1);
+        $this->db->from('tbl_student_results')->where('is_published', 1)->where('is_deleted', 'n');
         if ($year_id) $this->db->where('academic_year_id', $year_id);
         $published_results = $this->db->count_all_results();
 

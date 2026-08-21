@@ -83,7 +83,7 @@ class Period_model extends CI_Model {
     public function delete($id)
     {
         if ($this->is_safe_to_delete($id)) {
-            return $this->db->where($this->primaryKey, $id)->delete($this->table);
+            return $this->db->where($this->primaryKey, $id)->update($this->table, ['is_deleted' => 'y']);
         }
         // Soft delete if referenced
         return $this->update($id, array('status' => 0));

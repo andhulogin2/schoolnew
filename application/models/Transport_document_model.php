@@ -51,6 +51,6 @@ class Transport_document_model extends CI_Model {
 
     public function delete($id)
     {
-        return $this->db->where($this->primaryKey, $id)->delete($this->table);
+        return $this->db->where($this->primaryKey, $id)->update($this->table, ['is_deleted' => 'y']);
     }
 }

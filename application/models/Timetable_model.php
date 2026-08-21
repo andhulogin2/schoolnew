@@ -261,7 +261,7 @@ class Timetable_model extends CI_Model {
         if ($entry && $this->is_schedule_locked($entry->academic_year_id, $entry->class_id, $entry->section_id)) {
             return array('success' => FALSE, 'message' => 'Cannot delete slot: class timetable is LOCKED.');
         }
-        $this->db->where($this->primaryKey, $id)->delete($this->table);
+        $this->db->where($this->primaryKey, $id)->update($this->table, ['is_deleted' => 'y']);
         return array('success' => TRUE);
     }
 }

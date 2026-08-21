@@ -9,11 +9,12 @@ class Class_model extends CI_Model {
     public function get_all($academic_year_id = NULL)
     {
         $this->db
-            ->select('c.*, y.year_name, s.full_name as class_teacher_name, (SELECT COUNT(student_id) FROM tbl_students WHERE class_id = c.class_id AND status = 1) as student_count')
+            ->select('c.*, y.year_name, s.full_name as class_teacher_name, (SELECT COUNT(student_id) FROM tbl_students WHERE class_id = c.class_id AND status = 1 AND is_deleted = \'n\') as student_count')
             ->from('tbl_classes c')
             ->join('tbl_academic_years y', 'y.academic_year_id = c.academic_year_id', 'left')
             ->join('tbl_staff s', 's.staff_id = c.class_teacher_id', 'left')
             ->where('c.status', 1)
+            ->where('c.is_deleted', 'n')
             ->order_by('c.class_id', 'ASC');
 
         if ($academic_year_id) {
@@ -42,6 +43,7 @@ class Class_model extends CI_Model {
         }
         return $this->db
             ->where('status', 1)
+            ->where('is_deleted', 'n')
             ->count_all_results($this->table);
     }
 
@@ -62,6 +64,6 @@ class Class_model extends CI_Model {
     {
         return $this->db
             ->where($this->primaryKey, $id)
-            ->update($this->table, array('status' => 0));
+            ->update($this->table, ['status' => 0, 'is_deleted' => 'y']);
     }
 }

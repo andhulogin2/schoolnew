@@ -8,11 +8,11 @@ class Staff_model extends CI_Model {
 
     public function get_dashboard_stats()
     {
-        $total_staff = $this->db->where('status >=', 0)->count_all_results('tbl_staff');
-        $active_staff = $this->db->where('status', 1)->count_all_results('tbl_staff');
-        $inactive_staff = $this->db->where('status', 0)->count_all_results('tbl_staff');
+        $total_staff = $this->db->where('is_deleted', 'n')->count_all_results('tbl_staff');
+        $active_staff = $this->db->where('status', 1)->where('is_deleted', 'n')->count_all_results('tbl_staff');
+        $inactive_staff = $this->db->where('status', 0)->where('is_deleted', 'n')->count_all_results('tbl_staff');
 
-        $total_teachers = $this->db->where('status', 1)
+        $total_teachers = $this->db->where('status', 1)->where('is_deleted', 'n')
             ->group_start()
                 ->where('staff_type', 'Teacher')
                 ->or_where('staff_type', 'teaching')
@@ -20,7 +20,7 @@ class Staff_model extends CI_Model {
             ->group_end()
             ->count_all_results('tbl_staff');
 
-        $non_teaching = $this->db->where('status', 1)
+        $non_teaching = $this->db->where('status', 1)->where('is_deleted', 'n')
             ->group_start()
                 ->where('staff_type', 'non_teaching')
                 ->or_where('category', 'Non-Teaching')
@@ -32,7 +32,8 @@ class Staff_model extends CI_Model {
             SELECT d.department_id, d.department_name, 
                    COUNT(s.staff_id) as staff_count
             FROM tbl_departments d
-            LEFT JOIN tbl_staff s ON s.department_id = d.department_id AND s.status = 1
+            LEFT JOIN tbl_staff s ON s.department_id = d.department_id AND s.status = 1 AND s.is_deleted = 'n'
+            WHERE d.status = 1 AND d.is_deleted = 'n'
             GROUP BY d.department_id
             ORDER BY d.department_name ASC
         ")->result();
@@ -44,6 +45,7 @@ class Staff_model extends CI_Model {
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
             ->where('s.status', 1)
+            ->where('s.is_deleted', 'n')
             ->order_by('s.staff_id', 'DESC')
             ->limit(8)
             ->get()
@@ -74,6 +76,7 @@ class Staff_model extends CI_Model {
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
             ->where('s.status >=', 0)
+            ->where('s.is_deleted', 'n')
             ->order_by('s.staff_id', 'ASC');
 
         if (!empty($filters['staff_type'])) {
@@ -122,6 +125,7 @@ class Staff_model extends CI_Model {
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
             ->where('s.status >=', 0)
+            ->where('s.is_deleted', 'n')
             ->group_start()
                 ->where('s.staff_type', 'Teacher')
                 ->or_where('s.staff_type', 'teacher')
@@ -169,6 +173,7 @@ class Staff_model extends CI_Model {
             ->join('tbl_departments d', 'd.department_id = s.department_id', 'left')
             ->join('tbl_designations dg', 'dg.designation_id = s.designation_id', 'left')
             ->where('s.status >=', 0)
+            ->where('s.is_deleted', 'n')
             ->where('s.staff_type', 'non_teaching')
             ->order_by('s.staff_id', 'ASC');
 
@@ -297,7 +302,7 @@ class Staff_model extends CI_Model {
 
     public function delete_document($id)
     {
-        return $this->db->where('document_id', $id)->delete('tbl_staff_documents');
+        return $this->db->where('document_id', $id)->update('tbl_staff_documents', ['is_deleted' => 'y', 'status' => 0]);
     }
 
     /* =========================================================================
@@ -341,7 +346,7 @@ class Staff_model extends CI_Model {
 
     public function delete_workload($id)
     {
-        return $this->db->where('workload_id', $id)->delete('tbl_teacher_workload');
+        return $this->db->where('workload_id', $id)->update('tbl_teacher_workload', ['is_deleted' => 'y', 'status' => 0]);
     }
 
     /* =========================================================================
@@ -466,16 +471,16 @@ class Staff_model extends CI_Model {
     {
         return $this->db
             ->where($this->primaryKey, $id)
-            ->update($this->table, array('status' => 0, 'employment_status' => 'Resigned'));
+            ->update($this->table, array('status' => 0, 'is_deleted' => 'y', 'employment_status' => 'Resigned'));
     }
 
     public function count_staff()
     {
-        return $this->db->where('status', 1)->count_all_results($this->table);
+        return $this->db->where('status', 1)->where('is_deleted', 'n')->count_all_results($this->table);
     }
 
     public function count_teachers()
     {
-        return $this->db->where('status', 1)->where('staff_type', 'teacher')->count_all_results($this->table);
+        return $this->db->where('status', 1)->where('is_deleted', 'n')->where('staff_type', 'teacher')->count_all_results($this->table);
     }
 }

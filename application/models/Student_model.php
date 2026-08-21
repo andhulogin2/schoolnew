@@ -13,15 +13,15 @@ class Student_model extends CI_Model {
             $year_id = $active_year ? (int)$active_year->academic_year_id : NULL;
         }
 
-        $total_students = $this->db->where('status >=', 0)->count_all_results('tbl_students');
-        $active_students = $this->db->where('status', 1)->count_all_results('tbl_students');
-        $inactive_students = $this->db->where('status', 0)->count_all_results('tbl_students');
+        $total_students = $this->db->where('is_deleted', 'n')->count_all_results('tbl_students');
+        $active_students = $this->db->where('status', 1)->where('is_deleted', 'n')->count_all_results('tbl_students');
+        $inactive_students = $this->db->where('status', 0)->where('is_deleted', 'n')->count_all_results('tbl_students');
         
-        $male_students = $this->db->where('gender', 'Male')->where('status', 1)->count_all_results('tbl_students');
-        $female_students = $this->db->where('gender', 'Female')->where('status', 1)->count_all_results('tbl_students');
+        $male_students = $this->db->where('gender', 'Male')->where('status', 1)->where('is_deleted', 'n')->count_all_results('tbl_students');
+        $female_students = $this->db->where('gender', 'Female')->where('status', 1)->where('is_deleted', 'n')->count_all_results('tbl_students');
 
         // New admissions
-        $this->db->where('status', 1);
+        $this->db->where('status', 1)->where('is_deleted', 'n');
         if ($year_id) {
             $this->db->where('academic_year_id', $year_id);
         }
@@ -34,8 +34,8 @@ class Student_model extends CI_Model {
                    SUM(CASE WHEN st.gender = 'Male' THEN 1 ELSE 0 END) as male_count,
                    SUM(CASE WHEN st.gender = 'Female' THEN 1 ELSE 0 END) as female_count
             FROM tbl_classes c
-            LEFT JOIN tbl_students st ON st.class_id = c.class_id AND st.status = 1
-            WHERE c.status = 1
+            LEFT JOIN tbl_students st ON st.class_id = c.class_id AND st.status = 1 AND st.is_deleted = 'n'
+            WHERE c.status = 1 AND c.is_deleted = 'n'
             GROUP BY c.class_id
             ORDER BY c.class_id ASC
         ")->result();
@@ -47,6 +47,7 @@ class Student_model extends CI_Model {
             ->join('tbl_classes c', 'c.class_id = st.class_id', 'left')
             ->join('tbl_sections sec', 'sec.section_id = st.section_id', 'left')
             ->where('st.status', 1)
+            ->where('st.is_deleted', 'n')
             ->order_by('st.student_id', 'DESC')
             ->limit(8)
             ->get()
@@ -73,6 +74,7 @@ class Student_model extends CI_Model {
             ->join('tbl_sections sec', 'sec.section_id = st.section_id', 'left')
             ->join('tbl_academic_years y', 'y.academic_year_id = st.academic_year_id', 'left')
             ->where('st.status >=', 0)
+            ->where('st.is_deleted', 'n')
             ->order_by('st.student_id', 'ASC');
 
         if (!empty($filters['academic_year_id'])) {
@@ -113,7 +115,8 @@ class Student_model extends CI_Model {
     {
         $this->db
             ->from('tbl_students st')
-            ->where('st.status >=', 0);
+            ->where('st.status >=', 0)
+            ->where('st.is_deleted', 'n');
 
         if (!empty($filters['academic_year_id'])) {
             $this->db->where('st.academic_year_id', $filters['academic_year_id']);
@@ -245,7 +248,7 @@ class Student_model extends CI_Model {
     {
         return $this->db
             ->where('document_id', $document_id)
-            ->delete('tbl_student_documents');
+            ->update('tbl_student_documents', ['is_deleted' => 'y', 'status' => 0]);
     }
 
     /* =========================================================================
@@ -534,7 +537,7 @@ class Student_model extends CI_Model {
     {
         return $this->db
             ->where($this->primaryKey, $id)
-            ->update($this->table, array('status' => 0));
+            ->update($this->table, ['status' => 0, 'is_deleted' => 'y']);
     }
 }
 

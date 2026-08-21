@@ -42,6 +42,6 @@ class Designation_model extends CI_Model {
     {
         return $this->db
             ->where($this->primaryKey, $id)
-            ->update($this->table, array('status' => 0));
+            ->update($this->table, ['status' => 0, 'is_deleted' => 'y']);
     }
 }

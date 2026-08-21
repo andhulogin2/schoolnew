@@ -71,6 +71,6 @@ class Fee_structure_model extends CI_Model {
         if ($assigned > 0) {
             return false;
         }
-        return $this->db->delete('tbl_fee_structures', array('fee_structure_id' => $id));
+        return $this->db->where('fee_structure_id', $id)->update('tbl_fee_structures', ['is_deleted' => 'y']);
     }
 }

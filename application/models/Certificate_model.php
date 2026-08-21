@@ -21,7 +21,8 @@ class Certificate_model extends CI_Model {
             ->join('tbl_sections sec', 'sec.section_id = st.section_id', 'left')
             ->join('tbl_certificate_types ct', 'ct.type_id = cert.certificate_type_id', 'left')
             ->join('tbl_academic_years ay', 'ay.academic_year_id = cert.academic_year_id', 'left')
-            ->join('tbl_users u', 'u.user_id = cert.generated_by', 'left');
+            ->join('tbl_users u', 'u.user_id = cert.generated_by', 'left')
+            ->where('cert.is_deleted', 'n');
 
         if (!empty($filters['status'])) {
             $this->db->where('cert.status', $filters['status']);
@@ -61,6 +62,7 @@ class Certificate_model extends CI_Model {
             ->join('tbl_certificate_templates tmpl', 'tmpl.template_id = cert.template_id', 'left')
             ->join('tbl_users u', 'u.user_id = cert.generated_by', 'left')
             ->where('cert.certificate_id', $id)
+            ->where('cert.is_deleted', 'n')
             ->get()
             ->row();
     }
@@ -203,21 +205,21 @@ class Certificate_model extends CI_Model {
      */
     public function get_dashboard_stats()
     {
-        $total_certificates = $this->db->count_all($this->table);
-        $pending_requests   = $this->db->where_in('status', array('Pending', 'Under Verification'))->count_all_results('tbl_certificate_requests');
-        $approved_requests  = $this->db->where('status', 'Approved')->count_all_results('tbl_certificate_requests');
-        $generated_certs    = $this->db->where_in('status', array('Generated', 'Printed', 'Issued'))->count_all_results($this->table);
-        $printed_certs      = $this->db->where_in('status', array('Printed', 'Issued'))->count_all_results($this->table);
-        $issued_certs       = $this->db->where('status', 'Issued')->count_all_results($this->table);
+        $total_certificates = $this->db->where('is_deleted', 'n')->count_all_results($this->table);
+        $pending_requests   = $this->db->where_in('status', array('Pending', 'Under Verification'))->where('is_deleted', 'n')->count_all_results('tbl_certificate_requests');
+        $approved_requests  = $this->db->where('status', 'Approved')->where('is_deleted', 'n')->count_all_results('tbl_certificate_requests');
+        $generated_certs    = $this->db->where_in('status', array('Generated', 'Printed', 'Issued'))->where('is_deleted', 'n')->count_all_results($this->table);
+        $printed_certs      = $this->db->where_in('status', array('Printed', 'Issued'))->where('is_deleted', 'n')->count_all_results($this->table);
+        $issued_certs       = $this->db->where('status', 'Issued')->where('is_deleted', 'n')->count_all_results($this->table);
 
-        $total_docs         = $this->db->where('status', 1)->count_all_results('tbl_student_documents');
-        $pending_docs       = $this->db->where('verification_status', 'Pending')->where('status', 1)->count_all_results('tbl_student_documents');
+        $total_docs         = $this->db->where('status', 1)->where('is_deleted', 'n')->count_all_results('tbl_student_documents');
+        $pending_docs       = $this->db->where('verification_status', 'Pending')->where('status', 1)->where('is_deleted', 'n')->count_all_results('tbl_student_documents');
 
         // Type breakdowns
-        $bonafide_count = $this->db->like('certificate_type', 'Bonafide')->count_all_results($this->table);
-        $tc_count       = $this->db->group_start()->like('certificate_type', 'Transfer')->or_like('certificate_type', 'TC')->group_end()->count_all_results($this->table);
-        $study_count    = $this->db->like('certificate_type', 'Study')->count_all_results($this->table);
-        $conduct_count  = $this->db->group_start()->like('certificate_type', 'Conduct')->or_like('certificate_type', 'Character')->group_end()->count_all_results($this->table);
+        $bonafide_count = $this->db->like('certificate_type', 'Bonafide')->where('is_deleted', 'n')->count_all_results($this->table);
+        $tc_count       = $this->db->group_start()->like('certificate_type', 'Transfer')->or_like('certificate_type', 'TC')->group_end()->where('is_deleted', 'n')->count_all_results($this->table);
+        $study_count    = $this->db->like('certificate_type', 'Study')->where('is_deleted', 'n')->count_all_results($this->table);
+        $conduct_count  = $this->db->group_start()->like('certificate_type', 'Conduct')->or_like('certificate_type', 'Character')->group_end()->where('is_deleted', 'n')->count_all_results($this->table);
 
         return (object) array(
             'total_certificates' => $total_certificates,

@@ -36,7 +36,7 @@ class Homework_type_model extends CI_Model {
         // Safe delete or toggle
         $used_cnt = $this->db->where('assignment_type_id', $id)->count_all_results('tbl_assignments');
         if ($used_cnt === 0) {
-            return $this->db->where($this->primaryKey, $id)->delete($this->table);
+            return $this->db->where($this->primaryKey, $id)->update($this->table, ['is_deleted' => 'y']);
         }
         return $this->update($id, ['status' => 0]);
     }

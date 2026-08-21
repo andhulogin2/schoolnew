@@ -192,6 +192,51 @@ const PAGE_URLS = {
   "user-audit-logs": "users/audit_logs",
   "user-management": "users",
   "settings": "settings",
+  "portal-dashboard": "dashboard",
+  "portal-profile": "students",
+  "portal-attendance": "attendance",
+  "portal-homework": "homework",
+  "portal-results": "examinations/results",
+  "portal-timetable": "academics/timetable",
+  "portal-fees": "fees",
+  "portal-notices": "communication/notices",
+  "portal-leave": "leave",
+  "portal-messages": "communication",
+  "library-dashboard": "reports",
+  "library-books": "reports",
+  "library-categories": "reports",
+  "library-authors": "reports",
+  "library-publishers": "reports",
+  "library-issue": "reports",
+  "library-return": "reports",
+  "library-members": "reports",
+  "library-fines": "reports",
+  "library-available": "reports",
+  "hostel-dashboard": "reports",
+  "hostel-buildings": "reports",
+  "hostel-rooms": "reports",
+  "hostel-allocation": "reports",
+  "hostel-attendance": "reports",
+  "hostel-fees": "fees",
+  "hostel-visitors": "reports",
+  "hostel-reports": "reports",
+  "inventory-dashboard": "reports",
+  "inventory-products": "reports",
+  "inventory-categories": "reports",
+  "inventory-stock-in": "reports",
+  "inventory-stock-out": "reports",
+  "inventory-current-stock": "reports",
+  "inventory-suppliers": "reports",
+  "inventory-purchases": "reports",
+  "inventory-alerts": "reports",
+  "events-dashboard": "academics/calendar",
+  "events-list": "academics/calendar",
+  "events-programs": "academics/calendar",
+  "events-competitions": "academics/calendar",
+  "events-sports": "academics/calendar",
+  "events-cultural": "academics/calendar",
+  "events-calendar": "academics/calendar",
+  "events-reports": "reports",
   "unauthorized": "unauthorized",
   "login": "auth/login",
   "logout": "auth/logout",
@@ -216,17 +261,14 @@ const CURRENT_USER = window.CURRENT_USER || {
 // Level 2: Logical Group (collapsible)
 // Level 3: Existing Pages (linked to existing routes)
 const NAV = [
+  // 1. Dashboard
   { key: "dashboard", label: "Dashboard", icon: "dashboard" },
+
+  // 2. Student Management
   {
     key: "students", label: "Student Management", icon: "school",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "students", label: "Student Dashboard" },
-          { key: "student-search", label: "Student Search" },
-        ],
-      },
+      { key: "students", label: "Overview" },
       {
         label: "Admissions",
         items: [
@@ -249,23 +291,15 @@ const NAV = [
           { key: "student-transfers", label: "Transfer / TC Management" },
         ],
       },
-      {
-        label: "Reports",
-        items: [
-          { key: "student-reports", label: "Student Reports" },
-        ],
-      },
+      { key: "student-reports", label: "Reports" },
     ],
   },
+
+  // 3. Staff / Teacher Management
   {
     key: "staff", label: "Staff / Teacher Management", icon: "badge",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "staff", label: "Staff Dashboard" },
-        ],
-      },
+      { key: "staff", label: "Overview" },
       {
         label: "Staff Profiles",
         items: [
@@ -281,36 +315,18 @@ const NAV = [
           { key: "designations", label: "Designations" },
         ],
       },
-      {
-        label: "Workload",
-        items: [
-          { key: "teacher-workload", label: "Teacher Workload" },
-        ],
-      },
-      {
-        label: "Attendance & Leave",
-        items: [
-          { key: "staff-attendance", label: "Staff Attendance" },
-          { key: "staff-leave", label: "Staff Leave" },
-        ],
-      },
-      {
-        label: "Reports",
-        items: [
-          { key: "staff-reports", label: "Staff Reports" },
-        ],
-      },
+      { key: "teacher-workload", label: "Teacher Workload" },
+      { key: "staff-attendance", label: "Staff Attendance" },
+      { key: "staff-leave", label: "Leave Management" },
+      { key: "staff-reports", label: "Reports" },
     ],
   },
+
+  // 4. Academic Management
   {
     key: "academics", label: "Academic Management", icon: "menu_book",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "academics", label: "Academic Dashboard" },
-        ],
-      },
+      { key: "academics", label: "Overview" },
       {
         label: "Academic Setup",
         items: [
@@ -327,30 +343,16 @@ const NAV = [
           { key: "subject-teachers", label: "Subject Teachers" },
         ],
       },
-      {
-        label: "Academic Calendar",
-        items: [
-          { key: "academic-calendar", label: "Academic Calendar" },
-          { key: "timetable", label: "Timetable Schedule" },
-        ],
-      },
-      {
-        label: "Reports",
-        items: [
-          { key: "academic-reports", label: "Academic Reports" },
-        ],
-      },
+      { key: "academic-calendar", label: "Academic Calendar" },
+      { key: "academic-reports", label: "Reports" },
     ],
   },
+
+  // 5. Student Attendance
   {
     key: "attendance", label: "Student Attendance", icon: "fact_check",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "attendance-dashboard", label: "Attendance Dashboard" },
-        ],
-      },
+      { key: "attendance-dashboard", label: "Overview" },
       {
         label: "Attendance",
         items: [
@@ -360,12 +362,7 @@ const NAV = [
           { key: "attendance-period-wise", label: "Period-wise Attendance" },
         ],
       },
-      {
-        label: "Period Setup",
-        items: [
-          { key: "attendance-periods", label: "Period Management" },
-        ],
-      },
+      { key: "attendance-periods", label: "Period Setup" },
       {
         label: "Tracking & History",
         items: [
@@ -374,12 +371,7 @@ const NAV = [
           { key: "attendance-calendar", label: "Attendance Calendar" },
         ],
       },
-      {
-        label: "Reports",
-        items: [
-          { key: "attendance-reports", label: "Attendance Reports" },
-        ],
-      },
+      { key: "attendance-reports", label: "Reports" },
       {
         label: "Notifications",
         items: [
@@ -387,140 +379,74 @@ const NAV = [
           { key: "attendance-notification-history", label: "Notification History" },
         ],
       },
-      {
-        label: "Settings",
-        items: [
-          { key: "attendance-settings", label: "Attendance Settings" },
-        ],
-      },
+      { key: "attendance-settings", label: "Settings" },
     ],
   },
+
+  // 6. Examination & Results
   {
     key: "examinations", label: "Examination & Results", icon: "assignment_turned_in",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "exam-dashboard", label: "Examination Dashboard" },
-        ],
-      },
+      { key: "exam-dashboard", label: "Overview" },
       {
         label: "Exam Setup",
         items: [
           { key: "exams", label: "Exam Creation" },
-          { key: "exam-types", label: "Exam Types" },
           { key: "grade-management", label: "Grade Management" },
         ],
       },
-      {
-        label: "Exam Schedule",
-        items: [
-          { key: "exam-schedules", label: "Exam Schedule" },
-          { key: "exam-allocations", label: "Subject Allocations" },
-        ],
-      },
+      { key: "exam-schedules", label: "Exam Schedules" },
       {
         label: "Marks & Results",
         items: [
           { key: "marks-entry", label: "Marks Entry" },
-          { key: "marks-verification", label: "Marks Verification" },
           { key: "result-calculation", label: "Result Calculation" },
-          { key: "result-publishing", label: "Result Publishing" },
         ],
       },
-      {
-        label: "Reports & Cards",
-        items: [
-          { key: "report-cards", label: "Report Cards" },
-          { key: "progress-reports", label: "Progress Reports" },
-          { key: "results", label: "Student Results" },
-        ],
-      },
-      {
-        label: "Ranking",
-        items: [
-          { key: "exam-ranks", label: "Rank / Position" },
-        ],
-      },
-      {
-        label: "Reports",
-        items: [
-          { key: "exam-reports", label: "Examination Reports" },
-        ],
-      },
-      {
-        label: "Settings",
-        items: [
-          { key: "exam-settings", label: "Examination Settings" },
-        ],
-      },
+      { key: "report-cards", label: "Report Cards" },
+      { key: "exam-ranks", label: "Rank / Position" },
+      { key: "progress-reports", label: "Progress Reports" },
+      { key: "exam-reports", label: "Reports" },
     ],
   },
+
+  // 7. Fees & Finance
   {
     key: "fees", label: "Fees & Finance", icon: "payments",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "fee-dashboard", label: "Finance Dashboard" },
-        ],
-      },
+      { key: "fee-dashboard", label: "Overview" },
       {
         label: "Fee Setup",
         items: [
           { key: "fee-categories", label: "Fee Categories" },
           { key: "fee-structures", label: "Fee Structure" },
-          { key: "fee-adjustments", label: "Fee Adjustments" },
         ],
       },
       {
         label: "Student Fees",
         items: [
           { key: "fee-assignments", label: "Student Fee Assignment" },
-          { key: "student-fees", label: "Student Fees" },
-          { key: "due-fees", label: "Due Fees" },
           { key: "fee-discounts", label: "Discounts / Concessions" },
+          { key: "due-fees", label: "Due Fees" },
         ],
       },
       {
         label: "Payments",
         items: [
           { key: "fee-collection", label: "Fee Collection" },
-          { key: "payment-history", label: "Payment History" },
           { key: "fee-receipts", label: "Receipts" },
-          { key: "fee-refunds", label: "Fee Refunds" },
         ],
       },
-      {
-        label: "Reminders",
-        items: [
-          { key: "fee-reminders", label: "Fee Reminders" },
-        ],
-      },
-      {
-        label: "Reports",
-        items: [
-          { key: "collection-reports", label: "Collection Reports" },
-          { key: "due-reports", label: "Fee Reports" },
-        ],
-      },
-      {
-        label: "Settings",
-        items: [
-          { key: "finance-settings", label: "Fee Settings" },
-        ],
-      },
+      { key: "fee-reminders", label: "Fee Reminders" },
+      { key: "collection-reports", aliases: ["fee-reports", "due-reports"], label: "Reports" },
     ],
   },
+
+  // 8. Timetable
   {
     key: "timetable", label: "Timetable", icon: "calendar_month",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "timetable-dashboard", label: "Timetable Dashboard" },
-        ],
-      },
+      { key: "timetable-dashboard", label: "Overview" },
       {
         label: "Timetables",
         items: [
@@ -528,196 +454,144 @@ const NAV = [
           { key: "teacher-timetable", label: "Teacher Timetable" },
         ],
       },
-      {
-        label: "Allocation",
-        items: [
-          { key: "subject-allocation", label: "Subject Allocation" },
-        ],
-      },
-      {
-        label: "Period Setup",
-        items: [
-          { key: "timetable-builder", label: "Timetable Builder" },
-          { key: "free-periods", label: "Free Periods" },
-        ],
-      },
-      {
-        label: "Publishing",
-        items: [
-          { key: "timetable-conflicts", label: "Conflict Management" },
-          { key: "timetable-publish", label: "Publish / Lock" },
-        ],
-      },
-      {
-        label: "Reports",
-        items: [
-          { key: "timetable-reports", label: "Timetable Reports" },
-        ],
-      },
-      {
-        label: "Settings",
-        items: [
-          { key: "timetable-settings", label: "Timetable Settings" },
-        ],
-      },
+      { key: "subject-allocation", label: "Subject Allocation" },
+      { key: "timetable-builder", label: "Period Management" },
+      { key: "free-periods", label: "Free-period Management" },
+      { key: "timetable-reports", label: "Reports" },
     ],
   },
+
+  // 9. Homework / Assignments
   {
     key: "homework", label: "Homework / Assignments", icon: "assignment",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "homework-dashboard", label: "Homework Dashboard" },
-        ],
-      },
+      { key: "homework-dashboard", label: "Overview" },
       {
         label: "Assignments",
         items: [
           { key: "homework-create", label: "Homework Creation" },
-          { key: "homework-assignments", label: "Assignments List" },
           { key: "homework-subjects", label: "Subject-wise Assignments" },
-          { key: "homework-classes", label: "Class-wise Assignments" },
         ],
       },
+      { key: "homework-submissions", label: "Submissions" },
       {
-        label: "Submissions",
+        label: "Evaluation",
         items: [
-          { key: "homework-submissions", label: "Submission Tracking" },
-          { key: "homework-calendar", label: "Assignment Calendar" },
+          { key: "homework-assignments", label: "Teacher Remarks" },
+          { key: "homework-types", label: "Assignment Evaluation" },
         ],
       },
-      {
-        label: "Setup",
-        items: [
-          { key: "homework-types", label: "Assignment Types" },
-        ],
-      },
-      {
-        label: "Reports",
-        items: [
-          { key: "homework-reports", label: "Homework Reports" },
-        ],
-      },
-      {
-        label: "Settings",
-        items: [
-          { key: "homework-settings", label: "Homework Settings" },
-        ],
-      },
+      { key: "homework-classes", label: "Student / Parent Access" },
+      { key: "homework-reports", label: "Reports" },
     ],
   },
+
+  // 10. Communication
   {
-    key: "communication", label: "Communication / Notifications", icon: "campaign",
+    key: "communication", label: "Communication", icon: "campaign",
     groups: [
+      { key: "comm-dashboard", label: "Overview" },
+      { key: "notices", label: "Notices" },
+      { key: "announcements", label: "Announcements" },
       {
-        label: "Overview",
+        label: "Messaging",
         items: [
-          { key: "comm-dashboard", label: "Notification Dashboard" },
+          { key: "comm-templates", label: "Parent-Teacher Communication" },
+          { key: "comm-automated", label: "Internal Messaging" },
         ],
       },
       {
-        label: "Notices & Circulars",
+        label: "Communication Channels",
         items: [
-          { key: "notices", label: "Notices" },
-          { key: "announcements", label: "Announcements" },
+          { key: "comm-sms-templates", label: "SMS" },
+          { key: "comm-whatsapp-templates", label: "WhatsApp" },
+          { key: "comm-email-templates", label: "Email" },
         ],
       },
-      {
-        label: "Templates",
-        items: [
-          { key: "comm-templates", label: "Notification Templates" },
-          { key: "comm-sms-templates", label: "SMS Templates" },
-          { key: "comm-whatsapp-templates", label: "WhatsApp Templates" },
-          { key: "comm-email-templates", label: "Email Templates" },
-        ],
-      },
-      {
-        label: "Automation",
-        items: [
-          { key: "comm-automated", label: "Automated Notifications" },
-          { key: "comm-rules", label: "Notification Rules" },
-        ],
-      },
-      {
-        label: "Queue & Delivery",
-        items: [
-          { key: "comm-queue", label: "Notification Queue" },
-          { key: "comm-reports", label: "Delivery Reports" },
-          { key: "comm-failed", label: "Failed Notifications" },
-        ],
-      },
-      {
-        label: "History",
-        items: [
-          { key: "comm-history", label: "Notification History" },
-        ],
-      },
-      {
-        label: "Settings",
-        items: [
-          { key: "comm-settings", label: "Notification Settings" },
-        ],
-      },
+      { key: "comm-history", label: "History" },
     ],
   },
+
+  // 11. Parent & Student Portal (SECOND PHASE)
+  {
+    key: "portal", label: "Parent & Student Portal", icon: "diversity_1", soon: true,
+    groups: [
+      { key: "portal-dashboard", label: "Overview", soon: true },
+      { key: "portal-profile", label: "Student Profile", soon: true },
+      {
+        label: "Academics",
+        soon: true,
+        items: [
+          { key: "portal-attendance", label: "Attendance", soon: true },
+          { key: "portal-homework", label: "Homework", soon: true },
+          { key: "portal-results", label: "Exam Results", soon: true },
+          { key: "portal-timetable", label: "Timetable", soon: true },
+        ],
+      },
+      { key: "portal-fees", label: "Fees", soon: true },
+      { key: "portal-notices", label: "Notices", soon: true },
+      { key: "portal-leave", label: "Leave Requests", soon: true },
+      { key: "portal-messages", label: "Messages", soon: true },
+    ],
+  },
+
+  // 12. Leave Management
   {
     key: "leave", label: "Leave Management", icon: "event_busy",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "leave-dashboard", label: "Leave Dashboard" },
-        ],
-      },
+      { key: "leave-dashboard", label: "Overview" },
       {
         label: "Leave Requests",
         items: [
           { key: "leave-student", label: "Student Leave" },
           { key: "leave-staff", label: "Staff Leave" },
-          { key: "leave-request", label: "Apply Leave" },
         ],
       },
-      {
-        label: "Approval & Balance",
-        items: [
-          { key: "leave-approval", label: "Leave Approval" },
-          { key: "leave-balance", label: "Leave Balance" },
-        ],
-      },
-      {
-        label: "Calendar & History",
-        items: [
-          { key: "leave-calendar", label: "Leave Calendar" },
-          { key: "leave-history", label: "Leave History" },
-        ],
-      },
-      {
-        label: "Setup & Reports",
-        items: [
-          { key: "leave-types", label: "Leave Types" },
-          { key: "leave-reports", label: "Leave Reports" },
-          { key: "leave-settings", label: "Leave Settings" },
-        ],
-      },
+      { key: "leave-types", label: "Leave Types" },
+      { key: "leave-approval", label: "Leave Approval" },
+      { key: "leave-balance", label: "Leave Balance" },
+      { key: "leave-history", label: "Leave History" },
+      { key: "leave-reports", label: "Leave Reports" },
     ],
   },
+
+  // 13. Library Management (SECOND PHASE)
+  {
+    key: "library", label: "Library Management", icon: "local_library", soon: true,
+    groups: [
+      { key: "library-dashboard", label: "Overview", soon: true },
+      {
+        label: "Books",
+        soon: true,
+        items: [
+          { key: "library-books", label: "Book Management", soon: true },
+          { key: "library-categories", label: "Categories", soon: true },
+          { key: "library-authors", label: "Authors", soon: true },
+          { key: "library-publishers", label: "Publishers", soon: true },
+        ],
+      },
+      {
+        label: "Issue / Return",
+        soon: true,
+        items: [
+          { key: "library-issue", label: "Book Issue", soon: true },
+          { key: "library-return", label: "Book Return", soon: true },
+        ],
+      },
+      { key: "library-members", label: "Library Members", soon: true },
+      { key: "library-fines", label: "Fine Management", soon: true },
+      { key: "library-available", label: "Available Books", soon: true },
+      { key: "library-reports", label: "Reports", soon: true },
+    ],
+  },
+
+  // 14. Transport Management
   {
     key: "transport", label: "Transport Management", icon: "directions_bus",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "transport-dashboard", label: "Transport Dashboard" },
-        ],
-      },
-      {
-        label: "Fleet & Drivers",
-        items: [
-          { key: "transport-vehicles", label: "Vehicles" },
-          { key: "transport-drivers", label: "Drivers" },
-        ],
-      },
+      { key: "transport-dashboard", label: "Overview" },
+      { key: "transport-vehicles", label: "Vehicles" },
+      { key: "transport-drivers", label: "Drivers" },
       {
         label: "Routes & Stops",
         items: [
@@ -725,40 +599,68 @@ const NAV = [
           { key: "transport-stops", label: "Stops" },
         ],
       },
-      {
-        label: "Student Assignment",
-        items: [
-          { key: "transport-assignments", label: "Student Transport Assignment" },
-          { key: "transport-bulk", label: "Bulk Student Assignment" },
-        ],
-      },
-      {
-        label: "Fees & Maintenance",
-        items: [
-          { key: "transport-fees", label: "Transport Fees" },
-          { key: "transport-maintenance", label: "Vehicle Maintenance" },
-          { key: "transport-maintenance-history", label: "Maintenance History" },
-        ],
-      },
-      {
-        label: "Documents & Reports",
-        items: [
-          { key: "transport-documents", label: "Transport Documents" },
-          { key: "transport-reports", label: "Transport Reports" },
-          { key: "transport-settings", label: "Transport Settings" },
-        ],
-      },
+      { key: "transport-assignments", label: "Student Transport Assignment" },
+      { key: "transport-maintenance", label: "Vehicle Maintenance" },
+      { key: "transport-fees", label: "Transport Fees" },
+      { key: "transport-reports", label: "Reports" },
     ],
   },
+
+  // 15. Hostel Management (SECOND PHASE)
   {
-    key: "certificates", label: "Certificate & Documents", icon: "workspace_premium",
+    key: "hostel", label: "Hostel Management", icon: "hotel", soon: true,
     groups: [
+      { key: "hostel-dashboard", label: "Overview", soon: true },
       {
-        label: "Overview",
+        label: "Hostel Setup",
+        soon: true,
         items: [
-          { key: "certificates-dashboard", label: "Certificate Dashboard" },
+          { key: "hostel-buildings", label: "Hostel Buildings", soon: true },
+          { key: "hostel-rooms", label: "Rooms / Beds", soon: true },
         ],
       },
+      { key: "hostel-allocation", label: "Student Allocation", soon: true },
+      { key: "hostel-attendance", label: "Hostel Attendance", soon: true },
+      { key: "hostel-fees", label: "Hostel Fees", soon: true },
+      { key: "hostel-visitors", label: "Visitor Management", soon: true },
+      { key: "hostel-reports", label: "Reports", soon: true },
+    ],
+  },
+
+  // 16. Inventory / Store Management (SECOND PHASE)
+  {
+    key: "inventory", label: "Inventory / Store Management", icon: "inventory_2", soon: true,
+    groups: [
+      { key: "inventory-dashboard", label: "Overview", soon: true },
+      {
+        label: "Products",
+        soon: true,
+        items: [
+          { key: "inventory-products", label: "Products / Items", soon: true },
+          { key: "inventory-categories", label: "Categories", soon: true },
+        ],
+      },
+      {
+        label: "Stock",
+        soon: true,
+        items: [
+          { key: "inventory-stock-in", label: "Stock In", soon: true },
+          { key: "inventory-stock-out", label: "Stock Out", soon: true },
+          { key: "inventory-current-stock", label: "Current Stock", soon: true },
+        ],
+      },
+      { key: "inventory-suppliers", label: "Suppliers", soon: true },
+      { key: "inventory-purchases", label: "Purchase Management", soon: true },
+      { key: "inventory-alerts", label: "Low-stock Alerts", soon: true },
+      { key: "inventory-reports", label: "Reports", soon: true },
+    ],
+  },
+
+  // 17. Certificate & Document Management
+  {
+    key: "certificates", label: "Certificate & Document Management", icon: "workspace_premium",
+    groups: [
+      { key: "certificates-dashboard", label: "Overview" },
       {
         label: "Certificates",
         items: [
@@ -768,32 +670,69 @@ const NAV = [
           { key: "certificates-conduct", label: "Conduct Certificate" },
         ],
       },
+      { key: "certificates-requests", label: "Certificate Requests" },
       {
-        label: "Requests & Generation",
+        label: "Generation & Printing",
         items: [
-          { key: "certificates-requests", label: "Certificate Requests" },
           { key: "certificates-generate", label: "Certificate Generation" },
-          { key: "certificates-templates", label: "Certificate Templates" },
+          { key: "certificates-templates", label: "Certificate Printing" },
         ],
       },
-      {
-        label: "Student Documents",
-        items: [
-          { key: "certificates-documents", label: "Student Documents" },
-          { key: "certificates-doc-categories", label: "Document Categories" },
-          { key: "certificates-doc-verification", label: "Document Verification" },
-        ],
-      },
-      {
-        label: "History & Reports",
-        items: [
-          { key: "certificates-history", label: "Certificate History" },
-          { key: "certificates-reports", label: "Certificate Reports" },
-          { key: "certificates-settings", label: "Certificate Settings" },
-        ],
-      },
+      { key: "certificates-documents", label: "Student Documents" },
+      { key: "certificates-reports", label: "Reports" },
     ],
   },
+
+  // 18. Events & Activities (SECOND PHASE)
+  {
+    key: "events", label: "Events & Activities", icon: "event", soon: true,
+    groups: [
+      { key: "events-dashboard", label: "Overview", soon: true },
+      {
+        label: "Events",
+        soon: true,
+        items: [
+          { key: "events-list", label: "School Events", soon: true },
+          { key: "events-programs", label: "Programs", soon: true },
+        ],
+      },
+      {
+        label: "Activities",
+        soon: true,
+        items: [
+          { key: "events-competitions", label: "Competitions", soon: true },
+          { key: "events-sports", label: "Sports Activities", soon: true },
+          { key: "events-cultural", label: "Cultural Activities", soon: true },
+        ],
+      },
+      { key: "events-calendar", label: "Event Calendar", soon: true },
+      { key: "events-reports", label: "Reports", soon: true },
+    ],
+  },
+
+  // 19. Communication / Notifications (SECOND PHASE)
+  {
+    key: "comm-notifications", label: "Communication / Notifications", icon: "notifications_active", soon: true,
+    groups: [
+      { key: "comm-dashboard", label: "Overview", soon: true },
+      { key: "comm-templates", label: "Notification Templates", soon: true },
+      { key: "comm-sms-templates", label: "SMS Templates", soon: true },
+      { key: "comm-whatsapp-templates", label: "WhatsApp Templates", soon: true },
+      { key: "comm-email-templates", label: "Email Templates", soon: true },
+      {
+        label: "Automated Notifications",
+        soon: true,
+        items: [
+          { key: "comm-rules", label: "Notification Rules", soon: true },
+          { key: "comm-automated", label: "Scheduled Notifications", soon: true },
+        ],
+      },
+      { key: "comm-history", label: "Notification History", soon: true },
+      { key: "comm-reports", label: "Delivery Reports", soon: true },
+    ],
+  },
+
+  // 20. Reports
   {
     key: "reports", label: "Reports", icon: "bar_chart",
     groups: [
@@ -821,27 +760,32 @@ const NAV = [
       { key: "inventory-reports", label: "Inventory Reports", soon: true },
     ],
   },
+
+  // 21. User & Permission Management
   {
     key: "user-management", label: "User & Permission Management", icon: "manage_accounts",
     groups: [
-      {
-        label: "Overview",
-        items: [
-          { key: "user-dashboard", label: "User Dashboard" },
-        ],
-      },
+      { key: "user-dashboard", label: "Overview" },
       {
         label: "Users",
         items: [
           { key: "users", label: "Users" },
           { key: "user-create", label: "Add User" },
+          { key: "user-details", label: "User Details" },
         ],
       },
       {
-        label: "Roles & Permissions",
+        label: "Roles",
         items: [
           { key: "user-roles", label: "Roles" },
+          { key: "user-role-permissions", label: "User Roles" },
+        ],
+      },
+      {
+        label: "Permissions",
+        items: [
           { key: "user-permissions", label: "Permissions" },
+          { key: "user-role-permissions", label: "Role Permissions" },
         ],
       },
       {
@@ -854,46 +798,43 @@ const NAV = [
         ],
       },
       {
-        label: "Security & Audits",
+        label: "Security",
+        items: [
+          { key: "user-security-settings", label: "Account Status" },
+          { key: "user-security-settings", label: "Password Management" },
+          { key: "user-security-settings", label: "Security Settings" },
+        ],
+      },
+      {
+        label: "Activity",
         items: [
           { key: "user-login-activity", label: "Login Activity" },
-          { key: "user-security-settings", label: "Security Settings" },
           { key: "user-audit-logs", label: "Permission Audit Logs" },
         ],
       },
     ],
   },
-  { key: "settings", label: "School Settings", icon: "settings" },
-  // Second Phase Modules
+
+  // 22. School Settings
   {
-    key: "portal", label: "Parent & Student Portal", icon: "diversity_1", soon: true,
+    key: "settings", label: "School Settings", icon: "settings",
     groups: [
-      { label: "Overview", items: [{ key: "portal-dashboard", label: "Portal Dashboard", soon: true }] }
-    ]
-  },
-  {
-    key: "library", label: "Library Management", icon: "local_library", soon: true,
-    groups: [
-      { label: "Overview", items: [{ key: "library-dashboard", label: "Library Dashboard", soon: true }] }
-    ]
-  },
-  {
-    key: "hostel", label: "Hostel Management", icon: "hotel", soon: true,
-    groups: [
-      { label: "Overview", items: [{ key: "hostel-dashboard", label: "Hostel Dashboard", soon: true }] }
-    ]
-  },
-  {
-    key: "inventory", label: "Inventory / Store", icon: "inventory_2", soon: true,
-    groups: [
-      { label: "Overview", items: [{ key: "inventory-dashboard", label: "Inventory Dashboard", soon: true }] }
-    ]
-  },
-  {
-    key: "events", label: "Events & Activities", icon: "event", soon: true,
-    groups: [
-      { label: "Overview", items: [{ key: "events-dashboard", label: "Events Dashboard", soon: true }] }
-    ]
+      { key: "settings", label: "Overview" },
+      { key: "settings", label: "School Profile" },
+      {
+        label: "Academic Settings",
+        items: [
+          { key: "academic-years", label: "Academic Year" },
+          { key: "classes", label: "Classes & Sections" },
+          { key: "subjects", label: "Subjects" },
+        ],
+      },
+      { key: "academic-calendar", label: "Working Days & Holidays" },
+      { key: "grade-management", label: "Grading System" },
+      { key: "finance-settings", label: "Fee Settings" },
+      { key: "comm-settings", label: "Notification Settings" },
+      { key: "settings", label: "System Settings" },
+    ],
   },
   { key: "unauthorized", label: "Access Restricted", icon: "lock" },
 ];

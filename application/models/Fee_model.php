@@ -358,7 +358,7 @@ class Fee_model extends CI_Model {
 
     public function get_receipt_by_id($payment_id)
     {
-        return $this->db->select('fp.*, st.admission_number, st.first_name, st.last_name, st.roll_number, st.guardian_name, st.guardian_phone, c.class_name, sec.section_name, fh.head_name as category_name, sf.invoice_no, sf.original_amount, sf.discount_amount, sf.concession_amount, sf.final_amount, sf.paid_amount as total_paid_to_date, sf.due_amount as remaining_due, sf.due_date, u.full_name as collected_by_name')
+        return $this->db->select('fp.*, st.admission_number, st.first_name, st.last_name, st.roll_number, st.guardian_name, st.guardian_phone, c.class_name, sec.section_name, fh.head_name as category_name, sf.invoice_no, sf.original_amount, sf.discount_amount, sf.concession_amount, sf.final_amount, sf.paid_amount as total_paid_to_date, sf.due_amount as remaining_due, sf.due_date, u.name as collected_by_name')
                         ->from('tbl_fee_payments fp')
                         ->join('tbl_students st', 'st.student_id = fp.student_id', 'inner')
                         ->join('tbl_student_fees sf', 'sf.student_fee_id = fp.student_fee_id', 'inner')
@@ -374,7 +374,7 @@ class Fee_model extends CI_Model {
 
     public function get_payments($filters = array(), $limit = 100)
     {
-        $this->db->select('fp.*, st.admission_number, st.first_name, st.last_name, c.class_name, sec.section_name, fh.head_name as category_name, sf.invoice_no, u.full_name as collected_by_name')
+        $this->db->select('fp.*, st.admission_number, st.first_name, st.last_name, c.class_name, sec.section_name, fh.head_name as category_name, sf.invoice_no, u.name as collected_by_name')
                  ->from('tbl_fee_payments fp')
                  ->join('tbl_students st', 'st.student_id = fp.student_id', 'inner')
                  ->join('tbl_student_fees sf', 'sf.student_fee_id = fp.student_fee_id', 'left')

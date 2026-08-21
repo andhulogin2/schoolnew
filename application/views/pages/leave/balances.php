@@ -47,7 +47,7 @@
                 <tr class="hover:bg-surface-container-low transition-colors">
                   <td class="px-4 py-3 whitespace-nowrap">
                     <strong class="text-on-surface block"><?php echo html_escape($name); ?></strong>
-                    <span class="text-[11px] text-on-surface-variant font-mono"><?php echo html_escape($b->employee_code ?: $b->admission_no); ?></span>
+                    <span class="text-[11px] text-on-surface-variant font-mono"><?php echo html_escape($b->employee_code ?: ($b->admission_number ?? $b->admission_no ?? '')); ?></span>
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap text-[13px] text-on-surface font-medium">
                     <?php echo html_escape($scope); ?>

@@ -20,7 +20,7 @@ class Finance_audit_model extends CI_Model {
 
     public function get_logs($limit = 50)
     {
-        return $this->db->select('al.*, u.full_name as user_name')
+        return $this->db->select('al.*, u.name as user_name')
                         ->from('tbl_finance_audit_logs al')
                         ->join('tbl_users u', 'u.user_id = al.user_id', 'left')
                         ->order_by('al.log_id', 'DESC')

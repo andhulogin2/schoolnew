@@ -52,7 +52,7 @@ class Leave_model extends CI_Model {
     public function get_applications($filters = array(), $limit = 50, $offset = 0)
     {
         $this->db
-            ->select('a.*, lt.type_name, lt.type_code, s.full_name as staff_name, s.employee_code, d.department_name, st.first_name, st.last_name, st.admission_no, st.guardian_name, c.class_name, sec.section_name, approver.full_name as approver_name')
+            ->select('a.*, lt.type_name, lt.type_code, s.full_name as staff_name, s.employee_code, d.department_name, st.first_name, st.last_name, st.admission_number, st.admission_number as admission_no, st.guardian_name, c.class_name, sec.section_name, approver.full_name as approver_name')
             ->from('tbl_leave_applications a')
             ->join('tbl_leave_types lt', 'lt.type_id = a.leave_type_id', 'left')
             ->join('tbl_staff s', 's.staff_id = a.staff_id', 'left')
@@ -91,7 +91,7 @@ class Leave_model extends CI_Model {
     public function get_by_id($id)
     {
         return $this->db
-            ->select('a.*, lt.type_name, lt.type_code, s.full_name as staff_name, s.employee_code, d.department_name, des.designation_name, st.first_name, st.last_name, st.admission_no, st.guardian_name, st.emergency_phone, c.class_name, sec.section_name, approver.full_name as approver_name')
+            ->select('a.*, lt.type_name, lt.type_code, s.full_name as staff_name, s.employee_code, d.department_name, des.designation_name, st.first_name, st.last_name, st.admission_number, st.admission_number as admission_no, st.guardian_name, st.guardian_phone as emergency_phone, c.class_name, sec.section_name, approver.full_name as approver_name')
             ->from('tbl_leave_applications a')
             ->join('tbl_leave_types lt', 'lt.type_id = a.leave_type_id', 'left')
             ->join('tbl_staff s', 's.staff_id = a.staff_id', 'left')

@@ -14,7 +14,7 @@ class Conversation_model extends CI_Model {
             ->join('tbl_conversation_participants cp', "cp.conversation_id = c.conversation_id AND cp.user_id = {$user_id} AND cp.user_type = '{$user_type}'")
             ->join('tbl_staff s', 's.staff_id = c.created_by', 'left')
             ->join('(SELECT m1.* FROM tbl_messages m1 JOIN (SELECT conversation_id, MAX(message_id) as max_id FROM tbl_messages GROUP BY conversation_id) m2 ON m1.message_id = m2.max_id) lm', 'lm.conversation_id = c.conversation_id', 'left')
-            ->order_by('COALESCE(lm.created_at, c.created_at)', 'DESC')
+            ->order_by('COALESCE(lm.created_at, c.created_at)', 'DESC', FALSE)
             ->get()
             ->result();
     }

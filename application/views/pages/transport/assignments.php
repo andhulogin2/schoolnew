@@ -101,7 +101,7 @@
                 <tr class="hover:bg-surface-container-low transition-colors">
                   <td class="px-4 py-3 whitespace-nowrap">
                     <strong class="text-on-surface block"><?php echo html_escape($a->first_name . ' ' . $a->last_name); ?></strong>
-                    <span class="text-[11px] text-on-surface-variant font-mono"><?php echo html_escape($a->admission_no); ?></span>
+                    <span class="text-[11px] text-on-surface-variant font-mono"><?php echo html_escape($a->admission_number ?? $a->admission_no ?? ''); ?></span>
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap font-medium text-on-surface text-[13px]">
                     <?php echo html_escape($a->class_name . ' - ' . $a->section_name); ?>
@@ -162,7 +162,7 @@
                 <option value="">-- Choose Student --</option>
                 <?php foreach ($students as $st): ?>
                   <option value="<?php echo $st->student_id; ?>">
-                    <?php echo html_escape($st->first_name . ' ' . $st->last_name . ' (' . $st->admission_no . ' - ' . $st->class_name . ' ' . $st->section_name . ')'); ?>
+                    <?php echo html_escape($st->first_name . ' ' . $st->last_name . ' (' . ($st->admission_number ?? $st->admission_no ?? '') . ' - ' . ($st->class_name ?? '') . ' ' . ($st->section_name ?? '') . ')'); ?>
                   </option>
                 <?php endforeach; ?>
               </select>

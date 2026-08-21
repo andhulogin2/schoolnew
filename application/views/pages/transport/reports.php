@@ -54,7 +54,7 @@
                 <tr class="hover:bg-surface-container-low transition-colors">
                   <td class="px-4 py-3 whitespace-nowrap font-medium text-on-surface">
                     <?php echo html_escape($a->first_name . ' ' . $a->last_name); ?>
-                    <span class="text-[11px] text-on-surface-variant font-mono block"><?php echo html_escape($a->admission_no); ?></span>
+                    <span class="text-[11px] text-on-surface-variant font-mono block"><?php echo html_escape($a->admission_number ?? $a->admission_no ?? ''); ?></span>
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap text-[13px] text-on-surface"><?php echo html_escape($a->class_name . ' ' . $a->section_name); ?></td>
                   <td class="px-4 py-3 whitespace-nowrap text-[13px] text-on-surface"><?php echo html_escape($a->route_name); ?></td>

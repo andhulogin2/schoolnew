@@ -5,7 +5,7 @@ class Fee_reminder_model extends CI_Model {
 
     public function get_all($filters = array(), $limit = 50)
     {
-        $this->db->select('fr.*, st.first_name, st.last_name, st.admission_number, c.class_name, sec.section_name, sf.invoice_no, sf.due_amount, u.full_name as created_by_name')
+        $this->db->select('fr.*, st.first_name, st.last_name, st.admission_number, c.class_name, sec.section_name, sf.invoice_no, sf.due_amount, u.name as created_by_name')
                  ->from('tbl_fee_reminders fr')
                  ->join('tbl_students st', 'st.student_id = fr.student_id', 'inner')
                  ->join('tbl_classes c', 'c.class_id = st.class_id', 'left')

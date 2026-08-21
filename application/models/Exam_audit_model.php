@@ -23,7 +23,7 @@ class Exam_audit_model extends CI_Model {
     public function get_logs($limit = 50, $entity_type = NULL, $entity_id = NULL)
     {
         $this->db
-            ->select('l.*, u.name as user_name, u.role as user_role')
+            ->select('l.*, u.name as user_name, u.user_type as user_role')
             ->from($this->table . ' l')
             ->join('tbl_users u', 'u.user_id = l.user_id', 'left')
             ->order_by('l.created_at', 'DESC')

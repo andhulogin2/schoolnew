@@ -64,7 +64,7 @@
                     <input type="checkbox" name="student_ids[]" value="<?php echo $st->student_id; ?>" class="student-chk w-4 h-4 rounded text-secondary focus:ring-secondary"/>
                     <div>
                       <strong class="text-on-surface text-body-md block"><?php echo html_escape($st->first_name . ' ' . $st->last_name); ?></strong>
-                      <span class="text-xs text-on-surface-variant font-mono"><?php echo html_escape($st->admission_no); ?></span>
+                      <span class="text-xs text-on-surface-variant font-mono"><?php echo html_escape($st->admission_number ?? $st->admission_no ?? ''); ?></span>
                     </div>
                   </div>
                   <span class="text-xs text-on-surface-variant"><?php echo html_escape($st->guardian_name); ?></span>

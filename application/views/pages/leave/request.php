@@ -61,7 +61,7 @@
                 <option value="">-- Choose Student --</option>
                 <?php foreach ($students as $st): ?>
                   <option value="<?php echo $st->student_id; ?>">
-                    <?php echo html_escape($st->first_name . ' ' . $st->last_name . ' (' . $st->admission_no . ' - ' . $st->class_name . ' ' . $st->section_name . ')'); ?>
+                    <?php echo html_escape($st->first_name . ' ' . $st->last_name . ' (' . ($st->admission_number ?? $st->admission_no ?? '') . ' - ' . ($st->class_name ?? '') . ' ' . ($st->section_name ?? '') . ')'); ?>
                   </option>
                 <?php endforeach; ?>
               </select>

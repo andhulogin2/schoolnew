@@ -24,7 +24,7 @@ class Fee_structure_model extends CI_Model {
             $this->db->where('fs.status', $filters['status']);
         }
 
-        return $this->db->order_by('c.sort_order', 'ASC')
+        return $this->db->order_by('c.class_name', 'ASC')
                         ->order_by('fh.head_name', 'ASC')
                         ->get()
                         ->result();

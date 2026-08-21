@@ -9,7 +9,7 @@ class Transport_assignment_model extends CI_Model {
     public function get_all($filters = array(), $limit = 100, $offset = 0)
     {
         $this->db
-            ->select('ta.*, st.first_name, st.last_name, st.admission_no, st.guardian_name, st.emergency_phone, c.class_name, sec.section_name, r.route_name, r.route_code, v.vehicle_number, v.registration_number, pstop.stop_name as pickup_stop_name, pstop.pickup_time, dstop.stop_name as drop_stop_name, dstop.drop_time, d.driver_name, d.phone as driver_phone')
+            ->select('ta.*, st.first_name, st.last_name, st.admission_number, st.admission_number as admission_no, st.guardian_name, st.guardian_phone as emergency_phone, c.class_name, sec.section_name, r.route_name, r.route_code, v.vehicle_number, v.registration_number, pstop.stop_name as pickup_stop_name, pstop.pickup_time, dstop.stop_name as drop_stop_name, dstop.drop_time, d.driver_name, d.phone as driver_phone')
             ->from('tbl_student_transport_assignments ta')
             ->join('tbl_students st', 'st.student_id = ta.student_id', 'left')
             ->join('tbl_classes c', 'c.class_id = ta.class_id', 'left')
@@ -39,7 +39,7 @@ class Transport_assignment_model extends CI_Model {
             $this->db->group_start()
                 ->like('st.first_name', $q)
                 ->or_like('st.last_name', $q)
-                ->or_like('st.admission_no', $q)
+                ->or_like('st.admission_number', $q)
             ->group_end();
         }
 
@@ -51,7 +51,7 @@ class Transport_assignment_model extends CI_Model {
     public function get_by_id($id)
     {
         return $this->db
-            ->select('ta.*, st.first_name, st.last_name, st.admission_no, st.guardian_name, st.emergency_phone, c.class_name, sec.section_name, r.route_name, r.route_code, v.vehicle_number, v.registration_number, pstop.stop_name as pickup_stop_name, pstop.pickup_time, dstop.stop_name as drop_stop_name, dstop.drop_time, d.driver_name, d.phone as driver_phone')
+            ->select('ta.*, st.first_name, st.last_name, st.admission_number, st.admission_number as admission_no, st.guardian_name, st.guardian_phone as emergency_phone, c.class_name, sec.section_name, r.route_name, r.route_code, v.vehicle_number, v.registration_number, pstop.stop_name as pickup_stop_name, pstop.pickup_time, dstop.stop_name as drop_stop_name, dstop.drop_time, d.driver_name, d.phone as driver_phone')
             ->from('tbl_student_transport_assignments ta')
             ->join('tbl_students st', 'st.student_id = ta.student_id', 'left')
             ->join('tbl_classes c', 'c.class_id = ta.class_id', 'left')

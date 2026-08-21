@@ -84,7 +84,7 @@
                 <option value="">-- Choose Student Parent --</option>
                 <?php foreach ($students as $st): ?>
                   <option value="<?php echo $st->student_id; ?>">
-                    <?php echo html_escape($st->first_name . ' ' . $st->last_name . ' (' . ($st->guardian_name ?: 'Parent') . ' - ' . $st->admission_no . ')'); ?>
+                    <?php echo html_escape($st->first_name . ' ' . $st->last_name . ' (' . ($st->guardian_name ?: 'Parent') . ' - ' . ($st->admission_number ?? $st->admission_no ?? '') . ')'); ?>
                   </option>
                 <?php endforeach; ?>
               </select>

@@ -152,8 +152,8 @@ class User_model extends CI_Model {
             ->select('ps.*, s.first_name, s.last_name, s.admission_number, c.class_name, sec.section_name')
             ->from('tbl_parent_students ps')
             ->join('tbl_students s', 's.student_id = ps.student_id')
-            ->leftJoin('tbl_classes c', 'c.class_id = s.class_id')
-            ->leftJoin('tbl_sections sec', 'sec.section_id = s.section_id')
+            ->join('tbl_classes c', 'c.class_id = s.class_id', 'left')
+            ->join('tbl_sections sec', 'sec.section_id = s.section_id', 'left')
             ->where('ps.parent_user_id', (int)$parent_user_id)
             ->get()
             ->result();

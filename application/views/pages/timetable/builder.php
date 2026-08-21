@@ -159,12 +159,24 @@
           <div>
             <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Subject *</label>
             <select name="subject_id" id="b-tt-subject" required class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary">
-              <option value="">-- Choose Subject --</option>
-              <?php foreach ($subjects as $sub): ?>
-                <option value="<?php echo $sub->subject_id; ?>"><?php echo html_escape($sub->subject_name . ' (' . $sub->subject_code . ')'); ?></option>
-              <?php endforeach; ?>
+              <?php if (empty($subjects)): ?>
+                <option value="">-- No subjects assigned to this class --</option>
+              <?php else: ?>
+                <option value="">-- Choose Subject --</option>
+                <?php foreach ($subjects as $sub): ?>
+                  <option value="<?php echo $sub->subject_id; ?>"><?php echo html_escape($sub->subject_name . ' (' . $sub->subject_code . ')'); ?></option>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </select>
+            <?php if (empty($subjects)): ?>
+              <p class="mt-1 text-[12px] text-error flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">warning</span>
+                No subjects allocated for this class. Go to
+                <a href="<?php echo site_url('timetable/allocations?academic_year_id=' . $selected_year . '&class_id=' . $selected_class . '&section_id=' . $selected_section); ?>" class="underline text-primary ml-1">Subject Allocation</a> first.
+              </p>
+            <?php endif; ?>
           </div>
+
 
           <div>
             <label class="block font-label-md text-label-md text-on-surface mb-1 font-medium">Teacher / Faculty *</label>

@@ -49,6 +49,12 @@ class Class_model extends CI_Model {
 
     public function insert($data)
     {
+        if (!isset($data['status'])) {
+            $data['status'] = 1;
+        }
+        if (!isset($data['is_deleted'])) {
+            $data['is_deleted'] = 'n';
+        }
         $this->db->insert($this->table, $data);
         return $this->db->insert_id();
     }

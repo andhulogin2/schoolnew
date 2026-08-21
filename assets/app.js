@@ -172,6 +172,10 @@ const PAGE_URLS = {
   "certificates-reports": "certificates/reports",
   "certificates-settings": "certificates/settings",
   "reports": "reports",
+  "fee-reports": "fees/reports?type=due",
+  "result-reports": "examinations/results",
+  "library-reports": "reports",
+  "inventory-reports": "reports",
   "user-dashboard": "users",
   "users": "users/list",
   "user-create": "users/create",
@@ -790,7 +794,33 @@ const NAV = [
       },
     ],
   },
-  { key: "reports", label: "Reports", icon: "bar_chart" },
+  {
+    key: "reports", label: "Reports", icon: "bar_chart",
+    groups: [
+      { key: "reports", label: "Overview" },
+      { key: "student-reports", label: "Student Reports" },
+      { key: "attendance-reports", label: "Attendance Reports" },
+      {
+        label: "Finance Reports",
+        items: [
+          { key: "fee-reports", aliases: ["due-reports", "student-fee-reports"], label: "Fee Reports" },
+          { key: "collection-reports", label: "Collection Reports" },
+        ],
+      },
+      {
+        label: "Examination & Results",
+        items: [
+          { key: "exam-reports", label: "Exam Reports" },
+          { key: "result-reports", aliases: ["results"], label: "Result Reports" },
+        ],
+      },
+      { key: "staff-reports", label: "Staff Reports" },
+      { key: "academic-reports", label: "Academic Reports" },
+      { key: "transport-reports", label: "Transport Reports" },
+      { key: "library-reports", label: "Library Reports", soon: true },
+      { key: "inventory-reports", label: "Inventory Reports", soon: true },
+    ],
+  },
   {
     key: "user-management", label: "User & Permission Management", icon: "manage_accounts",
     groups: [
@@ -926,6 +956,10 @@ const PAGE_TITLES = {
   "certificates-history": "Certificate History", "certificates-reports": "Certificate Reports",
   "certificates-settings": "Certificate Settings", "certificates": "Certificates & Documents",
   "reports": "Reports",
+  "fee-reports": "Fee Reports",
+  "result-reports": "Result Reports",
+  "library-reports": "Library Reports",
+  "inventory-reports": "Inventory Reports",
   "user-dashboard": "User & Permission Dashboard",
   "users": "User Management",
   "user-create": "Add User",
@@ -951,13 +985,41 @@ function iconSpan(name, extra) {
 
 // Find active hierarchy path: Module Key and Group Label for the current active page
 function findActiveHierarchy(activeKey) {
+  const reportKeys = [
+    "reports", "student-reports", "attendance-reports",
+    "fee-reports", "due-reports", "student-fee-reports", "collection-reports",
+    "exam-reports", "result-reports", "results",
+    "staff-reports", "academic-reports", "transport-reports",
+    "library-reports", "inventory-reports"
+  ];
+
+  if (reportKeys.includes(activeKey)) {
+    const repMod = NAV.find((item) => item.key === "reports");
+    if (repMod && repMod.groups) {
+      for (const group of repMod.groups) {
+        if (group.key === activeKey || (group.aliases && group.aliases.includes(activeKey))) {
+          return { moduleKey: "reports", groupLabel: null, pageKey: group.key };
+        }
+        if (group.items) {
+          const matched = group.items.find((c) => c.key === activeKey || (c.aliases && c.aliases.includes(activeKey)));
+          if (matched) {
+            return { moduleKey: "reports", groupLabel: group.label, pageKey: matched.key };
+          }
+        }
+      }
+    }
+  }
+
   for (const item of NAV) {
     if (item.key === activeKey) {
       return { moduleKey: item.key, groupLabel: null, pageKey: activeKey };
     }
     if (item.groups) {
       for (const group of item.groups) {
-        if (group.items && group.items.some((c) => c.key === activeKey)) {
+        if (group.key === activeKey || (group.aliases && group.aliases.includes(activeKey))) {
+          return { moduleKey: item.key, groupLabel: null, pageKey: group.key };
+        }
+        if (group.items && group.items.some((c) => c.key === activeKey || (c.aliases && c.aliases.includes(activeKey)))) {
           return { moduleKey: item.key, groupLabel: group.label, pageKey: activeKey };
         }
       }
@@ -969,7 +1031,7 @@ function findActiveHierarchy(activeKey) {
 function renderNavItem(item, activeKey, activeHierarchy) {
   const isModuleOpen = item.key === activeHierarchy.moduleKey;
 
-  // Direct link item (e.g. Dashboard, Settings, Reports)
+  // Direct link item (e.g. Dashboard, Settings)
   if (!item.groups) {
     const active = item.key === activeKey;
     return `
@@ -983,11 +1045,26 @@ function renderNavItem(item, activeKey, activeHierarchy) {
       </a>`;
   }
 
-  // 3-Level Expandable Module with Groups
+  // Expandable Module with Direct Items or Subgroups
   const groupsHtml = item.groups.map((group) => {
-    const isGroupOpen = isModuleOpen && (group.label === activeHierarchy.groupLabel);
+    // Level 2 Direct Item (e.g. Overview, Student Reports, Attendance Reports inside Reports)
+    if (group.key) {
+      const active = group.key === activeKey || (group.aliases && group.aliases.includes(activeKey));
+      return `
+        <a href="${url(group.key)}" class="flex items-center justify-between pl-7 pr-3 py-1.5 rounded-lg text-xs font-body-md transition-colors
+          ${active ? "bg-primary-fixed text-primary font-bold shadow-xs" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"}">
+          <span class="truncate">${group.label}</span>
+          ${group.soon ? '<span class="ml-1.5 shrink-0 rounded-full bg-tertiary-container/10 px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wide text-on-tertiary-container">Soon</span>' : ""}
+        </a>`;
+    }
+
+    // Level 2 Expandable Group (e.g. Finance Reports, Examination & Results)
+    const isGroupOpen = isModuleOpen && (
+      group.label === activeHierarchy.groupLabel ||
+      (group.items && group.items.some((c) => c.key === activeKey || (c.aliases && c.aliases.includes(activeKey))))
+    );
     const itemsHtml = group.items.map((c) => {
-      const active = c.key === activeKey;
+      const active = c.key === activeKey || (c.aliases && c.aliases.includes(activeKey));
       return `
         <a href="${url(c.key)}" class="flex items-center justify-between pl-11 pr-3 py-1.5 rounded-lg text-xs font-body-md transition-colors
           ${active ? "bg-primary-fixed text-primary font-bold shadow-xs" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"}">
@@ -1002,7 +1079,7 @@ function renderNavItem(item, activeKey, activeHierarchy) {
           class="w-full flex items-center justify-between pl-7 pr-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-colors
           ${isGroupOpen ? "text-primary font-bold" : "text-on-surface-variant/80 hover:bg-surface-container-high hover:text-on-surface"}">
           <span class="truncate">${group.label}</span>
-          ${iconSpan("expand_more", `text-[16px] transition-transform ${isGroupOpen ? "rotate-180" : ""}`)}
+          ${iconSpan("chevron_right", `text-[16px] transition-transform ${isGroupOpen ? "rotate-90" : ""}`)}
         </button>
         <div class="nav-sub-items mt-0.5 space-y-0.5 ${isGroupOpen ? "" : "hidden"}">${itemsHtml}</div>
       </div>`;
@@ -1150,16 +1227,44 @@ function initShell() {
     });
   });
 
-  // Level 2: Subgroup expand/collapse
+  // Level 2: Subgroup expand/collapse (accordion behavior)
   document.querySelectorAll("[data-toggle-subgroup]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const level2 = btn.closest(".nav-level-2");
-      const subItems = level2.querySelector(".nav-sub-items");
+      const parentContainer = level2 ? level2.closest(".nav-groups") : null;
+      const subItems = level2 ? level2.querySelector(".nav-sub-items") : null;
       const chevron = btn.querySelector(".material-symbols-outlined:last-child");
+      const isCurrentlyOpen = subItems && !subItems.classList.contains("hidden");
+
+      // Accordion behavior: only one dropdown group remains expanded at a time inside module
+      if (parentContainer) {
+        parentContainer.querySelectorAll(".nav-level-2").forEach((otherL2) => {
+          if (otherL2 !== level2) {
+            const otherSub = otherL2.querySelector(".nav-sub-items");
+            const otherChevron = otherL2.querySelector("[data-toggle-subgroup] .material-symbols-outlined:last-child");
+            if (otherSub) otherSub.classList.add("hidden");
+            if (otherChevron) {
+              otherChevron.classList.remove("rotate-90");
+              otherChevron.classList.remove("rotate-180");
+            }
+          }
+        });
+      }
+
       if (subItems) {
-        subItems.classList.toggle("hidden");
-        if (chevron) chevron.classList.toggle("rotate-180");
+        if (isCurrentlyOpen) {
+          subItems.classList.add("hidden");
+          if (chevron) {
+            chevron.classList.remove("rotate-90");
+            chevron.classList.remove("rotate-180");
+          }
+        } else {
+          subItems.classList.remove("hidden");
+          if (chevron) {
+            chevron.classList.add("rotate-90");
+          }
+        }
       }
     });
   });
